@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Nigents Crazy apps — experimental macOS utilities. AirSound, AppJealousy, Battery DNA, BreathBar, LangFlip, Break Alarm, MoodBoard, TiltDJ, ThermalMap, MouseTrailMap, GravityDock, Rise&amp;Open, GhostTouch, CursorAge, DontForget, Desktop Load, NightOwlDiary, and WhisperType." />
+    <title>Crazy apps — Nigents</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #09080c;
+            --bg-secondary: #141116;
+            --border: #2a2a35;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+            --accent-orange: #ff570a;
+            --accent-green: #19d59e;
+            --accent-heat: #ff3d5c;
+            --accent-volt: #2dd4bf;
+            --accent-breath: #67e8f9;
+            --accent-flip: #818cf8;
+            --accent-alarm: #f5921e;
+            --accent-mood: #a78bfa;
+            --accent-dj: #e879f9;
+            --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+            --font-sans: 'Poppins', 'Sakkal Majalla', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 87, 10, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 87, 10, 0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, var(--bg-primary) 0%, transparent 100%);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .nav-logo {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-orange);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--bg-primary);
+        }
+
+        .nav-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--text-primary); }
+
+        .nav-link.active {
+            color: var(--accent-orange);
+        }
+
+        .soon-pill {
+            display: inline-block;
+            margin-left: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--bg-primary);
+            background: var(--accent-orange);
+            padding: 3px 9px;
+            border-radius: 999px;
+            vertical-align: middle;
+        }
+
+        .nav-cta {
+            padding: 10px 20px;
+            border: 1px solid var(--accent-orange);
+            color: var(--accent-orange);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .nav-cta:hover {
+            background: var(--accent-orange);
+            color: var(--bg-primary);
+        }
+
+        .nav-toggle {
+            display: none;
+            width: 44px;
+            height: 44px;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .nav-toggle-icon-close { display: none; font-size: 28px; }
+        body.nav-open .nav-toggle-icon-open { display: none; }
+        body.nav-open .nav-toggle-icon-close { display: block; }
+        .nav-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 998;
+        }
+        body.nav-open .nav-backdrop { display: block; }
+        body.nav-open { overflow: hidden; }
+
+        @media (max-width: 900px) {
+            .nav-toggle { display: flex; }
+            .nav-links {
+                display: none;
+                position: fixed;
+                top: 72px;
+                left: 16px;
+                right: 16px;
+                flex-direction: column;
+                align-items: stretch;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                padding: 12px;
+                z-index: 999;
+            }
+            body.nav-open .nav-links { display: flex; }
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 120px 32px 72px;
+        }
+
+        .hub-badge {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--accent-green);
+            border: 1px solid rgba(25, 213, 158, 0.35);
+            padding: 8px 14px;
+            display: inline-block;
+            margin-bottom: 18px;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 4.5vw, 2.85rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+            margin-bottom: 14px;
+        }
+
+        h1 .shimmer {
+            background: linear-gradient(
+                90deg,
+                var(--text-primary) 0%,
+                var(--text-primary) 38%,
+                var(--accent-orange) 52%,
+                var(--text-primary) 65%,
+                var(--text-primary) 100%
+            );
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: textShimmer 4.5s linear infinite;
+        }
+
+        @keyframes textShimmer {
+            0% { background-position: 100% 50%; }
+            100% { background-position: -100% 50%; }
+        }
+
+        .lead {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 48ch;
+            margin-bottom: 40px;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .app-pick {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.25s, transform 0.25s;
+        }
+
+        .app-pick::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .app-pick:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255, 87, 10, 0.45);
+        }
+
+        .app-pick.as::before {
+            background: linear-gradient(90deg, var(--accent-orange), var(--accent-green));
+        }
+
+        .app-pick.aj::before {
+            background: linear-gradient(90deg, var(--accent-orange), var(--accent-heat));
+        }
+
+        .app-pick.bd::before {
+            background: linear-gradient(90deg, var(--accent-volt), var(--accent-green));
+        }
+
+        .app-pick .icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .app-pick .icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            border-radius: 14px;
+        }
+
+        .app-pick.mb:hover {
+            border-color: rgba(167, 139, 250, 0.45);
+        }
+
+        .app-pick.td::before {
+            background: linear-gradient(90deg, var(--accent-dj), #a78bfa);
+        }
+
+        .app-pick.td .icon {
+            color: var(--accent-dj);
+            background: rgba(232, 121, 249, 0.1);
+            border-color: rgba(232, 121, 249, 0.35);
+        }
+
+        .app-pick.td:hover {
+            border-color: rgba(232, 121, 249, 0.45);
+        }
+
+        .app-pick.tm::before {
+            background: linear-gradient(90deg, var(--accent-heat), #2dd4bf);
+        }
+
+        .app-pick.tm .icon {
+            color: var(--accent-heat);
+            background: rgba(255, 61, 92, 0.1);
+            border: 1px solid rgba(255, 61, 92, 0.35);
+        }
+
+        .app-pick.tm:hover {
+            border-color: rgba(255, 61, 92, 0.45);
+        }
+
+        .app-pick.mt::before {
+            background: linear-gradient(90deg, #00c6ff, #a855f7, #f97316);
+        }
+
+        .app-pick.mt .icon {
+            background: rgba(0, 198, 255, 0.08);
+            border-color: rgba(0, 198, 255, 0.3);
+        }
+
+        .app-pick.mt:hover {
+            border-color: rgba(0, 198, 255, 0.45);
+        }
+
+        .app-pick.ro::before {
+            background: linear-gradient(90deg, #8B5CF6, #EC4899);
+        }
+
+        .app-pick.ro .icon {
+            background: rgba(139, 92, 246, 0.07);
+            border-color: rgba(139, 92, 246, 0.28);
+        }
+
+        .app-pick.ro:hover {
+            border-color: rgba(236, 72, 153, 0.45);
+        }
+
+        .app-pick.gd::before {
+            background: linear-gradient(90deg, #8B5CF6, #3B82F6, #06B6D4);
+        }
+
+        .app-pick.gd .icon {
+            background: rgba(139, 92, 246, 0.08);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        .app-pick.gd:hover {
+            border-color: rgba(139, 92, 246, 0.45);
+        }
+
+        .app-pick.gt::before {
+            background: linear-gradient(90deg, #8B5CF6, #06B6D4);
+        }
+
+        .app-pick.gt .icon {
+            background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(6,182,212,0.12));
+            border: 1px solid rgba(139,92,246,0.3);
+        }
+
+        .app-pick.gt:hover {
+            border-color: rgba(6, 182, 212, 0.45);
+        }
+
+        .app-pick h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .app-pick p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.55;
+            margin-bottom: 20px;
+        }
+
+        .app-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .app-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+
+        .app-actions a:active { transform: scale(0.98); }
+
+        .btn-landing {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-landing:hover {
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+        }
+
+        .btn-dl {
+            background: var(--accent-orange);
+            color: var(--bg-primary);
+            border: 1px solid var(--accent-orange);
+        }
+
+        .btn-dl:hover { opacity: 0.92; }
+
+        .subtle-link {
+            margin-top: 40px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .subtle-link a {
+            color: var(--accent-orange);
+            text-decoration: none;
+        }
+
+        .subtle-link a:hover { text-decoration: underline; }
+
+        @media (prefers-reduced-motion: reduce) {
+            h1 .shimmer { animation: none; color: var(--text-primary); -webkit-text-fill-color: var(--text-primary); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">
+            <div class="nav-logo">N</div>
+            <span class="nav-title">Nigents</span>
+        </a>
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+            <span class="nav-toggle-icon-open" aria-hidden="true">☰</span>
+            <span class="nav-toggle-icon-close" aria-hidden="true">×</span>
+        </button>
+        <div class="nav-links" id="nav-links" role="navigation" aria-label="Main">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/how-it-works.html" class="nav-link">How it works</a>
+            <a href="/skills.html" class="nav-link">AI Skills</a>
+            <a href="/materials.html" class="nav-link">Free Materials</a>
+            <a href="/crazy-apps.html" class="nav-link active">Crazy apps</a>
+            <a href="/opencode-kits.html" class="nav-link">OpenCode kits <span class="soon-pill">Soon</span></a>
+            <a href="/apps/" class="nav-link">Apps</a>
+            <a href="/login.html" class="nav-cta">Login →</a>
+        </div>
+    </nav>
+    <div class="nav-backdrop" id="nav-backdrop" aria-hidden="true" hidden></div>
+
+    <main>
+        <p class="hub-badge">macOS · Menu bar experiments</p>
+        <h1><span class="shimmer">Crazy apps</span></h1>
+        <p class="lead">Pick a utility below — each has its own landing page, story, and disk image. Experimental toys, not production infrastructure.</p>
+
+        <div class="app-grid">
+            <article class="app-pick as">
+                <div class="icon"><img src="/icons/airsound.png" alt="AirSound icon" loading="lazy"></div>
+                <h2>AirSound</h2>
+                <p>Tilt your MacBook and stereo pans with the motion sensor. Tight bounce loop and a silent center dead zone — best on headphones.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/airsound.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/AirSound-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick aj">
+                <div class="icon"><img src="/icons/appjealousy.png" alt="AppJealousy icon" loading="lazy"></div>
+                <h2>AppJealousy</h2>
+                <p>Dock apps react when you ignore them. Adjustable jealousy timer, moods, and optional notifications — playful dock drama.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/appjealousy.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/AppJealousy-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick bd">
+                <div class="icon"><img src="/icons/batterydna.png" alt="Battery DNA icon" loading="lazy"></div>
+                <h2>Battery DNA</h2>
+                <p>Menu bar battery clarity — charge state, cycles, and health context without diving into System Settings.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/batterydna.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/BatteryDNA-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick bb">
+                <div class="icon"><img src="/icons/breathbar.png" alt="BreathBar icon" loading="lazy"></div>
+                <h2>BreathBar</h2>
+                <p>Guided breathing in the menu bar — box, 4-7-8, session rings, streaks, optional focus overlay and break reminders.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/breathbar.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/BreathBar-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick lf">
+                <div class="icon"><img src="/icons/langflip.png" alt="LangFlip icon" loading="lazy"></div>
+                <h2>LangFlip</h2>
+                <p>Typed in the wrong keyboard layout? Triple-tap ⌘ to flip mistyped Arabic ↔ English text in-place — no retyping, clipboard untouched.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/langflip.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/LangFlip-1.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick ba">
+                <div class="icon"><img src="/icons/breakalarm.png" alt="Break Alarm icon" loading="lazy"></div>
+                <h2>Break Alarm</h2>
+                <p>Know how long you've been grinding. Dims every screen, plays a chime, and says your coffee is brewing — so you actually stand up.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/breakalarm.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/BreakAlarm-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick mb">
+                <div class="icon"><img src="/icons/moodboard.png" alt="MoodBoard icon" loading="lazy"></div>
+                <h2>MoodBoard</h2>
+                <p>Five mood modes — wallpaper shifts on every screen, a phrase streams out, then your media plays with a live wave animation. <span dir="rtl">اسمع دي هتعجبك</span></p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/moodboard.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/MoodBoard-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick td">
+                <div class="icon"><img src="/icons/tiltdj.png" alt="TiltDJ icon" loading="lazy"></div>
+                <h2>TiltDJ</h2>
+                <p>Eight synth pads, stereo pan, 16-step pattern grid, audio import remix, waveform hot cues and voice drops — a groove box for your Mac desktop while you study.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/tiltdj.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/TiltDJ-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick tm">
+                <div class="icon"><img src="/icons/thermalmap.png" alt="ThermalMap icon" loading="lazy"></div>
+                <h2>ThermalMap</h2>
+                <p>Visualize your Mac's thermal state — CPU, GPU, Neural Engine, storage, battery, and chassis zones. Animated fan indicator and menu bar panel included.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/thermalmap.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/ThermalMap-1.1.1.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick" style="border-color:rgba(108,92,231,.25)">
+                <div class="icon" style="background:linear-gradient(135deg,#1a1540,#2d1b69);display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="12" fill="url(#ffg)"/><defs><linearGradient id="ffg" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#6c5ce7"/><stop offset="1" stop-color="#a29bfe"/></linearGradient></defs><circle cx="24" cy="20" r="9" stroke="#fff" stroke-width="2.5" fill="none"/><path d="M15 36c0-5 4-9 9-9s9 4 9 9" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="24" cy="20" r="3" fill="#fff"/></svg>
+                </div>
+                <h2>FocusFlow</h2>
+                <p>Pomodoro timer with ambient soundscapes (rain, cafe, fire, birds, waves). Menu bar app with circular progress, session tracking, and smart break notifications.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/focusflow.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/FocusFlow-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick">
+                <div class="icon" style="background:#1a0808;display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="12" fill="#1e0808"/><rect x="8" y="14" width="32" height="20" rx="3" stroke="#ff4747" stroke-width="2"/><path d="M18 24l4 4 8-8" stroke="#ff4747" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h2>Escape</h2>
+                <p>One hotkey and every window flips to VS Code and Terminal in under 100 ms — for the exact moment the manager walks in.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/escape.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/Escape-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick mt">
+                <div class="icon" style="display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="48" rx="12" fill="#080818"/>
+                        <path d="M12 36 Q18 20 24 24 Q30 28 36 12" stroke="url(#trail)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                        <circle cx="36" cy="12" r="3" fill="#00c6ff"/>
+                        <circle cx="24" cy="24" r="2" fill="#a855f7"/>
+                        <circle cx="12" cy="36" r="2" fill="#f97316"/>
+                        <defs>
+                            <linearGradient id="trail" x1="12" y1="36" x2="36" y2="12" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#f97316"/>
+                                <stop offset="50%" stop-color="#a855f7"/>
+                                <stop offset="100%" stop-color="#00c6ff"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <h2>MouseTrailMap</h2>
+                <p>Your mouse becomes art. Rainbow trails draw in real-time as you move, with live stats — points, speed, distance, and click detection. Interactive canvas with a custom cursor glow.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/mousetrailmap.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/MouseTrailMap-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+
+            <article class="app-pick ro">
+                <div class="icon" style="display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="48" rx="12" fill="#0d0818"/>
+                        <!-- palm -->
+                        <rect x="14" y="26" width="22" height="18" rx="6" fill="#1a1030" stroke="rgba(139,92,246,0.4)" stroke-width="1.2"/>
+                        <!-- index finger raised -->
+                        <rect x="20" y="8" width="9" height="24" rx="4" fill="#1a1030" stroke="#8B5CF6" stroke-width="1.8"/>
+                        <!-- other fingers folded -->
+                        <rect x="30" y="22" width="6" height="8" rx="3" fill="#1a1030" stroke="rgba(139,92,246,0.25)" stroke-width="1"/>
+                        <rect x="13" y="22" width="6" height="8" rx="3" fill="#1a1030" stroke="rgba(139,92,246,0.25)" stroke-width="1"/>
+                        <!-- tip glow -->
+                        <circle cx="24.5" cy="9" r="5" fill="rgba(139,92,246,0.3)"/>
+                        <circle cx="24.5" cy="9" r="3" fill="#8B5CF6"/>
+                        <!-- detection beam -->
+                        <line x1="24.5" y1="9" x2="10" y2="2" stroke="#EC4899" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.7"/>
+                        <!-- launch sparkles -->
+                        <circle cx="8" cy="4" r="2.5" fill="#EC4899" opacity="0.8"/>
+                        <circle cx="5" cy="9" r="1.5" fill="#8B5CF6" opacity="0.6"/>
+                    </svg>
+                </div>
+                <h2>Rise&amp;Open</h2>
+                <p>Launch any Mac app by raising a single finger at your FaceTime camera. Apple Vision framework detects which finger you're holding up — thumb through pinky, each mapped to an app of your choice.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/riseopen.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/RiseOpen-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+
+            <article class="app-pick gd" style="--gd-accent:#8B5CF6">
+                <div class="icon" style="display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="48" rx="12" fill="#0d0818"/>
+                        <rect x="8" y="36" width="32" height="6" rx="3" fill="#8B5CF6" opacity="0.35"/>
+                        <rect x="11" y="8" width="11" height="11" rx="3" fill="url(#gd1)"/>
+                        <rect x="26" y="16" width="11" height="11" rx="3" fill="url(#gd2)"/>
+                        <path d="M16.5 19 Q16.5 38 16.5 38" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+                        <path d="M31.5 27 Q31.5 38 31.5 38" stroke="#3B82F6" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+                        <defs>
+                            <linearGradient id="gd1" x1="11" y1="8" x2="22" y2="19" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#8B5CF6"/>
+                                <stop offset="100%" stop-color="#3B82F6"/>
+                            </linearGradient>
+                            <linearGradient id="gd2" x1="26" y1="16" x2="37" y2="27" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#3B82F6"/>
+                                <stop offset="100%" stop-color="#06B6D4"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <h2>GravityDock</h2>
+                <p>Turn your Dock apps into physics objects that bounce, float, and fly around your desktop. Four real-time modes — Bounce, Float, Gravity, Chaos. Click any flying icon to launch that app instantly.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/gravitydock.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/GravityDock-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick gt">
+                <div class="icon" style="display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="48" rx="12" fill="#0d0a1a"/>
+                        <defs>
+                            <linearGradient id="gtg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#8B5CF6"/>
+                                <stop offset="100%" stop-color="#06B6D4"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M24 6C20 11 16 13 16 17a8 8 0 0016 0c0-4-4-6-8-11z" stroke="url(#gtg)" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+                        <circle cx="24" cy="21" r="3" fill="#8B5CF6" opacity="0.8"/>
+                        <circle cx="24" cy="21" r="6" stroke="#06B6D4" stroke-width="1.2" fill="none" opacity="0.4"/>
+                        <circle cx="24" cy="21" r="10" stroke="#8B5CF6" stroke-width="0.8" fill="none" opacity="0.2"/>
+                    </svg>
+                </div>
+                <h2>GhostTouch</h2>
+                <p>Simulates tiny invisible mouse movements and key presses to keep your Mac awake — no sleep, no screensaver, zero CPU impact. 4 modes, adjustable interval, 100% native Swift.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/ghosttouch.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/GhostTouch-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick" style="border-color:rgba(239,68,68,.25)">
+                <div class="icon" style="background:linear-gradient(135deg,#1a0000,#2d0606);display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="48" rx="12" fill="url(#nhqg)"/>
+                        <defs><linearGradient id="nhqg" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#ef4444"/><stop offset="1" stop-color="#7f1d1d"/></linearGradient></defs>
+                        <rect x="10" y="8" width="28" height="6" rx="3" fill="#000"/>
+                        <rect x="8" y="18" width="32" height="22" rx="4" fill="none" stroke="#fff" stroke-width="2"/>
+                        <circle cx="16" cy="29" r="2.5" fill="#fff"/>
+                        <circle cx="24" cy="29" r="2.5" fill="#fff"/>
+                        <circle cx="32" cy="29" r="2.5" fill="#fff"/>
+                    </svg>
+                </div>
+                <h2>NotchHQ</h2>
+                <p>Your Notch, Now Useful. Hover at the notch to unlock 7 tools — Now Playing, Quick Notes, Timer, Calculator, Clipboard history, AI Chat, and live System Stats. Command center in the dead space above your screen.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/notchhq.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/NotchHQ-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick" style="border-color:rgba(59,130,246,.25)">
+                <div class="icon" style="background:linear-gradient(135deg,#0c1635,#1b2a60);display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="48" rx="12" fill="url(#cag)"/>
+                        <defs><linearGradient id="cag" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs>
+                        <path d="M16 8 L16 40 L24 32 L28 42 L32 40 L28 28 L38 28 Z" fill="white" stroke="#0a0a0f" stroke-width="1.4" stroke-linejoin="round"/>
+                        <path d="M20 14 Q22 17 24 14" stroke="#0a0a0f" stroke-width="0.6" fill="none" opacity="0.3"/>
+                        <path d="M26 18 L30 26" stroke="#eab308" stroke-width="1" fill="none" opacity="0.5"/>
+                    </svg>
+                </div>
+                <h2>CursorAge</h2>
+                <p>Leave your mouse idle and watch your cursor grow old — wrinkles, cracks, and a walking cane. Move it again and it snaps back to young. 4 aging stages with animated live demo.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/cursorage.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/CursorAge-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick" style="border-color:rgba(59,130,246,.25)">
+                <div class="icon" style="background:linear-gradient(135deg,#0c1635,#1b2a60);display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="48" rx="12" fill="url(#dfg)"/>
+                        <defs><linearGradient id="dfg" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+                        <path d="M34 22a10 10 0 0 0-20 0c0 7-3 9-3 9h26s-3-2-3-9" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <path d="M22 36a2 2 0 0 0 4 0" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+                        <circle cx="34" cy="14" r="4" fill="#ef4444" stroke="#0a0a0f" stroke-width="1.4"/>
+                    </svg>
+                </div>
+                <h2>DontForget</h2>
+                <p>Notch reminders for your favorite apps. Track up to 5, set an idle threshold, and a frosted-glass card drops from the notch when one needs you — tap to open or snooze. 100% native Swift, zero permissions.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/dontforget.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/DontForget-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick" style="border-color:rgba(16,185,129,.25)">
+                <div class="icon" style="background:linear-gradient(135deg,#0c2920,#0a3d2e);display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="48" rx="12" fill="url(#dlg)"/>
+                        <defs><linearGradient id="dlg" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#10b981"/><stop offset="1" stop-color="#047857"/></linearGradient></defs>
+                        <circle cx="24" cy="26" r="11" stroke="#fff" stroke-width="2.4" fill="none"/>
+                        <path d="M24 15 a11 11 0 0 1 11 11" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+                        <path d="M24 26 L31 19" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+                        <circle cx="24" cy="26" r="2" fill="#fff"/>
+                    </svg>
+                </div>
+                <h2>Desktop Load</h2>
+                <p>Your desktop is a pressure gauge. Live count of files cluttering your Mac desktop with one-click clean — see the load, clear the noise. Self-contained DMG, drag to install.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/desktopload.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/DesktopLoad-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick" style="border-color:rgba(129,140,248,.25)">
+                <div class="icon" style="background:linear-gradient(135deg,#1a1a3e,#0f0f1a);display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="48" rx="12" fill="url(#nog)"/>
+                        <defs><linearGradient id="nog" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#4f46e5"/></linearGradient></defs>
+                        <circle cx="35" cy="14" r="2" fill="#fff" opacity="0.9"/>
+                        <circle cx="30" cy="20" r="1" fill="#fff" opacity="0.7"/>
+                        <circle cx="40" cy="22" r="1" fill="#fff" opacity="0.6"/>
+                        <path d="M14 12 L32 12 Q34 12 34 14 L34 36 Q34 38 32 38 L14 38 Q12 38 12 36 L12 14 Q12 12 14 12 Z" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
+                        <line x1="16" y1="18" x2="28" y2="18" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity="0.85"/>
+                        <line x1="16" y1="24" x2="26" y2="24" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity="0.7"/>
+                        <line x1="16" y1="30" x2="24" y2="30" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/>
+                    </svg>
+                </div>
+                <h2>NightOwlDiary</h2>
+                <p>End-of-day reflections before sleep. Three prompts — smile, drain, tomorrow — in five minutes. Fully offline, local SQLite, with a gentle seven-day streak strip. No cloud, no AI, no noise.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/nightowldiary.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/NightOwlDiary-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+            <article class="app-pick" style="border-color:rgba(167,139,250,.25)">
+                <div class="icon" style="background:linear-gradient(135deg,#1e1b4b,#0c0c1a);display:flex;align-items:center;justify-content:center;">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="48" height="48" rx="12" fill="url(#wtg)"/>
+                        <defs><linearGradient id="wtg" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs>
+                        <!-- Microphone -->
+                        <rect x="20" y="12" width="8" height="16" rx="4" fill="#fff"/>
+                        <path d="M16 22 v2 a8 8 0 0 0 16 0 v-2" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+                        <line x1="24" y1="32" x2="24" y2="38" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+                        <line x1="20" y1="38" x2="28" y2="38" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+                        <!-- Soundwave accents -->
+                        <path d="M11 20 v8" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/>
+                        <path d="M8 22 v4"  stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity="0.35"/>
+                        <path d="M37 20 v8" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/>
+                        <path d="M40 22 v4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity="0.35"/>
+                    </svg>
+                </div>
+                <h2>WhisperType</h2>
+                <p>Speak your plan in English or Arabic — Whisper auto-detects, GPT-4o-mini structures it into prioritised steps with time estimates in the same language. Your OpenAI key, your data. Voice-to-action, not another todo app.</p>
+                <div class="app-actions">
+                    <a class="btn-landing" href="/whispertype.html">Open landing</a>
+                    <a class="btn-dl" href="/downloads/WhisperType-1.0.0.dmg" download>Download DMG</a>
+                </div>
+            </article>
+        </div>
+
+        <p class="subtle-link">These apps also appear on the <a href="/materials.html#crazy-apps">materials page</a> next to free PDF roadmaps.</p>
+    </main>
+
+    <script>
+        (function () {
+            var toggle = document.getElementById('nav-toggle');
+            var backdrop = document.getElementById('nav-backdrop');
+            if (!toggle) return;
+            function setOpen(open) {
+                document.body.classList.toggle('nav-open', open);
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (backdrop) backdrop.hidden = !open;
+            }
+            toggle.addEventListener('click', function () {
+                setOpen(!document.body.classList.contains('nav-open'));
+            });
+            if (backdrop) backdrop.addEventListener('click', function () { setOpen(false); });
+            document.getElementById('nav-links').querySelectorAll('a').forEach(function (link) {
+                link.addEventListener('click', function () { setOpen(false); });
+            });
+        })();
+    </script>
+</body>
+</html>

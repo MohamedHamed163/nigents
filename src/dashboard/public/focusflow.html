@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow — Pomodoro Timer with Ambient Soundscapes</title>
+    <meta name="description" content="A sleek menu-bar Pomodoro timer for macOS with six ambient soundscapes, session tracking, and smart break reminders. Focus deeper. Break smarter." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            --border: #2a2a35;
+            --bg-secondary: #141116;
+            --ff-a: #8B5CF6;
+            --ff-b: #6366F1;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-sans); background: #0a0a0f; color: #e0e0e0; overflow-x: hidden; }
+
+        /* ── Site nav (Nigents) ───────────────────────────── */
+        .site-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, #09080c 0%, transparent 100%);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .nav-logo { width: 40px; height: 40px; background: #ff570a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: #09080c; }
+        .nav-title { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+        .nav-links { display: flex; align-items: center; gap: 24px; }
+        .nav-link { color: #a0a0a0; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover { color: #fff; }
+        .nav-link.active { color: #ff570a; }
+        .nav-cta { padding: 10px 20px; border: 1px solid #ff570a; color: #ff570a; text-decoration: none; font-size: 14px; font-weight: 600; transition: all 0.2s; border-radius: 6px; }
+        .nav-cta:hover { background: #ff570a; color: #09080c; }
+        .nav-toggle { display: none; width: 44px; height: 44px; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 10px; color: #fff; cursor: pointer; }
+        .nav-toggle-icon-close { display: none; font-size: 28px; }
+        body.nav-open .nav-toggle-icon-open { display: none; }
+        body.nav-open .nav-toggle-icon-close { display: block; }
+        .nav-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 998; }
+        body.nav-open .nav-backdrop { display: block; }
+        body.nav-open { overflow: hidden; }
+        @media (max-width: 900px) {
+            .site-nav { padding: 16px 20px; }
+            .nav-toggle { display: flex; }
+            .nav-links { display: none; position: fixed; top: 72px; left: 16px; right: 16px; flex-direction: column; align-items: stretch; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 12px; z-index: 999; }
+            body.nav-open .nav-links { display: flex; }
+            .nav-link, .nav-cta { padding: 12px; text-align: center; }
+        }
+
+        /* ── Background grid ─────────────────────────────── */
+        .bg-grid {
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 50px 50px; pointer-events: none; z-index: 0;
+        }
+
+        /* ── Hero ────────────────────────────────────────── */
+        .hero {
+            min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 120px 40px 60px; position: relative;
+            background: radial-gradient(ellipse at 50% 40%, rgba(139,92,246,0.1) 0%, transparent 60%);
+        }
+        .hero-content { position: relative; z-index: 1; max-width: 720px; text-align: center; }
+
+        .hero-icon-wrap { width: 110px; height: 110px; margin: 0 auto 28px; position: relative; animation: iconFloat 4s ease-in-out infinite; }
+        @keyframes iconFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        .hero-icon-wrap::after { content:''; position:absolute; bottom:-14px; left:15%; width:70%; height:14px; background: radial-gradient(ellipse, rgba(139,92,246,0.3), transparent); border-radius: 50%; animation: shPulse 4s ease-in-out infinite; }
+        @keyframes shPulse { 0%,100% { opacity:0.4; transform:scaleX(1); } 50% { opacity:0.7; transform:scaleX(0.8); } }
+        .hero-icon-inner {
+            width: 110px; height: 110px; border-radius: 26px;
+            background: linear-gradient(135deg, var(--ff-a), var(--ff-b));
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 20px 60px rgba(139,92,246,0.35);
+        }
+        .hero-icon-inner svg { width: 56px; height: 56px; }
+
+        .hero h1 {
+            font-size: clamp(38px, 7vw, 62px); font-weight: 900; letter-spacing: -2px;
+            background: linear-gradient(135deg, var(--ff-a), var(--ff-b), var(--ff-a));
+            background-size: 200% 200%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: gradShift 3s ease-in-out infinite;
+            margin-bottom: 6px;
+        }
+        @keyframes gradShift { 0%,100% { background-position:0% 50%; } 50% { background-position:100% 50%; } }
+        .hero .tagline { font-size: clamp(16px, 2.4vw, 20px); color: #8899bb; margin-bottom: 10px; }
+        .hero .subtitle { font-size: 15px; color: #556; max-width: 520px; margin: 0 auto 28px; line-height: 1.65; }
+
+        .badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+        .badge { padding: 6px 14px; border-radius: 18px; font-size: 11px; font-weight: 600; animation: bPop 0.5s ease-out both; }
+        .badge:nth-child(1) { animation-delay:0.1s; } .badge:nth-child(2) { animation-delay:0.2s; }
+        .badge:nth-child(3) { animation-delay:0.3s; } .badge:nth-child(4) { animation-delay:0.4s; }
+        @keyframes bPop { from { opacity:0; transform:scale(0.85) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .badge-purple { background: rgba(139,92,246,0.12); color: #a78bfa; border: 1px solid rgba(139,92,246,0.25); }
+        .badge-indigo { background: rgba(99,102,241,0.12); color: #818cf8; border: 1px solid rgba(99,102,241,0.25); }
+        .badge-green  { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+        .badge-orange { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
+
+        .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 15px 34px; text-decoration: none; border-radius: 13px;
+            font-weight: 700; font-size: 16px; cursor: pointer; border: none;
+            transition: all 0.3s; font-family: inherit;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--ff-a), var(--ff-b)); color: #fff; box-shadow: 0 8px 30px rgba(139,92,246,0.3); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(139,92,246,0.45); }
+        .btn-ghost { background: rgba(255,255,255,0.06); color: #ccc; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-ghost:hover { background: rgba(255,255,255,0.1); transform: translateY(-3px); }
+
+        .section-title { text-align: center; font-size: clamp(22px, 4vw, 34px); font-weight: 800; color: #fff; margin-bottom: 8px; }
+        .section-sub { text-align: center; font-size: 15px; color: #8899bb; margin-bottom: 48px; }
+
+        /* ── Demo (interactive pomodoro) ──────────────────── */
+        .demo-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .screen-wrap {
+            max-width: 420px; margin: 0 auto; border-radius: 18px; overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.4), 0 0 60px rgba(139,92,246,0.05);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .screen-bar { background: #1c1c22; padding: 10px 16px; display: flex; align-items: center; gap: 8px; }
+        .sdot { width: 11px; height: 11px; border-radius: 50%; }
+        .sdot.r { background: #ff5f56; } .sdot.y { background: #ffbd2e; } .sdot.g { background: #27c93f; }
+        .screen-title { margin-left: 10px; font-size: 11px; color: #666; flex: 1; }
+        .screen-live { padding: 3px 10px; border-radius: 10px; font-size: 10px; font-weight: 700; background: rgba(139,92,246,0.15); color: #a78bfa; }
+
+        .demo-canvas { background: linear-gradient(135deg, #0d0d14, #0a0a12); position: relative; padding: 22px; }
+        .demo-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+        .demo-header-icon { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, var(--ff-a), var(--ff-b)); display:inline-flex; align-items:center; justify-content:center; }
+        .demo-header-icon svg { width: 14px; height: 14px; }
+        .demo-header-name { font-size: 13px; font-weight: 700; color: #fff; }
+        .demo-mode-tag { margin-left: auto; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: rgba(139,92,246,0.15); color: #a78bfa; letter-spacing: 0.04em; text-transform: uppercase; }
+
+        .timer-circle-wrap { display: flex; justify-content: center; margin: 10px 0 16px; position: relative; }
+        .timer-circle-wrap canvas { display: block; }
+        .timer-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .timer-digits { font-size: 36px; font-weight: 800; font-variant-numeric: tabular-nums; color: #fff; }
+        .timer-label { font-size: 10px; color: #888; letter-spacing: 0.05em; text-transform: uppercase; }
+
+        .demo-modes { display: flex; gap: 6px; justify-content: center; margin-bottom: 14px; }
+        .demo-mode-btn {
+            padding: 6px 14px; border-radius: 7px; font-size: 10px; font-weight: 600;
+            font-family: inherit; cursor: pointer; border: none;
+            background: rgba(255,255,255,0.04); color: #888; transition: all 0.2s;
+        }
+        .demo-mode-btn.active { background: rgba(139,92,246,0.2); color: #a78bfa; }
+
+        .demo-controls { display: flex; justify-content: center; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .ctrl-btn {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: rgba(255,255,255,0.05); border: none; color: #aaa;
+            font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .ctrl-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .ctrl-btn.play {
+            width: 48px; height: 48px; font-size: 18px; color: #fff;
+            background: linear-gradient(135deg, var(--ff-a), var(--ff-b));
+            box-shadow: 0 4px 20px rgba(139,92,246,0.35);
+        }
+
+        .demo-stats { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+        .demo-stat { text-align: center; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.03); flex: 1; }
+        .demo-stat-val { font-size: 14px; font-weight: 800; color: #a78bfa; }
+        .demo-stat-lbl { font-size: 8px; color: #666; letter-spacing: 0.08em; text-transform: uppercase; }
+
+        .demo-sounds-title { font-size: 11px; font-weight: 700; color: #888; margin-bottom: 8px; letter-spacing: 0.06em; text-transform: uppercase; }
+        .demo-sounds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .demo-sound {
+            text-align: center; padding: 10px 4px; border-radius: 10px;
+            background: rgba(255,255,255,0.02); cursor: pointer;
+            border: 1px solid transparent; transition: all 0.2s;
+        }
+        .demo-sound:hover { background: rgba(255,255,255,0.05); }
+        .demo-sound.active { border-color: rgba(139,92,246,0.35); background: rgba(139,92,246,0.08); }
+        .demo-sound .icon { font-size: 20px; display: block; margin-bottom: 3px; }
+        .demo-sound .name { font-size: 9px; color: #888; font-weight: 600; }
+        .demo-sound.active .name { color: #a78bfa; }
+
+        /* ── Features ────────────────────────────────────── */
+        .features-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; }
+        .feature-card {
+            background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px; padding: 24px; transition: all 0.3s;
+            position: relative; overflow: hidden;
+        }
+        .feature-card::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg,transparent,var(--ff-a),transparent);
+            opacity:0; transition:opacity 0.3s;
+        }
+        .feature-card:hover { transform: translateY(-4px); border-color: rgba(139,92,246,0.2); }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+        .feature-card h3 { font-size: 16px; color: #fff; margin-bottom: 6px; }
+        .feature-card p { font-size: 13px; color: #8899bb; line-height: 1.6; }
+
+        /* ── How it works ────────────────────────────────── */
+        .how-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; }
+        .how-card {
+            background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px; padding: 20px; text-align: center; transition: all 0.3s;
+        }
+        .how-card:hover { transform: translateY(-4px); border-color: rgba(139,92,246,0.2); }
+        .how-num {
+            font-size: 32px; font-weight: 900;
+            background: linear-gradient(135deg, var(--ff-a), var(--ff-b));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .how-card h3 { font-size: 15px; color: #fff; margin-bottom: 6px; }
+        .how-card p { font-size: 12.5px; color: #8899bb; line-height: 1.55; }
+
+        /* ── Install ────────────────────────────────────── */
+        .install-section { padding: 60px 40px; position: relative; z-index: 1; }
+        .install-card {
+            max-width: 700px; margin: 0 auto;
+            background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px; padding: 28px;
+        }
+        .install-card h3 { font-size: 15px; margin-bottom: 14px; color: #fff; }
+        .code-block {
+            background: #080810; border-radius: 10px; padding: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; line-height: 2;
+            margin-bottom: 12px; overflow-x: auto;
+        }
+        .cm { color: #556; } .cp { color: #34d399; } .cc { color: #e0e0e0; } .ch { color: #fbbf24; }
+
+        /* ── Download ────────────────────────────────────── */
+        .download-section {
+            background: linear-gradient(135deg, #080810, #0a0a1a, #080810);
+            padding: 80px 40px; text-align: center; position: relative; z-index: 1;
+        }
+
+        /* ── Footer ──────────────────────────────────────── */
+        footer {
+            padding: 24px; text-align: center; color: #445; font-size: 12px;
+            border-top: 1px solid rgba(255,255,255,0.03);
+        }
+        footer a { color: #a78bfa; text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+
+        @media (max-width: 640px) {
+            .hero { padding: 110px 20px 50px; }
+            .demo-section, .features-section, .how-section, .install-section, .download-section { padding: 60px 20px; }
+            .install-card { padding: 20px; }
+            .screen-wrap { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Site nav -->
+<nav class="site-nav">
+    <a href="/" class="nav-brand">
+        <div class="nav-logo">N</div>
+        <span class="nav-title">Nigents</span>
+    </a>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">
+        <span class="nav-toggle-icon-open" aria-hidden="true">☰</span>
+        <span class="nav-toggle-icon-close" aria-hidden="true">×</span>
+    </button>
+    <div class="nav-links" id="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/how-it-works.html" class="nav-link">How it works</a>
+            <a href="/skills.html" class="nav-link">AI Skills</a>
+        <a href="/materials.html" class="nav-link">Free Materials</a>
+        <a href="/crazy-apps.html" class="nav-link active">Crazy apps</a>
+        <a href="/opencode-kits.html" class="nav-link">OpenCode kits</a>
+        <a href="/apps/" class="nav-link">Apps</a>
+        <a href="/login.html" class="nav-cta">Login →</a>
+    </div>
+</nav>
+<div class="nav-backdrop" id="nav-backdrop" aria-hidden="true" hidden></div>
+
+<div class="bg-grid"></div>
+
+<!-- Hero -->
+<div class="hero">
+    <div class="hero-content">
+        <div class="hero-icon-wrap">
+            <div class="hero-icon-inner">
+                <!-- Brain / focus glyph -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 5a3 3 0 0 1 3-3 3 3 0 0 1 3 3v0a3 3 0 0 1 3 3v1a3 3 0 0 1 1 5.8V17a3 3 0 0 1-3 3h-1a3 3 0 0 1-3 3 3 3 0 0 1-3-3H7a3 3 0 0 1-3-3v-2.2A3 3 0 0 1 5 9V8a3 3 0 0 1 3-3"/>
+                    <path d="M12 2v20M9 7h1M14 10h1M9 14h1M14 17h1"/>
+                </svg>
+            </div>
+        </div>
+        <h1>FocusFlow</h1>
+        <p class="tagline">Stay Sharp with Pomodoro + Ambient Sounds</p>
+        <p class="subtitle">A sleek menu-bar Pomodoro timer for macOS. Six ambient soundscapes, session tracking, and smart break reminders. Focus deeper, break smarter, get more done.</p>
+        <div class="badges">
+            <span class="badge badge-purple">Pomodoro Timer</span>
+            <span class="badge badge-indigo">6 Ambient Sounds</span>
+            <span class="badge badge-green">Session Tracking</span>
+            <span class="badge badge-orange">Menu Bar App</span>
+        </div>
+        <div class="cta-row">
+            <a href="/downloads/FocusFlow-1.0.0.dmg" download class="btn btn-primary"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download FocusFlow.dmg</a>
+            <a href="#demo" class="btn btn-ghost">See Demo</a>
+        </div>
+    </div>
+</div>
+
+<!-- Interactive demo -->
+<div class="demo-section" id="demo">
+    <div class="section-title">Interactive Timer Demo</div>
+    <div class="section-sub">Hit play to start a live focus session. Toggle ambient sounds.</div>
+    <div class="screen-wrap">
+        <div class="screen-bar">
+            <div class="sdot r"></div><div class="sdot y"></div><div class="sdot g"></div>
+            <div class="screen-title">Menu Bar — FocusFlow</div>
+            <div class="screen-live" id="liveTag">PAUSED</div>
+        </div>
+        <div class="demo-canvas">
+            <div class="demo-header">
+                <span class="demo-header-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                </span>
+                <span class="demo-header-name">FocusFlow</span>
+                <span class="demo-mode-tag" id="modeTag">Focus</span>
+            </div>
+
+            <div class="timer-circle-wrap">
+                <canvas id="timerCanvas" width="160" height="160"></canvas>
+                <div class="timer-center">
+                    <div class="timer-digits" id="timerDigits">25:00</div>
+                    <div class="timer-label" id="timerLabel">Focus Session</div>
+                </div>
+            </div>
+
+            <div class="demo-modes">
+                <button type="button" class="demo-mode-btn active" onclick="setDemoMode('focus')">Focus</button>
+                <button type="button" class="demo-mode-btn" onclick="setDemoMode('short')">Short Break</button>
+                <button type="button" class="demo-mode-btn" onclick="setDemoMode('long')">Long Break</button>
+            </div>
+
+            <div class="demo-controls">
+                <button type="button" class="ctrl-btn" onclick="resetDemo()" aria-label="Reset"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
+                <button type="button" class="ctrl-btn play" id="playBtn" onclick="toggleTimer()" aria-label="Play/pause"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg></button>
+                <button type="button" class="ctrl-btn" onclick="skipDemo()" aria-label="Skip"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+            </div>
+
+            <div class="demo-stats">
+                <div class="demo-stat"><div class="demo-stat-val" id="statSessions">0</div><div class="demo-stat-lbl">Sessions</div></div>
+                <div class="demo-stat"><div class="demo-stat-val" id="statMinutes">0m</div><div class="demo-stat-lbl">Focus</div></div>
+                <div class="demo-stat"><div class="demo-stat-val" id="statStreak">0</div><div class="demo-stat-lbl">Streak</div></div>
+            </div>
+
+            <div class="demo-sounds-title">Ambient Sounds</div>
+            <div class="demo-sounds">
+                <div class="demo-sound" onclick="toggleSound(this,'Rain')"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="8" y1="13" x2="8" y2="15"/><line x1="16" y1="19" x2="16" y2="21"/><line x1="16" y1="13" x2="16" y2="15"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="12" y1="15" x2="12" y2="17"/></svg></span><span class="name">Rain</span></div>
+                <div class="demo-sound" onclick="toggleSound(this,'Cafe')"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></span><span class="name">Cafe</span></div>
+                <div class="demo-sound" onclick="toggleSound(this,'Fire')"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span><span class="name">Fire</span></div>
+                <div class="demo-sound" onclick="toggleSound(this,'Birds')"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h.01"/><path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20"/><path d="m20 7 2 .5-2 .5"/><path d="M10 18v3"/><path d="M14 17.75V21"/><path d="M7 18a6 6 0 0 0 3.84-10.61"/></svg></span><span class="name">Birds</span></div>
+                <div class="demo-sound" onclick="toggleSound(this,'Waves')"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5s2.4 2 5 2 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.4 2 5 2 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2s2.4 2 5 2 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/></svg></span><span class="name">Waves</span></div>
+                <div class="demo-sound" onclick="toggleSound(this,'Wind')"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg></span><span class="name">Wind</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features -->
+<div class="features-section">
+    <div class="section-title">Built for Deep Focus</div>
+    <div class="section-sub">Everything you need to stay productive</div>
+    <div class="features-grid">
+        <div class="feature-card"><span class="feature-icon" style="color:#8B5CF6" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><polyline points="12 9 12 13 15 15"/><line x1="9" y1="1" x2="15" y2="1"/></svg></span><h3>Pomodoro Timer</h3><p>25-minute focus sessions with 5-minute short breaks and 15-minute long breaks. Customizable durations.</p></div>
+        <div class="feature-card"><span class="feature-icon" style="color:#6366F1" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><h3>Ambient Soundscapes</h3><p>Rain, cafe, fireplace, birds, ocean waves, and wind. Mix and match with individual volume control.</p></div>
+        <div class="feature-card"><span class="feature-icon" style="color:#34d399" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span><h3>Session Tracking</h3><p>Completed sessions, total focus minutes, and streaks — watch your productivity compound.</p></div>
+        <div class="feature-card"><span class="feature-icon" style="color:#fbbf24" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span><h3>Smart Notifications</h3><p>Notified when focus ends and breaks are over. Never miss a beat in your flow.</p></div>
+        <div class="feature-card"><span class="feature-icon" style="color:#a78bfa" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></span><h3>Menu Bar App</h3><p>Lives in your menu bar. One click for timer, controls, and sounds. Zero window clutter.</p></div>
+        <div class="feature-card"><span class="feature-icon" style="color:#22d3ee" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8 8 16"/><path d="m8 8 8 8"/></svg></span><h3>Beautiful Dark UI</h3><p>Circular progress, smooth animations, and a clean dark interface that stays out of your way.</p></div>
+    </div>
+</div>
+
+<!-- How it works -->
+<div class="how-section">
+    <div class="section-title">How It Works</div>
+    <div class="section-sub">Four steps to deep focus</div>
+    <div class="how-grid">
+        <div class="how-card"><div class="how-num">01</div><h3>Open the menu bar icon</h3><p>FocusFlow lives in your macOS menu bar. One click opens the timer panel.</p></div>
+        <div class="how-card"><div class="how-num">02</div><h3>Start a focus session</h3><p>Hit play or pick your duration. The circular timer shows your progress in real time.</p></div>
+        <div class="how-card"><div class="how-num">03</div><h3>Pick your ambient sound</h3><p>Rain, cafe, fire, birds, waves, or wind. Get in the zone instantly.</p></div>
+        <div class="how-card"><div class="how-num">04</div><h3>Take breaks automatically</h3><p>When the timer ends, FocusFlow switches to break mode. Rinse and repeat.</p></div>
+    </div>
+</div>
+
+<!-- Install -->
+<div class="install-section">
+    <div class="section-title">Installation</div>
+    <div class="section-sub">Up and running in seconds</div>
+    <div class="install-card">
+        <h3>Quick Install</h3>
+        <div class="code-block">
+            <span class="cm"># 1. Open the DMG and drag FocusFlow to Applications</span><br>
+            <span class="cp">$</span> <span class="cc">open FocusFlow.dmg</span><br><br>
+            <span class="cm"># 2. Remove the quarantine flag (unsigned build)</span><br>
+            <span class="cp">$</span> <span class="ch">xattr -cr</span> <span class="cc">/Applications/FocusFlow.app</span><br><br>
+            <span class="cm"># 3. Ad-hoc re-sign so macOS opens it</span><br>
+            <span class="cp">$</span> <span class="ch">codesign --force --deep --sign -</span> <span class="cc">/Applications/FocusFlow.app</span><br><br>
+            <span class="cm"># 4. Launch — look for the brain icon in your menu bar</span><br>
+            <span class="cp">$</span> <span class="cc">open /Applications/FocusFlow.app</span>
+        </div>
+        <p style="font-size:12px;color:#8899bb;">FocusFlow is a menu-bar app (LSUIElement). It won't appear in the Dock — look for the brain icon up top.</p>
+    </div>
+</div>
+
+<!-- Download -->
+<div class="download-section">
+    <div class="section-title" style="margin-bottom:12px;">Ready to Focus?</div>
+    <div class="section-sub">Download FocusFlow and start your first Pomodoro session.</div>
+    <a href="/downloads/FocusFlow-1.0.0.dmg" download class="btn btn-primary"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download FocusFlow.dmg</a>
+</div>
+
+<footer>
+    <a href="/crazy-apps.html">← All Crazy Apps</a> &nbsp;·&nbsp;
+    Nigents — FocusFlow — Built with SwiftUI + AVFoundation
+</footer>
+
+<script>
+// ── Pomodoro timer demo ────────────────────────────────
+const PLAY_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg>';
+const PAUSE_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>';
+let timerInterval = null;
+let running = false;
+let totalSeconds = 25 * 60;
+let remaining = 25 * 60;
+let sessions = 0;
+let focusMin = 0;
+let streak = 0;
+let mode = 'focus';
+const canvas = document.getElementById('timerCanvas');
+const ctx = canvas.getContext('2d');
+
+function drawTimer() {
+    ctx.clearRect(0, 0, 160, 160);
+    ctx.beginPath();
+    ctx.arc(80, 80, 72, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 8;
+    ctx.stroke();
+
+    const progress = (totalSeconds - remaining) / totalSeconds;
+    const startAngle = -Math.PI / 2;
+    const endAngle = startAngle + progress * Math.PI * 2;
+
+    const gradient = ctx.createLinearGradient(0, 0, 160, 160);
+    gradient.addColorStop(0, '#8B5CF6');
+    gradient.addColorStop(1, '#6366F1');
+
+    ctx.beginPath();
+    ctx.arc(80, 80, 72, startAngle, endAngle);
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+}
+
+function updateDisplay() {
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    document.getElementById('timerDigits').textContent = m + ':' + String(s).padStart(2, '0');
+    drawTimer();
+}
+
+function toggleTimer() {
+    if (running) {
+        clearInterval(timerInterval); running = false;
+        document.getElementById('playBtn').innerHTML = PLAY_SVG;
+        const lt = document.getElementById('liveTag');
+        lt.textContent = 'PAUSED';
+        lt.style.background = 'rgba(139,92,246,0.15)';
+        lt.style.color = '#a78bfa';
+    } else {
+        running = true;
+        document.getElementById('playBtn').innerHTML = PAUSE_SVG;
+        const lt = document.getElementById('liveTag');
+        lt.textContent = 'ACTIVE';
+        lt.style.background = 'rgba(16,185,129,0.15)';
+        lt.style.color = '#34d399';
+        timerInterval = setInterval(tick, 1000);
+    }
+}
+
+function tick() {
+    if (remaining <= 0) { completeSession(); return; }
+    remaining--;
+    if (mode === 'focus') focusMin = Math.round((totalSeconds - remaining) / 60);
+    updateDisplay();
+    document.getElementById('statMinutes').textContent = focusMin + 'm';
+}
+
+function completeSession() {
+    clearInterval(timerInterval); running = false;
+    document.getElementById('playBtn').innerHTML = PLAY_SVG;
+    if (mode === 'focus') { sessions++; streak++; }
+    updateStats();
+    if (mode === 'focus' && sessions % 4 === 0) setDemoMode('long');
+    else if (mode === 'focus') setDemoMode('short');
+    else setDemoMode('focus');
+}
+
+function resetDemo() {
+    clearInterval(timerInterval); running = false;
+    document.getElementById('playBtn').innerHTML = PLAY_SVG;
+    const lt = document.getElementById('liveTag');
+    lt.textContent = 'PAUSED'; lt.style.color = '#a78bfa';
+    lt.style.background = 'rgba(139,92,246,0.15)';
+    setDemoMode(mode);
+}
+
+function skipDemo() { remaining = 0; completeSession(); }
+
+function setDemoMode(m) {
+    mode = m;
+    clearInterval(timerInterval); running = false;
+    document.getElementById('playBtn').innerHTML = PLAY_SVG;
+    const btns = document.querySelectorAll('.demo-mode-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    const idx = m === 'focus' ? 0 : m === 'short' ? 1 : 2;
+    if (btns[idx]) btns[idx].classList.add('active');
+
+    const modeTag = document.getElementById('modeTag');
+    if (m === 'focus') {
+        totalSeconds = 25 * 60;
+        modeTag.textContent = 'Focus';
+        modeTag.style.background = 'rgba(139,92,246,0.15)';
+        modeTag.style.color = '#a78bfa';
+        document.getElementById('timerLabel').textContent = 'Focus Session';
+    } else if (m === 'short') {
+        totalSeconds = 5 * 60;
+        modeTag.textContent = 'Short Break';
+        modeTag.style.background = 'rgba(16,185,129,0.15)';
+        modeTag.style.color = '#34d399';
+        document.getElementById('timerLabel').textContent = 'Take a Break';
+    } else {
+        totalSeconds = 15 * 60;
+        modeTag.textContent = 'Long Break';
+        modeTag.style.background = 'rgba(6,182,212,0.15)';
+        modeTag.style.color = '#22d3ee';
+        document.getElementById('timerLabel').textContent = 'Rest & Recharge';
+    }
+    remaining = totalSeconds;
+    updateDisplay();
+}
+
+function updateStats() {
+    document.getElementById('statSessions').textContent = sessions;
+    document.getElementById('statStreak').textContent = streak;
+}
+
+function toggleSound(el) { el.classList.toggle('active'); }
+
+drawTimer(); updateDisplay();
+
+// ── Nav toggle ─────────────────────────────────────────
+(function () {
+    var toggle = document.getElementById('nav-toggle');
+    var backdrop = document.getElementById('nav-backdrop');
+    if (!toggle) return;
+    function setOpen(open) {
+        document.body.classList.toggle('nav-open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (backdrop) backdrop.hidden = !open;
+    }
+    toggle.addEventListener('click', function () { setOpen(!document.body.classList.contains('nav-open')); });
+    if (backdrop) backdrop.addEventListener('click', function () { setOpen(false); });
+    document.getElementById('nav-links').querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () { setOpen(false); });
+    });
+})();
+</script>
+
+</body>
+</html>

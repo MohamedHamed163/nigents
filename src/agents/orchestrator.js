@@ -1,0 +1,1360 @@
+/**
+ * 🦉 Nigents - Orchestrator Agent
+ * Team Lead & Router - Coordinates all other agents
+ */
+
+const BaseAgent = require('./base-agent');
+const logger = require('../utils/logger');
+const { v4: uuidv4 } = require('uuid');
+
+class OrchestratorAgent extends BaseAgent {
+  constructor() {
+    const config = require('../../config/agents.json').orchestrator;
+    super(config);
+    
+    this.agents = new Map();
+    this.taskQueue = []; // In-memory fallback
+    this.activeTasks = new Map();
+    this.completedTasks = [];
+    this.maxTaskQueueSize = 100; // Limit memory usage
+    this.maxCompletedTasks = 50; // Keep only recent completed tasks
+    
+    // Load database task queue if MySQL is configured
+    this.dbTaskQueue = null;
+    this.useDatabase = process.env.DB_HOST && process.env.DB_USER && process.env.DB_PASSWORD;
+    
+    // Always ensure chatStorage is set
+    this.chatStorage = null;
+    
+    if (this.useDatabase) {
+      try {
+        this.dbTaskQueue = require('../database/task-queue-mysql');
+        this.chatStorage = require('../database/chat-storage-mysql');
+        logger.info('[Orchestrator] Database storage enabled (MySQL)');
+      } catch (error) {
+        logger.error('[Orchestrator] Failed to load database modules:', error.message);
+        this.useDatabase = false;
+      }
+    }
+    
+    // Fallback to JSON storage if database not available or failed
+    if (!this.chatStorage) {
+      try {
+        this.chatStorage = require('../utils/chat-storage-json');
+        logger.info('[Orchestrator] Using JSON file storage');
+      } catch (error) {
+        logger.error('[Orchestrator] Failed to load JSON storage:', error.message);
+        // Create a minimal stub to prevent crashes
+        this.chatStorage = {
+          getPendingPlan: () => null,
+          deletePendingPlan: () => {},
+          setPendingPlan: () => false,
+          getUserSettings: () => ({
+            voiceResponse: true,
+            language: 'auto',
+            defaultProject: null,
+            preferredAI: null,
+            preferredModel: null,
+          }),
+          setUserSettings: () => {},
+        };
+        logger.warn('[Orchestrator] Using minimal stub storage - persistence disabled!');
+      }
+    }
+  }
+
+  /**
+   * Safely add task to queue with memory limits
+   */
+  addTaskToQueue(task) {
+    // Enforce max queue size
+    if (this.taskQueue.length >= this.maxTaskQueueSize) {
+      // Remove oldest pending tasks first
+      const pendingIndex = this.taskQueue.findIndex(t => t.status === 'pending_approval');
+      if (pendingIndex !== -1) {
+        this.taskQueue.splice(pendingIndex, 1);
+        logger.warn('[Orchestrator] Removed oldest pending task to free memory');
+      } else {
+        // Remove oldest completed/cancelled tasks
+        this.taskQueue.shift();
+        logger.warn('[Orchestrator] Removed oldest task from queue');
+      }
+    }
+    this.taskQueue.push(task);
+  }
+
+  /**
+   * Safely add completed task with memory limits.
+   * Re-entry guard prevents stack overflow from event/observer recursion.
+   */
+  addCompletedTask(task) {
+    if (this._addingCompletedTask) {
+      logger.warn('[Orchestrator] addCompletedTask re-entry ignored (recursion guard)');
+      return;
+    }
+    this._addingCompletedTask = true;
+    try {
+      const list = Array.isArray(this.completedTasks) ? this.completedTasks : [];
+      list.push(task);
+      const max = Math.max(0, this.maxCompletedTasks || 50);
+      this.completedTasks = list.length > max ? list.slice(-max) : list;
+      if (list.length > max) {
+        logger.debug('[Orchestrator] Trimmed completed tasks to max size');
+      }
+    } finally {
+      this._addingCompletedTask = false;
+    }
+  }
+
+  /**
+   * Register an agent with the orchestrator
+   */
+  registerAgent(agent) {
+    this.agents.set(agent.name, agent);
+    logger.info(`[Orchestrator] Registered agent: ${agent.name}`);
+    
+    // Listen to agent events
+    agent.on('statusChange', (data) => {
+      this.emit('agentStatusChange', data);
+    });
+  }
+
+  /**
+   * Reload agent configurations from file
+   * Called when agent models are changed at runtime
+   */
+  reloadAgentConfigs() {
+    logger.info('[Orchestrator] Reloading agent configurations...');
+    
+    try {
+      // Clear require cache to reload fresh config
+      delete require.cache[require.resolve('../../config/agents.json')];
+      const freshConfig = require('../../config/agents.json');
+      
+      // Update each registered agent with new config
+      for (const [agentName, agent] of this.agents) {
+        if (freshConfig[agentName]) {
+          const newConfig = freshConfig[agentName];
+          
+          // Update provider and model
+          if (newConfig.provider) {
+            agent.configProvider = newConfig.provider;
+            agent.provider = newConfig.provider;
+          }
+          if (newConfig.model) {
+            agent.configModel = newConfig.model;
+            agent.model = newConfig.model;
+          }
+          if (newConfig.fallbackProvider) {
+            agent.fallbackProvider = newConfig.fallbackProvider;
+          }
+          if (newConfig.fallbackModel) {
+            agent.fallbackModel = newConfig.fallbackModel;
+          }
+          
+          logger.info(`[Orchestrator] Updated ${agentName}: ${agent.provider}/${agent.model}`);
+        }
+      }
+      
+      // Also update self (orchestrator)
+      if (freshConfig.orchestrator) {
+        this.configProvider = freshConfig.orchestrator.provider;
+        this.provider = freshConfig.orchestrator.provider;
+        this.configModel = freshConfig.orchestrator.model;
+        this.model = freshConfig.orchestrator.model;
+      }
+      
+      logger.info('[Orchestrator] Agent configurations reloaded successfully');
+      return true;
+    } catch (error) {
+      logger.error('[Orchestrator] Failed to reload agent configs:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Process a user command
+   */
+  async processCommand(command, context = {}) {
+    const taskId = uuidv4();
+    logger.info(`[Orchestrator] Processing command: ${command}`, { taskId, context });
+
+    this.setStatus('working', { taskId, command });
+
+    try {
+      // Resolve per-user config and GitLab client
+      if (context.userId && !context.userConfig) {
+        try {
+          const userConfigModule = require('../database/user-config');
+          context.userConfig = await userConfigModule.getConfigForUser(context.userId);
+        } catch (e) {
+          logger.warn('[Orchestrator] getConfigForUser failed, using shared config:', e.message);
+          context.userConfig = require('../utils/shared-config').getFullConfig();
+        }
+      }
+      if (!context.userConfig) {
+        context.userConfig = require('../utils/shared-config').getFullConfig();
+      }
+      const gitlabModule = require('../tools/gitlab');
+      context.gitlab = gitlabModule.createGitLabClient
+        ? gitlabModule.createGitLabClient(context.userConfig)
+        : gitlabModule;
+
+      // Parse the command
+      const parsed = await this.parseCommand(command, context);
+      
+      switch (parsed.type) {
+        case 'plan':
+          return await this.handlePlanTask(parsed, context, taskId);
+        
+        case 'ask':
+          return await this.handleAskTask(parsed, context, taskId);
+        
+        case 'approve':
+          return await this.handleApproveTask(parsed, context, taskId);
+        
+        case 'run':
+          return await this.handleRunTasks(parsed, context, taskId);
+        
+        case 'status':
+          return await this.handleStatusQuery(parsed, context, taskId);
+        
+        case 'standup':
+          return await this.handleStandup(parsed, context, taskId);
+        
+        case 'meet':
+          return await this.handleMeetAgent(parsed, context, taskId);
+        
+        case 'cancel':
+          return await this.handleCancelTask(parsed, context, taskId);
+        
+        case 'stop':
+          return await this.handleStopTask(parsed, context, taskId);
+        
+        case 'remove':
+          return await this.handleRemoveTask(parsed, context, taskId);
+        
+        case 'clear':
+          return await this.handleClearTasks(parsed, context, taskId);
+        
+        case 'queue':
+          return await this.handleQueueList(parsed, context, taskId);
+        
+        case 'recheck':
+          return await this.handleRecheckTask(parsed, context, taskId);
+        
+        default:
+          return {
+            success: false,
+            message: 'Unknown command type. Try /start for available commands.',
+          };
+      }
+    } catch (error) {
+      logger.error(`[Orchestrator] Error processing command:`, error);
+      this.setStatus('error', { taskId, error: error.message });
+      return {
+        success: false,
+        message: `Error: ${error.message}`,
+      };
+    }
+  }
+
+  /**
+   * Parse command to determine type and parameters
+   */
+  async parseCommand(command, context) {
+    const lowerCmd = command.toLowerCase().trim();
+    
+    // Direct command patterns
+    if (lowerCmd.startsWith('/plan ')) {
+      return {
+        type: 'plan',
+        task: command.substring(6).trim(),
+      };
+    }
+    
+    if (lowerCmd.startsWith('/ask ')) {
+      return {
+        type: 'ask',
+        question: command.substring(5).trim(),
+      };
+    }
+    
+    if (lowerCmd === '/approve') {
+      return { type: 'approve' };
+    }
+    
+    if (lowerCmd === '/run') {
+      return { type: 'run' };
+    }
+    
+    if (lowerCmd === '/status') {
+      return { type: 'status' };
+    }
+    
+    if (lowerCmd === '/standup') {
+      return { type: 'standup' };
+    }
+    
+    if (lowerCmd.startsWith('/meet ')) {
+      return {
+        type: 'meet',
+        agentName: command.substring(6).trim(),
+      };
+    }
+    
+    if (lowerCmd.startsWith('/cancel ')) {
+      return {
+        type: 'cancel',
+        taskId: command.substring(8).trim(),
+      };
+    }
+    
+    if (lowerCmd.startsWith('/stop ')) {
+      return {
+        type: 'stop',
+        taskId: command.substring(6).trim(),
+      };
+    }
+    
+    if (lowerCmd.startsWith('/remove ')) {
+      return {
+        type: 'remove',
+        taskId: command.substring(8).trim(),
+      };
+    }
+    
+    if (lowerCmd === '/clear') {
+      return { type: 'clear' };
+    }
+    
+    if (lowerCmd === '/queue') {
+      return { type: 'queue' };
+    }
+
+    if (lowerCmd === '/recheck') {
+      return { type: 'recheck', taskId: null };
+    }
+    if (lowerCmd.startsWith('/recheck ')) {
+      return { type: 'recheck', taskId: command.substring(9).trim() };
+    }
+
+    // Use Claude to understand natural language intent
+    const prompt = `
+Analyze this user message and determine the intent:
+"${command}"
+
+Available command types:
+- plan: User wants to create an implementation plan for a task
+- ask: User is asking a question about their code
+- approve: User approves a plan to be implemented
+- run: User wants to execute queued tasks
+- status: User wants to see current status
+- standup: User wants a daily standup report
+- meet: User wants to talk to a specific agent
+- cancel: User wants to cancel a task
+- recheck: User wants to re-run code review after pushing fixes (e.g. "recheck", "recheck the last task")
+- unknown: Cannot determine intent
+
+Respond with JSON only:
+{
+  "type": "plan|ask|approve|run|status|standup|meet|cancel|recheck|unknown",
+  "task": "the task description if plan",
+  "question": "the question if ask",
+  "agentName": "agent name if meet",
+  "taskId": "task id if cancel or recheck"
+}
+`;
+
+    const result = await this.callClaude(prompt, { temperature: 0.3 });
+    
+    if (result.success) {
+      try {
+        const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[0]);
+        }
+      } catch (e) {
+        logger.warn('[Orchestrator] Failed to parse command JSON:', e);
+      }
+    }
+
+    return { type: 'unknown' };
+  }
+
+  /**
+   * Handle plan task - delegate to Planner agent
+   */
+  async handlePlanTask(parsed, context, taskId) {
+    const planner = this.agents.get('planner');
+    if (!planner) {
+      return { success: false, message: 'Planner agent not available' };
+    }
+
+    this.emit('taskStarted', { taskId, type: 'plan', task: parsed.task });
+    
+    // Set user's preferred AI provider if specified
+    if (context.aiProvider) {
+      planner.setAIProvider(context.aiProvider, context.aiModel);
+    }
+
+    const result = await planner.createPlan({
+      task: parsed.task,
+      project: context.project,
+      context: context,
+    });
+    
+    // Reset to default after task
+    planner.resetAIProvider();
+
+    if (result.success) {
+      // Store the plan for potential approval
+      const taskEntry = {
+        id: taskId,
+        type: 'implementation',
+        plan: result.plan,
+        status: 'pending_approval',
+        createdAt: new Date(),
+      };
+      
+      // Store userId if available for cross-referencing with persistent storage
+      if (context.userId) {
+        taskEntry.userId = context.userId.toString();
+      }
+      
+      this.addTaskToQueue(taskEntry);
+      
+      // Also save to database if available
+      if (this.useDatabase && this.dbTaskQueue) {
+        try {
+          await this.dbTaskQueue.createTask({
+            id: taskId,
+            userId: context.userId || 'system',
+            type: 'implementation',
+            title: result.plan?.title || parsed.task,
+            description: parsed.task,
+            status: 'pending',
+            plan: result.plan,
+          });
+        } catch (error) {
+          logger.error('[Orchestrator] Failed to save task to database:', error.message);
+        }
+      }
+
+      this.emit('taskCompleted', { taskId, type: 'plan', result });
+    }
+
+    return result;
+  }
+
+  /**
+   * Handle ask task - answer questions about code
+   */
+  async handleAskTask(parsed, context, taskId) {
+    const gitlab = context.gitlab || require('../tools/gitlab');
+    let codeContext = '';
+    try {
+      if (context.project) {
+        const repoFiles = await gitlab.getRepositoryFiles(context.project, 10);
+        codeContext = `Repository files:\n${repoFiles.map(f => `- ${f.path}`).join('\n')}`;
+      }
+    } catch (e) {
+      logger.warn('[Orchestrator] Could not fetch repo context:', e.message);
+    }
+
+    const prompt = `
+User question: ${parsed.question}
+
+${codeContext}
+
+Provide a helpful answer. If the question is about specific code and you don't have the full context, suggest using /plan to analyze the codebase.
+`;
+
+    // Use user's preferred AI provider if available
+    const provider = context.aiProvider || this.provider;
+    const model = context.aiModel || this.model;
+    
+    logger.info(`[Orchestrator] /ask using provider: ${provider}${model ? ` (${model})` : ''}`);
+
+    const result = await this.callAI(prompt, {
+      provider: provider,
+      model: model,
+      userConfig: context.userConfig,
+    });
+
+    return {
+      success: result.success,
+      message: result.content,
+      usage: result.usage,
+    };
+  }
+
+  /**
+   * Handle approve task - queue plan for implementation
+   */
+  async handleApproveTask(parsed, context, taskId) {
+    // First check in-memory queue
+    let pendingPlan = this.taskQueue.find(t => t.status === 'pending_approval');
+    
+    // If not found in memory, check persistent storage
+    if (!pendingPlan && context.userId) {
+      const userIdStr = context.userId.toString();
+      const persistedPlan = await this.chatStorage.getPendingPlan(userIdStr);
+      if (persistedPlan) {
+        logger.info(`[Orchestrator] Found persisted plan for user ${userIdStr}: ${persistedPlan.task}`);
+        const planObj = persistedPlan.plan || persistedPlan;
+        if (planObj && !planObj.project) {
+          planObj.project = persistedPlan.project || persistedPlan.projectId || persistedPlan.projectName;
+        }
+        pendingPlan = {
+          id: `plan-${Date.now()}`,
+          type: 'implementation',
+          plan: planObj || persistedPlan,
+          status: 'pending_approval',
+          createdAt: new Date(persistedPlan.createdAt || Date.now()),
+          userId: userIdStr,
+        };
+        this.addTaskToQueue(pendingPlan);
+      }
+    }
+    
+    if (!pendingPlan) {
+      return {
+        success: false,
+        message: 'No pending plan to approve. Use /plan first to create a plan.\n\nIf you just created a plan, try using the approve button in the message.',
+      };
+    }
+
+    pendingPlan.status = 'approved';
+    pendingPlan.approvedAt = new Date();
+
+    // Clean up the pending plan from persistent storage
+    if (pendingPlan.userId) {
+      this.chatStorage.deletePendingPlan(pendingPlan.userId);
+      logger.info(`[Orchestrator] Deleted pending plan for user ${pendingPlan.userId} from storage`);
+    }
+    
+    // Update database task status if using database
+    if (this.useDatabase && this.dbTaskQueue) {
+      try {
+        await this.dbTaskQueue.updateTaskStatus(pendingPlan.id, 'approved');
+      } catch (error) {
+        logger.error('[Orchestrator] Failed to update task status in database:', error.message);
+      }
+    }
+
+    this.emit('planApproved', { taskId: pendingPlan.id, plan: pendingPlan.plan });
+
+    return {
+      success: true,
+      message: `✅ Plan approved and queued for implementation.\n\nUse /run to start implementation now, or the agents will work on it overnight.`,
+      taskId: pendingPlan.id,
+    };
+  }
+
+  /**
+   * Handle run task - execute all approved tasks
+   */
+  async handleRunTasks(parsed, context, taskId) {
+    let approvedTasks = this.taskQueue.filter(t => t.status === 'approved');
+    
+    // If no approved tasks in memory, check for persisted pending plans and auto-approve
+    if (approvedTasks.length === 0 && context.userId) {
+      const userIdStr = context.userId.toString();
+      const persistedPlan = await this.chatStorage.getPendingPlan(userIdStr);
+      if (persistedPlan) {
+        logger.info(`[Orchestrator] Found persisted plan for user ${userIdStr}, auto-approving and running`);
+        // Use full plan object (with steps, title, branch) for implementation
+        const planObj = persistedPlan.plan || persistedPlan;
+        if (planObj && !planObj.project) {
+          planObj.project = persistedPlan.project || persistedPlan.projectId || persistedPlan.projectName;
+        }
+        const newTask = {
+          id: `plan-${Date.now()}`,
+          type: 'implementation',
+          plan: planObj || persistedPlan,
+          status: 'approved',
+          createdAt: new Date(persistedPlan.createdAt || Date.now()),
+          approvedAt: new Date(),
+          userId: userIdStr,
+        };
+        this.addTaskToQueue(newTask);
+        approvedTasks = [newTask];
+      }
+
+      // If still no task, try loading latest pending/pending_approval task from DB (e.g. after restart)
+      if (approvedTasks.length === 0 && this.useDatabase && this.dbTaskQueue) {
+        try {
+          const userTasks = await this.dbTaskQueue.getTasksByUser(userIdStr);
+          const runnable = userTasks.find(
+            t => (t.status === 'pending' || t.status === 'pending_approval') && t.plan && Array.isArray(t.plan?.steps)
+          );
+          if (runnable) {
+            logger.info(`[Orchestrator] Found runnable task from DB for user ${userIdStr}: ${runnable.id}`);
+            const plan = runnable.plan;
+            if (!plan.project) {
+              plan.project = runnable.projectId || runnable.projectName;
+            }
+            const newTask = {
+              ...runnable,
+              status: 'approved',
+              approvedAt: new Date(),
+              plan,
+            };
+            this.addTaskToQueue(newTask);
+            approvedTasks = [newTask];
+          }
+        } catch (err) {
+          logger.warn('[Orchestrator] DB fallback for /run failed:', err.message);
+        }
+      }
+    }
+
+    if (approvedTasks.length === 0) {
+      return {
+        success: false,
+        message: 'No approved tasks to run. Use /plan to create a plan, then /approve to queue it.',
+      };
+    }
+
+    this.executeImplementationWorkflow(approvedTasks[0], context);
+
+    return {
+      success: true,
+      message: `🚀 Starting implementation of ${approvedTasks.length} task(s). You'll receive updates as agents progress.`,
+    };
+  }
+
+  /**
+   * Execute the full implementation workflow
+   * @param {Object} context - Optional; if not provided, resolved from task.userId
+   */
+  async executeImplementationWorkflow(task, context = null) {
+    if (!context && task.userId) {
+      try {
+        const userConfigModule = require('../database/user-config');
+        const userConfig = await userConfigModule.getConfigForUser(task.userId);
+        const gitlabModule = require('../tools/gitlab');
+        context = {
+          userId: task.userId,
+          userConfig,
+          gitlab: gitlabModule.createGitLabClient ? gitlabModule.createGitLabClient(userConfig) : gitlabModule,
+        };
+      } catch (e) {
+        context = { userConfig: require('../utils/shared-config').getFullConfig(), gitlab: require('../tools/gitlab') };
+      }
+    }
+    if (!context) {
+      context = { userConfig: require('../utils/shared-config').getFullConfig(), gitlab: require('../tools/gitlab') };
+    }
+    const reporter = this.agents.get('reporter');
+    const backendDev = this.agents.get('backend-dev');
+    const qaTester = this.agents.get('qa-tester');
+    const codeReviewer = this.agents.get('code-reviewer');
+
+    task.status = 'running';
+    task.startedAt = new Date();
+    // Use the task's plan branch everywhere (clone, push, MR)
+    task.branch = task.plan?.branch || task.branch;
+
+    // Update database if using database
+    if (this.useDatabase && this.dbTaskQueue) {
+      try {
+        await this.dbTaskQueue.updateTaskStatus(task.id, 'running');
+      } catch (error) {
+        logger.error('[Orchestrator] Failed to update task status in database:', error.message);
+      }
+    }
+
+    this.emit('implementationStarted', { taskId: task.id });
+
+    const isFrontendOnly = task.plan?.primaryStack === 'frontend';
+    const frontendDev = this.agents.get('frontend-dev');
+
+    if (reporter) {
+      await reporter.sendProgress(isFrontendOnly
+        ? '⚙️ Frontend Dev implementing (repo fetch, edit, push to branch)...'
+        : '⚙️ Backend Dev implementing (repo fetch, edit, push to branch)...');
+    }
+
+    const implContext = { reporter, ...context };
+    let implementationResult;
+    if (isFrontendOnly && frontendDev) {
+      implementationResult = await frontendDev.implement(task.plan, implContext);
+    } else if (backendDev) {
+      implementationResult = await backendDev.implement(task.plan, implContext);
+    }
+    if (implementationResult?.branch) {
+      task.branch = implementationResult.branch;
+    }
+
+    // Step 2: QA Testing
+    if (reporter) {
+      await reporter.sendProgress('🧪 QA Tester running tests...');
+    }
+
+    let testResult;
+    if (qaTester) {
+      testResult = await qaTester.runTests(task.plan);
+    }
+
+    // Step 3: Code Review
+    if (reporter) {
+      await reporter.sendProgress('🔍 Code Reviewer reviewing changes...');
+    }
+
+    let reviewResult;
+    if (codeReviewer) {
+      reviewResult = await codeReviewer.review(implementationResult, implContext);
+    }
+
+    // Step 4: Create MR if approved (only after branch exists on GitLab)
+    if (reviewResult?.approved) {
+      if (reporter) {
+        await reporter.sendProgress('✅ Creating Merge Request...');
+      }
+
+      const gitlab = context.gitlab || require('../tools/gitlab');
+      const projectId = task.plan.project || task.plan.projectId || task.plan.projectName;
+      const sourceBranch = task.plan.branch || task.branch;
+      const targetBranch = implementationResult?.targetBranch || await gitlab.getDefaultBranch(projectId).catch(() => 'main');
+
+      let branches = await gitlab.getBranches(projectId, 100);
+      let branchExists = branches.some(b => b.name === sourceBranch);
+
+      // Only push via API if fallback ran but did not already push (e.g. clone/edit/push failed)
+      if (!branchExists && implementationResult?.fallbackMode && implementationResult?.generatedFiles?.length > 0 && !implementationResult?.pushedToGit) {
+        if (reporter) {
+          await reporter.sendProgress('📤 Pushing generated code to GitLab via API...');
+        }
+        try {
+          await gitlab.createBranchWithFiles(
+            projectId,
+            sourceBranch,
+            targetBranch,
+            implementationResult.generatedFiles,
+            `feat: ${task.plan.title}\n\n${task.plan.description}\n\nGenerated by Nigents`
+          );
+          branchExists = true;
+          logger.info('[Orchestrator] Pushed fallback code to branch:', sourceBranch);
+        } catch (pushErr) {
+          logger.error('[Orchestrator] Failed to push fallback code:', pushErr.message);
+          if (reporter) {
+            await reporter.sendProgress(`⚠️ Could not push code to GitLab: ${pushErr.message}`);
+          }
+        }
+      }
+
+      if (!branchExists) {
+        const msg = `Branch \`${sourceBranch}\` was not found on GitLab. Push it first (e.g. \`git push origin ${sourceBranch}\`) then create the MR from GitLab, or ensure OpenHands is running so the branch is pushed automatically.`;
+        if (reporter) {
+          await reporter.sendProgress(`⚠️ ${msg}`);
+        }
+        logger.warn('[Orchestrator] Cannot create MR: branch not on GitLab:', sourceBranch);
+        task.status = 'completed';
+        task.completedAt = new Date();
+        task.mrUrl = null;
+        if (this.useDatabase && this.dbTaskQueue) {
+          try {
+            await this.dbTaskQueue.updateTaskStatus(task.id, 'completed', { result: { mrUrl: null } });
+          } catch (error) {
+            logger.error('[Orchestrator] Failed to update task status in database:', error.message);
+          }
+        }
+        if (reporter) {
+          await reporter.sendCompletionReport(task);
+        }
+      } else {
+        const mrResult = await gitlab.createMergeRequest({
+          project: projectId,
+          title: task.plan.title,
+          description: task.plan.description,
+          sourceBranch,
+          targetBranch,
+        });
+
+        task.status = 'completed';
+        task.completedAt = new Date();
+        task.mrUrl = mrResult.url;
+        if (implementationResult && typeof implementationResult.compileCheckPassed === 'boolean') {
+          task.compileCheckPassed = implementationResult.compileCheckPassed;
+        }
+        if (reporter) {
+          await reporter.sendProgress(`🔗 Merge request created: ${mrResult.url}`);
+        }
+        // Fetch pipeline status for the branch so completion report can show pass/fail/running
+        try {
+          const pipelineInfo = await gitlab.getPipelineStatus(projectId, sourceBranch);
+          if (pipelineInfo) {
+            task.pipelineStatus = pipelineInfo.status;
+            task.pipelineUrl = pipelineInfo.web_url;
+          }
+        } catch (e) {
+          logger.debug('[Orchestrator] Pipeline status fetch skipped:', e.message);
+        }
+        if (this.useDatabase && this.dbTaskQueue) {
+          try {
+            await this.dbTaskQueue.updateTaskStatus(task.id, 'completed', {
+              result: { mrUrl: mrResult.url },
+            });
+          } catch (error) {
+            logger.error('[Orchestrator] Failed to update task status in database:', error.message);
+          }
+        }
+        if (reporter) {
+          await reporter.sendCompletionReport(task);
+        }
+      }
+    } else {
+      task.status = 'needs_changes';
+      task.reviewResult = reviewResult;
+      const gitlabTool = context.gitlab || require('../tools/gitlab');
+      const projectIdForBranch = task.plan?.project || task.plan?.projectId || task.plan?.projectName;
+      task.targetBranch = implementationResult?.targetBranch || (projectIdForBranch ? await gitlabTool.getDefaultBranch(projectIdForBranch).catch(() => 'main') : 'main');
+
+      if (this.useDatabase && this.dbTaskQueue) {
+        try {
+          await this.dbTaskQueue.updateTaskStatus(task.id, 'failed', {
+            result: {
+              reviewResult,
+              needs_changes: true,
+              branch: task.branch || task.plan?.branch,
+              targetBranch: task.targetBranch,
+            },
+          });
+        } catch (error) {
+          logger.error('[Orchestrator] Failed to update task status in database:', error.message);
+        }
+      }
+
+      const branchName = task.branch || task.plan?.branch || 'branch';
+      const issues = reviewResult?.issues || [];
+      const criticalCount = issues.filter(i => i.severity === 'critical').length;
+      const warningCount = issues.filter(i => i.severity === 'warning').length;
+      let issueSummary = '';
+      if (criticalCount > 0 || warningCount > 0) {
+        issueSummary = `${criticalCount} critical, ${warningCount} warning(s). `;
+      }
+      if (reporter) {
+        await reporter.sendProgress(
+          `❌ Code review requested changes. ${issueSummary}` +
+          `Push your fixes to branch \`${branchName}\`, then reply **/recheck** to re-run code review. ` +
+          `Or use \`/recheck ${task.id}\` to recheck this task.`
+        );
+      }
+    }
+
+    this.addCompletedTask(task);
+    this.emit('implementationCompleted', { taskId: task.id, task });
+  }
+
+  /**
+   * Handle status query
+   */
+  async handleStatusQuery(parsed, context, taskId) {
+    const status = {
+      queued: this.taskQueue.filter(t => t.status === 'approved').length,
+      running: this.taskQueue.filter(t => t.status === 'running').length,
+      completed: this.completedTasks.length,
+      pendingApproval: this.taskQueue.filter(t => t.status === 'pending_approval').length,
+    };
+
+    // Get MCP server status
+    let mcpStatus = '❌ Not initialized';
+    let gitlabStatus = '❌ Not configured';
+    
+    try {
+      const mcpClient = require('../mcp/mcp-client');
+      if (mcpClient.isInitialized) {
+        const connected = mcpClient.clients?.size || 0;
+        mcpStatus = connected > 0 ? `✅ ${connected} connected` : '⚠️ No servers';
+      }
+    } catch (e) {
+      mcpStatus = '❌ Error';
+    }
+    
+    // Check GitLab connectivity
+    try {
+      const gitlab = context.gitlab || require('../tools/gitlab');
+      if (gitlab.token) {
+        gitlabStatus = '✅ Configured';
+      } else {
+        gitlabStatus = '⚠️ No token';
+      }
+    } catch (e) {
+      gitlabStatus = '❌ Error';
+    }
+
+    return {
+      success: true,
+      message: `📊 System Status:
+
+<b>Task Queue:</b>
+⏳ Queued: ${status.queued}
+🔄 Running: ${status.running}
+✅ Completed: ${status.completed}
+📝 Pending Approval: ${status.pendingApproval}
+
+<b>Integrations:</b>
+🔧 MCP Servers: ${mcpStatus}
+🦊 GitLab: ${gitlabStatus}
+
+<i>Use /testmcp to run full connectivity test</i>`,
+      status,
+    };
+  }
+
+  /**
+   * Handle standup request
+   */
+  async handleStandup(parsed, context, taskId) {
+    const reports = [];
+    
+    for (const [name, agent] of this.agents) {
+      reports.push({
+        agent: name,
+        status: agent.status,
+        info: agent.getInfo(),
+      });
+    }
+
+    return {
+      success: true,
+      message: '🌅 Daily Standup:\n\n' + reports.map(r => 
+        `${this.getAgentEmoji(r.agent)} ${r.agent}: ${r.status}`
+      ).join('\n'),
+      reports,
+    };
+  }
+
+  /** Normalize /meet agent name to config key (e.g. backend -> backend-dev) */
+  _normalizeMeetAgentName(name) {
+    if (!name || typeof name !== 'string') return name;
+    const n = name.toLowerCase().trim().replace(/\s+/g, '-');
+    const aliases = {
+      backend: 'backend-dev',
+      frontend: 'frontend-dev',
+      qa: 'qa-tester',
+      reviewer: 'code-reviewer',
+      'code-reviewer': 'code-reviewer',
+    };
+    return aliases[n] || n;
+  }
+
+  /**
+   * Handle meet agent request
+   */
+  async handleMeetAgent(parsed, context, taskId) {
+    const rawName = parsed.agentName;
+    const agentKey = this._normalizeMeetAgentName(rawName);
+    const agent = this.agents.get(agentKey);
+    
+    if (!agent) {
+      const availableAgents = Array.from(this.agents.keys())
+        .filter(k => !['orchestrator', 'reporter'].includes(k))
+        .join(', ');
+      return {
+        success: false,
+        message: `Agent "${rawName}" not found. Try: ${availableAgents}`,
+      };
+    }
+
+    return {
+      success: true,
+      message: `👋 You are now chatting with **${agent.name}** (${agent.role}).\n\nWhat would you like to discuss?`,
+      agentInfo: agent.getInfo(),
+    };
+  }
+
+  /**
+   * Handle queue list - show all tasks with their IDs
+   */
+  async handleQueueList(parsed, context, taskId) {
+    if (this.taskQueue.length === 0 && this.completedTasks.length === 0) {
+      return {
+        success: true,
+        message: '**Task Queue is empty**\n\nNo tasks pending or completed. Use /plan to create a new task.',
+      };
+    }
+
+    let message = '**Task Queue**\n\n';
+
+    // Pending Approval tasks
+    const pendingApproval = this.taskQueue.filter(t => t.status === 'pending_approval');
+    if (pendingApproval.length > 0) {
+      message += '**📝 Pending Approval:**\n';
+      pendingApproval.forEach(t => {
+        const shortId = t.id.substring(0, 8);
+        message += `• \`${shortId}\` - ${t.plan?.title || t.task || 'Unknown task'}\n`;
+      });
+      message += '\n';
+    }
+
+    // Approved/Queued tasks
+    const queued = this.taskQueue.filter(t => t.status === 'approved');
+    if (queued.length > 0) {
+      message += '**⏳ Queued (Approved):**\n';
+      queued.forEach(t => {
+        const shortId = t.id.substring(0, 8);
+        message += `• \`${shortId}\` - ${t.plan?.title || t.task || 'Unknown task'}\n`;
+      });
+      message += '\n';
+    }
+
+    // Running tasks
+    const running = this.taskQueue.filter(t => t.status === 'running');
+    if (running.length > 0) {
+      message += '**🔄 Running:**\n';
+      running.forEach(t => {
+        const shortId = t.id.substring(0, 8);
+        message += `• \`${shortId}\` - ${t.plan?.title || t.task || 'Unknown task'}\n`;
+      });
+      message += '\n';
+    }
+
+    // Completed tasks
+    if (this.completedTasks.length > 0) {
+      message += `**✅ Completed (${this.completedTasks.length}):**\n`;
+      this.completedTasks.slice(-5).forEach(t => {
+        const shortId = t.id.substring(0, 8);
+        const statusIcon = t.status === 'completed' ? '✓' : t.status === 'needs_changes' ? '⚠' : '✗';
+        const statusLabel = t.status === 'needs_changes' ? ' (needs changes)' : '';
+        message += `${statusIcon} \`${shortId}\` - ${t.plan?.title || t.task || 'Unknown task'}${statusLabel}\n`;
+      });
+      message += '\n';
+    }
+
+    message += '**Commands:**\n';
+    message += '`/cancel <id>` - Cancel queued/approved task\n';
+    message += '`/stop <id>` - Stop running task\n';
+    message += '`/remove <id>` - Remove pending plan\n';
+    message += '`/recheck [id]` - Re-run code review after fixes (for tasks that need changes)\n';
+    message += '`/clear` - Clear completed tasks';
+
+    return {
+      success: true,
+      message,
+      queue: {
+        pendingApproval: pendingApproval.length,
+        queued: queued.length,
+        running: running.length,
+        completed: this.completedTasks.length,
+      },
+    };
+  }
+
+  /**
+   * Resolve a task for recheck: from completedTasks (needs_changes) or DB (failed + result.needs_changes).
+   * Normalizes task so it has branch, targetBranch, plan, reviewResult, status.
+   */
+  _normalizeTaskForRecheck(task) {
+    if (!task) return null;
+    if (task.result && task.result.needs_changes) {
+      task.branch = task.result.branch ?? task.plan?.branch;
+      task.targetBranch = task.result.targetBranch;
+      task.reviewResult = task.result.reviewResult;
+      task.status = 'needs_changes';
+    }
+    return task;
+  }
+
+  /**
+   * Handle recheck - re-run code review on a task that needs changes
+   */
+  async handleRecheckTask(parsed, context, taskId) {
+    const reporter = this.agents.get('reporter');
+    let task = null;
+
+    if (parsed.taskId) {
+      task = this.completedTasks.find(t => t.id === parsed.taskId || t.id.startsWith(parsed.taskId));
+      if (!task && this.useDatabase && this.dbTaskQueue) {
+        const fromDb = await this.dbTaskQueue.getTask(parsed.taskId);
+        if (fromDb && fromDb.result?.needs_changes) task = this._normalizeTaskForRecheck(fromDb);
+      }
+    } else {
+      task = this.completedTasks.find(t => t.status === 'needs_changes');
+      if (!task && this.useDatabase && this.dbTaskQueue && context.userId) {
+        const userTasks = await this.dbTaskQueue.getTasksByUser(context.userId.toString());
+        const recheckable = userTasks.filter(t => t.status === 'failed' && t.result?.needs_changes);
+        if (recheckable.length > 0) {
+          const byDate = recheckable.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+          task = this._normalizeTaskForRecheck(byDate[0]);
+        }
+      }
+    }
+
+    if (!task || task.status !== 'needs_changes') {
+      return {
+        success: false,
+        message: 'No task found to recheck. Use `/recheck <id>` with a task that needs changes, or /queue to list tasks.',
+      };
+    }
+
+    const branchName = task.branch || task.plan?.branch || 'branch';
+    const projectId = task.plan?.project || task.plan?.projectId || task.plan?.projectName;
+    const sourceBranch = task.branch || task.plan?.branch;
+    const targetBranch = task.targetBranch || 'main';
+
+    if (reporter) {
+      await reporter.sendProgress(`Re-running code review on branch \`${branchName}\`...`);
+    }
+
+    const codeReviewer = this.agents.get('code-reviewer');
+    if (!codeReviewer) {
+      return { success: false, message: 'Code Reviewer agent not available.' };
+    }
+
+    const implementationResult = {
+      projectId,
+      branch: sourceBranch,
+      targetBranch,
+    };
+    const reviewResult = await codeReviewer.review(implementationResult, context);
+
+    if (reviewResult?.approved) {
+      const gitlab = context.gitlab || require('../tools/gitlab');
+      let branches = await gitlab.getBranches(projectId, 100);
+      let branchExists = branches.some(b => b.name === sourceBranch);
+      if (!branchExists) {
+        if (reporter) {
+          await reporter.sendProgress(`Branch \`${sourceBranch}\` not found on GitLab. Push your changes first, then run /recheck again.`);
+        }
+        return {
+          success: false,
+          message: `Branch \`${sourceBranch}\` not on GitLab. Push your fixes, then run /recheck again.`,
+        };
+      }
+      const mrResult = await gitlab.createMergeRequest({
+        project: projectId,
+        title: task.plan?.title || 'Merge request',
+        description: task.plan?.description || '',
+        sourceBranch,
+        targetBranch,
+      });
+      task.status = 'completed';
+      task.completedAt = new Date();
+      task.mrUrl = mrResult.url;
+      try {
+        const pipelineInfo = await gitlab.getPipelineStatus(projectId, sourceBranch);
+        if (pipelineInfo) {
+          task.pipelineStatus = pipelineInfo.status;
+          task.pipelineUrl = pipelineInfo.web_url;
+        }
+      } catch (e) {
+        logger.debug('[Orchestrator] Pipeline status fetch skipped:', e.message);
+      }
+      if (this.useDatabase && this.dbTaskQueue) {
+        try {
+          await this.dbTaskQueue.updateTaskStatus(task.id, 'completed', { result: { mrUrl: mrResult.url } });
+        } catch (error) {
+          logger.error('[Orchestrator] Failed to update task status in database:', error.message);
+        }
+      }
+      const idx = this.completedTasks.findIndex(t => t.id === task.id);
+      if (idx >= 0) this.completedTasks[idx] = task;
+      else this.addCompletedTask(task);
+      if (reporter) {
+        await reporter.sendProgress(`🔗 Merge request created: ${mrResult.url}`);
+        await reporter.sendCompletionReport(task);
+      }
+      return {
+        success: true,
+        message: `✅ Code review passed. Merge request created: ${mrResult.url}`,
+      };
+    }
+
+    task.reviewResult = reviewResult;
+    if (this.useDatabase && this.dbTaskQueue) {
+      try {
+        await this.dbTaskQueue.updateTaskStatus(task.id, 'failed', {
+          result: {
+            reviewResult,
+            needs_changes: true,
+            branch: task.branch || task.plan?.branch,
+            targetBranch: task.targetBranch,
+          },
+        });
+      } catch (error) {
+        logger.error('[Orchestrator] Failed to update task status in database:', error.message);
+      }
+    }
+    const issues = reviewResult?.issues || [];
+    const criticalCount = issues.filter(i => i.severity === 'critical').length;
+    const warningCount = issues.filter(i => i.severity === 'warning').length;
+    let issueSummary = '';
+    if (criticalCount > 0 || warningCount > 0) {
+      issueSummary = `${criticalCount} critical, ${warningCount} warning(s). `;
+    }
+    if (reporter) {
+      await reporter.sendProgress(
+        `❌ Code review still requested changes. ${issueSummary}` +
+        `Push more fixes to branch \`${branchName}\`, then reply **/recheck** to re-run review.`
+      );
+    }
+    const idx = this.completedTasks.findIndex(t => t.id === task.id);
+    if (idx >= 0) this.completedTasks[idx] = task;
+    else this.addCompletedTask(task);
+    return {
+      success: true,
+      message: `Recheck complete. Review still requests changes. ${issueSummary}Push fixes to \`${branchName}\` and run /recheck again.`,
+    };
+  }
+
+  /**
+   * Handle cancel task - cancel queued or approved tasks
+   */
+  async handleCancelTask(parsed, context, taskId) {
+    const taskIndex = this.taskQueue.findIndex(t => t.id.startsWith(parsed.taskId) || t.id === parsed.taskId);
+    
+    if (taskIndex === -1) {
+      return {
+        success: false,
+        message: `Task \`${parsed.taskId}\` not found. Use /queue to see all tasks with IDs.`,
+      };
+    }
+
+    const task = this.taskQueue[taskIndex];
+    
+    if (task.status === 'running') {
+      return {
+        success: false,
+        message: `Task \`${parsed.taskId}\` is currently running. Use /stop to stop it.`,
+      };
+    }
+
+    // Move to completed with cancelled status
+    task.status = 'cancelled';
+    this.addCompletedTask(task);
+    this.taskQueue.splice(taskIndex, 1);
+
+    return {
+      success: true,
+      message: `✅ Task \`${parsed.taskId}\` has been cancelled.`,
+    };
+  }
+
+  /**
+   * Handle stop task - stop a running task
+   */
+  async handleStopTask(parsed, context, taskId) {
+    const taskIndex = this.taskQueue.findIndex(t => t.id.startsWith(parsed.taskId) || t.id === parsed.taskId);
+    
+    if (taskIndex === -1) {
+      return {
+        success: false,
+        message: `Task \`${parsed.taskId}\` not found. Use /queue to see all tasks with IDs.`,
+      };
+    }
+
+    const task = this.taskQueue[taskIndex];
+    
+    if (task.status !== 'running') {
+      return {
+        success: false,
+        message: `Task \`${parsed.taskId}\` is not running (status: ${task.status}). Use /cancel to remove it.`,
+      };
+    }
+
+    // Signal the task to stop (best effort)
+    task.status = 'stopped';
+    task.stoppedAt = new Date().toISOString();
+    
+    // Move to completed
+    this.addCompletedTask(task);
+    this.taskQueue.splice(taskIndex, 1);
+
+    // Emit stop event so agents can clean up
+    this.emit('taskStopped', { taskId: task.id, task });
+
+    return {
+      success: true,
+      message: `🛑 Task \`${parsed.taskId}\` has been stopped.`,
+    };
+  }
+
+  /**
+   * Handle remove task - remove a pending approval task
+   */
+  async handleRemoveTask(parsed, context, taskId) {
+    const taskIndex = this.taskQueue.findIndex(t => t.id.startsWith(parsed.taskId) || t.id === parsed.taskId);
+    
+    if (taskIndex === -1) {
+      return {
+        success: false,
+        message: `Task \`${parsed.taskId}\` not found. Use /queue to see all tasks with IDs.`,
+      };
+    }
+
+    const task = this.taskQueue[taskIndex];
+    
+    if (task.status !== 'pending_approval') {
+      return {
+        success: false,
+        message: `Task \`${parsed.taskId}\` is ${task.status}. Use /cancel or /stop instead.`,
+      };
+    }
+
+    this.taskQueue.splice(taskIndex, 1);
+
+    return {
+      success: true,
+      message: `🗑️ Pending plan \`${parsed.taskId}\` has been removed.`,
+    };
+  }
+
+  /**
+   * Handle clear tasks - clear completed and cancelled tasks
+   */
+  async handleClearTasks(parsed, context, taskId) {
+    const beforeCount = this.completedTasks.length;
+    
+    // Keep only the last 10 completed tasks
+    this.completedTasks = this.completedTasks.slice(-10);
+    
+    const clearedCount = beforeCount - this.completedTasks.length;
+
+    return {
+      success: true,
+      message: `🧹 Cleared ${clearedCount} completed/cancelled tasks. Keeping last 10 for reference.`,
+      cleared: clearedCount,
+    };
+  }
+
+  getAgentEmoji(agentName) {
+    const emojis = {
+      'orchestrator': '🧠',
+      'planner': '📋',
+      'backend-dev': '⚙️',
+      'frontend-dev': '🎨',
+      'qa-tester': '🧪',
+      'code-reviewer': '🔍',
+      'reporter': '📊',
+    };
+    return emojis[agentName] || '🤖';
+  }
+
+  /**
+   * Get full system status
+   */
+  getSystemStatus() {
+    return {
+      orchestrator: this.getInfo(),
+      agents: Array.from(this.agents.values()).map(a => a.getInfo()),
+      queue: {
+        total: this.taskQueue.length,
+        approved: this.taskQueue.filter(t => t.status === 'approved').length,
+        running: this.taskQueue.filter(t => t.status === 'running').length,
+        completed: this.completedTasks.length,
+      },
+    };
+  }
+
+  /**
+   * Execute task - required by BaseAgent
+   */
+  async execute(task) {
+    return this.processCommand(task.command, task.context);
+  }
+}
+
+module.exports = OrchestratorAgent;

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Nigents Apps — sister workspaces sharing the same sheets, issues, and admin model. Workspace, App, Tawazon, Droop." />
+    <title>Apps — Nigents</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #09080c;
+            --bg-secondary: #141116;
+            --border: #2a2a35;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+            --accent-orange: #ff570a;
+            --accent-volt: #2dd4bf;
+            --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+            --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(255,87,10,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,87,10,0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Nav (matches the rest of the site) ── */
+        .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, var(--bg-primary) 0%, transparent 100%); }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .nav-logo { width: 40px; height: 40px; background: var(--accent-orange); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: var(--bg-primary); }
+        .nav-title { font-size: 22px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.5px; }
+        .nav-links { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; justify-content: flex-end; }
+        .nav-link { color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover, .nav-link.active { color: var(--accent-orange); }
+        .soon-pill { display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--bg-primary); background: var(--accent-orange); padding: 3px 9px; border-radius: 999px; vertical-align: middle; }
+        .nav-cta { padding: 10px 20px; border: 1px solid var(--accent-orange); color: var(--accent-orange); text-decoration: none; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+        .nav-cta:hover { background: var(--accent-orange); color: var(--bg-primary); }
+        .nav-toggle { display: none; width: 44px; height: 44px; align-items: center; justify-content: center; margin-left: auto; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); cursor: pointer; }
+        .nav-toggle-icon-close { display: none; font-size: 28px; }
+        body.nav-open .nav-toggle-icon-open { display: none; }
+        body.nav-open .nav-toggle-icon-close { display: block; }
+        .nav-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 998; }
+        body.nav-open .nav-backdrop { display: block; }
+        body.nav-open { overflow: hidden; }
+        @media (max-width: 900px) {
+            .nav-toggle { display: flex; }
+            .nav-links { display: none; position: fixed; top: 72px; left: 16px; right: 16px; flex-direction: column; align-items: stretch; background: var(--bg-secondary); border: 1px solid var(--border); padding: 12px; z-index: 999; }
+            body.nav-open .nav-links { display: flex; }
+        }
+
+        main { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 120px 32px 80px; }
+
+        .hero-badge {
+            display: inline-block; font-family: var(--font-mono);
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--accent-volt); border: 1px solid rgba(45,212,191,0.4);
+            padding: 8px 14px; margin-bottom: 20px;
+        }
+        h1 { font-size: clamp(2rem, 4.5vw, 2.85rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 14px; }
+        h1 em { font-style: normal; color: var(--accent-orange); }
+        .lead { font-size: 1.05rem; color: var(--text-secondary); max-width: 60ch; margin-bottom: 40px; }
+
+        /* ── App grid ── */
+        .apps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 56px; }
+
+        .app-card {
+            position: relative;
+            display: flex; flex-direction: column;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.18s, border-color 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+        .app-card::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: var(--card-glow, transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .app-card:hover { transform: translateY(-3px); border-color: var(--card-accent, var(--accent-orange)); box-shadow: 0 12px 32px -8px rgba(0,0,0,0.4); }
+        .app-card:hover::before { opacity: 0.10; }
+        .app-card.disabled { cursor: default; }
+        .app-card.disabled:hover { transform: none; border-color: var(--border); box-shadow: none; }
+        .app-card.disabled .app-icon { opacity: 0.55; }
+
+        .app-card-top { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; position: relative; z-index: 1; }
+        .app-icon {
+            width: 52px; height: 52px;
+            border-radius: 12px;
+            background: var(--card-accent, var(--accent-orange));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 22px; color: #0a0a0a;
+            flex-shrink: 0;
+            font-family: var(--font-mono);
+            letter-spacing: -0.5px;
+        }
+        .app-card h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+        .app-tag {
+            display: inline-block; padding: 2px 8px;
+            font-size: 9px; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            border-radius: 4px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .app-tag-live   { background: rgba(45,212,191,0.15); color: var(--accent-volt); border: 1px solid rgba(45,212,191,0.4); }
+        .app-tag-soon   { background: rgba(255,255,255,0.06); color: var(--text-muted); border: 1px solid var(--border); }
+        .app-tag-beta   { background: rgba(255,87,10,0.15); color: var(--accent-orange); border: 1px solid rgba(255,87,10,0.4); }
+
+        .app-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.55; margin-bottom: 18px; position: relative; z-index: 1; }
+        .app-stats { display: flex; gap: 16px; font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border); position: relative; z-index: 1; }
+        .app-stats .stat strong { color: var(--card-accent, var(--text-primary)); font-weight: 700; }
+
+        /* ── Workflow callout ── */
+        .workflow { background: rgba(45,212,191,0.05); border: 1px solid rgba(45,212,191,0.25); border-radius: 14px; padding: 22px 26px; margin-bottom: 40px; }
+        .workflow h3 { font-size: 13px; font-weight: 700; color: var(--accent-volt); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 10px; font-family: var(--font-mono); }
+        .workflow ol { padding-left: 22px; color: var(--text-secondary); font-size: 14px; line-height: 1.7; }
+        .workflow ol li::marker { color: var(--accent-volt); font-weight: 700; }
+        .workflow strong { color: var(--text-primary); font-weight: 600; }
+        .workflow .admin-link { display: inline-block; margin-top: 12px; color: var(--accent-orange); text-decoration: none; font-size: 13px; font-weight: 600; border-bottom: 1px dashed rgba(255,87,10,0.5); }
+        .workflow .admin-link:hover { color: #ff7733; }
+
+        footer { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 40px; font-size: 13px; color: var(--text-muted); }
+        footer a { color: var(--accent-orange); text-decoration: none; }
+        @media (max-width: 640px) { .nav { padding: 16px 20px; } main { padding-top: 100px; } }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">
+            <div class="nav-logo">N</div>
+            <span class="nav-title">Nigents</span>
+        </a>
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+            <span class="nav-toggle-icon-open" aria-hidden="true">&#9776;</span>
+            <span class="nav-toggle-icon-close" aria-hidden="true">&times;</span>
+        </button>
+        <div class="nav-links" id="nav-links" role="navigation" aria-label="Main">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/how-it-works.html" class="nav-link">How it works</a>
+            <a href="/skills.html" class="nav-link">AI Skills</a>
+            <a href="/materials.html" class="nav-link">Free Materials</a>
+            <a href="/crazy-apps.html" class="nav-link">Crazy apps</a>
+            <a href="/opencode-kits.html" class="nav-link">OpenCode kits <span class="soon-pill">Soon</span></a>
+            <a href="/apps/" class="nav-link active">Apps</a>
+            <a href="/login.html" class="nav-cta">Login &rarr;</a>
+        </div>
+    </nav>
+    <div class="nav-backdrop" id="nav-backdrop" aria-hidden="true" hidden></div>
+
+    <main>
+        <p class="hero-badge">workspaces &middot; sheets &middot; bugs</p>
+        <h1>Nigents <em>Apps</em></h1>
+        <p class="lead">
+            Sister workspaces that share the same sheets-and-issues model as Workspace.
+            Pick an app to open its workspace &mdash; upload bugs, manage sheets, and track delivery.
+            A valid edit key is required to upload; admins can grant per-user keys below.
+        </p>
+
+        <div class="apps-grid">
+            <!-- Workspace — live -->
+            <a class="app-card" href="/workspace/?app=workspace" style="--card-accent:#ff570a; --card-glow: radial-gradient(circle at 30% 0%, #ff570a 0%, transparent 60%);">
+                <div class="app-card-top">
+                    <div class="app-icon">B</div>
+                    <h2>Workspace <span class="app-tag app-tag-live">Live</span></h2>
+                </div>
+                <p>The full Workspace workspace — sheets for Web, iOS, Android, Backend, Designs, Builds, Canvas, AI Roadmap, Admin. Upload bugs, attach screenshots, track priority + status.</p>
+                <div class="app-stats">
+                    <span class="stat"><strong>12</strong> pages</span>
+                    <span class="stat"><strong>Full</strong> workspace</span>
+                </div>
+            </a>
+
+            <!-- App -->
+            <a class="app-card" href="/workspace/?app=app" style="--card-accent:#a78bfa; --card-glow: radial-gradient(circle at 30% 0%, #a78bfa 0%, transparent 60%);">
+                <div class="app-card-top">
+                    <div class="app-icon" style="background:#a78bfa">M</div>
+                    <h2>App <span class="app-tag app-tag-live">Live</span></h2>
+                </div>
+                <p>Opens the same Workspace workspace but scoped to App data — same sheets / issues / canvas / builds / admin features. Switch apps from the header pill at any time.</p>
+                <div class="app-stats">
+                    <span class="stat"><strong>Same</strong> UI as Workspace</span>
+                    <span class="stat">Status: <strong>Open</strong></span>
+                </div>
+            </a>
+
+            <!-- Tawazon -->
+            <a class="app-card" href="/workspace/?app=tawazon" style="--card-accent:#19d59e; --card-glow: radial-gradient(circle at 30% 0%, #19d59e 0%, transparent 60%);">
+                <div class="app-card-top">
+                    <div class="app-icon" style="background:#19d59e">T</div>
+                    <h2>Tawazon <span class="app-tag app-tag-live">Live</span></h2>
+                </div>
+                <p>توازن &mdash; balance. Opens the Workspace workspace scoped to Tawazon data. Pick a sheet, file issues with your edit key, drop screenshots.</p>
+                <div class="app-stats">
+                    <span class="stat"><strong>Same</strong> UI as Workspace</span>
+                    <span class="stat">Status: <strong>Open</strong></span>
+                </div>
+            </a>
+
+            <!-- Droop -->
+            <a class="app-card" href="/workspace/?app=droop" style="--card-accent:#ff3d5c; --card-glow: radial-gradient(circle at 30% 0%, #ff3d5c 0%, transparent 60%);">
+                <div class="app-card-top">
+                    <div class="app-icon" style="background:#ff3d5c; color:#fff">D</div>
+                    <h2>Droop <span class="app-tag app-tag-live">Live</span></h2>
+                </div>
+                <p>Opens the Workspace workspace scoped to Droop data. Admin can grant per-user keys scoped to Droop only, or any combination of the 4 apps.</p>
+                <div class="app-stats">
+                    <span class="stat"><strong>Same</strong> UI as Workspace</span>
+                    <span class="stat">Status: <strong>Open</strong></span>
+                </div>
+            </a>
+
+            <!-- QuickIn -->
+            <a class="app-card" href="/workspace/?app=quickin" style="--card-accent:#5B0F16; --card-glow: radial-gradient(circle at 30% 0%, #5B0F16 0%, transparent 60%);">
+                <div class="app-card-top">
+                    <div class="app-icon" style="background:#5B0F16; color:#F6F1E6">Q</div>
+                    <h2>QuickIn <span class="app-tag app-tag-live">Live</span></h2>
+                </div>
+                <p>Opens the Workspace workspace scoped to QuickIn data — boutique vacation rental platform. File bugs against Web, Mobile and Backend ahead of the July 15 store launch.</p>
+                <div class="app-stats">
+                    <span class="stat"><strong>Same</strong> UI as Workspace</span>
+                    <span class="stat">Status: <strong>Open</strong></span>
+                </div>
+            </a>
+        </div>
+
+        <div class="workflow">
+            <h3>How upload-bugs works</h3>
+            <ol>
+                <li><strong>Open an app</strong> from the grid above &mdash; all five open the same Workspace workspace, scoped to that app's data.</li>
+                <li>Use the <strong>app pill in the top-right</strong> to hop between Workspace / App / Tawazon / Droop / QuickIn without re-typing the URL.</li>
+                <li>Pick a sheet from the hub (Web / Mobile / Backend / Designs / &hellip;).</li>
+                <li>Click <strong>+ Add</strong> on the sheet, fill the title + description + priority + criteria, save. Drag-drop screenshots in the issue card.</li>
+                <li>Keys are <strong>scoped per app</strong>: a Tawazon-only key cannot edit Workspace. <code>*</code> grants every app.</li>
+            </ol>
+            <a class="admin-link" href="/workspace/admin.html?app=workspace">Open admin &rarr; grant keys with app scope</a>
+        </div>
+
+        <footer>
+            <p><strong>Apps Hub</strong> &middot; <a href="/workspace/">Open Workspace</a> &middot; <a href="/workspace/admin.html">Manage keys</a> &middot; <a href="/">Nigents home</a></p>
+        </footer>
+    </main>
+
+    <script>
+        (function () {
+            var toggle = document.getElementById('nav-toggle');
+            var backdrop = document.getElementById('nav-backdrop');
+            if (!toggle) return;
+            function setOpen(open) {
+                document.body.classList.toggle('nav-open', open);
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (backdrop) backdrop.hidden = !open;
+            }
+            toggle.addEventListener('click', function () {
+                setOpen(!document.body.classList.contains('nav-open'));
+            });
+            if (backdrop) backdrop.addEventListener('click', function () { setOpen(false); });
+            document.getElementById('nav-links').querySelectorAll('a').forEach(function (link) {
+                link.addEventListener('click', function () { setOpen(false); });
+            });
+        })();
+    </script>
+</body>
+</html>

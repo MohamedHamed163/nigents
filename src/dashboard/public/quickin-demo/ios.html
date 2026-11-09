@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=360, initial-scale=1, viewport-fit=cover" />
+<title>QuickIn iOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --burgundy:#5B0F16;
+  --burgundy-soft:#7a1c25;
+  --cream:#F6F1E6;
+  --cream-2:#EFE6D8;
+  --white:#FFFFFF;
+  --text:#2B2B2B;
+  --muted:#7A746A;
+  --border:#E2D8C8;
+  --divider:#D6CCBC;
+  --green:#3F7D55;
+  --grey-pill:#A39989;
+  --shadow: 0 10px 30px rgba(0,0,0,0.06);
+  --shadow-strong: 0 18px 40px rgba(91,15,22,0.18);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;width:100%;background:var(--cream);font-family:'DM Sans',system-ui,sans-serif;color:var(--text);overflow:hidden;}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer;}
+input{font-family:inherit;}
+.app{position:relative;width:100vw;height:100vh;overflow:hidden;background:var(--cream);}
+
+/* ---------- Status Bar ---------- */
+.statusbar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px 0 26px;font-size:14px;font-weight:600;z-index:50;color:var(--text);pointer-events:none;}
+.statusbar .right{display:flex;align-items:center;gap:6px;}
+.notch{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:108px;height:26px;background:#000;border-radius:18px;z-index:60;}
+
+/* ---------- Bottom Home Indicator ---------- */
+.home-indicator{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:120px;height:5px;background:rgba(43,43,43,0.55);border-radius:3px;z-index:70;pointer-events:none;}
+
+/* ---------- Tab Bar ---------- */
+.tabbar{position:absolute;bottom:0;left:0;right:0;height:88px;padding:10px 18px 28px;background:rgba(246,241,230,0.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:flex-start;z-index:40;}
+.tabbar.hidden{display:none;}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);font-size:10.5px;font-weight:500;padding-top:8px;}
+.tab .ic{width:24px;height:24px;}
+.tab.active{color:var(--burgundy);}
+.tab.active .ic path,.tab.active .ic circle,.tab.active .ic rect{stroke:var(--burgundy);}
+.tab.active .ic .fill{fill:var(--burgundy);}
+
+/* ---------- Screens ---------- */
+.screen{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--cream);transform:translateX(100%);transition:transform .38s cubic-bezier(.32,.72,.32,1);overflow:hidden;will-change:transform;}
+.screen.active{transform:translateX(0);}
+.screen.exit-left{transform:translateX(-100%);}
+.scroll{position:absolute;top:44px;bottom:88px;left:0;right:0;overflow-y:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;}
+.scroll.no-tabbar{bottom:0;}
+.scroll::-webkit-scrollbar{display:none;}
+
+/* ---------- Screen 1: Splash ---------- */
+#splash{background:var(--cream);transform:translateX(0);}
+.splash-wrap{height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:80px 28px 50px;text-align:center;}
+.splash-hero{display:flex;flex-direction:column;align-items:center;gap:18px;margin-top:30px;}
+.logo-mark{width:96px;height:96px;background:var(--white);border-radius:30px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);}
+.logo-mark img{width:64px;height:auto;display:block;}
+.splash-title{font-family:'Playfair Display',serif;font-size:38px;font-weight:600;line-height:1.1;letter-spacing:-.5px;margin:18px 0 6px;color:var(--burgundy);}
+.splash-sub{font-size:15px;color:var(--muted);line-height:1.5;max-width:280px;margin:0 auto;}
+.splash-actions{display:flex;flex-direction:column;gap:12px;}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;border-radius:22px;padding:16px 22px;font-size:15.5px;font-weight:600;transition:transform .12s ease, opacity .12s ease;}
+.btn:active{transform:scale(.97);}
+.btn-dark{background:#0F0F10;color:#fff;}
+.btn-light{background:var(--white);color:var(--text);border:1px solid var(--border);}
+.btn-primary{background:var(--burgundy);color:var(--cream);}
+.btn-text{color:var(--burgundy);font-weight:600;font-size:14.5px;padding:8px;}
+.divider-row{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;}
+.divider-row::before,.divider-row::after{content:"";flex:1;height:1px;background:var(--divider);}
+
+/* ---------- Screen 2: Discover ---------- */
+.discover-head{padding:8px 22px 0;}
+.brand-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.brand-row .brand{display:flex;align-items:center;gap:8px;font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--burgundy);}
+.brand-row .brand img{width:26px;height:26px;}
+.icon-btn{width:38px;height:38px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);}
+.head-title{font-family:'Playfair Display',serif;font-size:34px;line-height:1.05;font-weight:600;color:var(--text);letter-spacing:-.5px;}
+.head-title em{font-style:italic;color:var(--burgundy);}
+.head-sub{font-size:14px;color:var(--muted);margin:8px 0 18px;}
+.search-pill{background:var(--white);border:1px solid var(--border);border-radius:22px;padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);}
+.search-pill .grow{flex:1;display:flex;flex-direction:column;}
+.search-pill .label{font-size:13px;font-weight:600;color:var(--text);}
+.search-pill .hint{font-size:12px;color:var(--muted);}
+.search-pill .filter{width:34px;height:34px;border-radius:50%;background:var(--burgundy);display:flex;align-items:center;justify-content:center;}
+
+.section-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;padding:0 22px;margin:24px 0 12px;display:flex;justify-content:space-between;align-items:baseline;}
+.section-title .more{font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--burgundy);font-weight:600;}
+
+.h-scroll{display:flex;gap:12px;overflow-x:auto;padding:2px 22px 6px;scroll-snap-type:x mandatory;}
+.h-scroll::-webkit-scrollbar{display:none;}
+.offer-chip{flex:0 0 156px;height:108px;border-radius:22px;position:relative;overflow:hidden;box-shadow:var(--shadow);scroll-snap-align:start;color:#fff;padding:14px;display:flex;flex-direction:column;justify-content:flex-end;}
+.offer-chip .tag{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.85);color:var(--burgundy);font-size:10px;font-weight:700;letter-spacing:.4px;padding:4px 8px;border-radius:10px;text-transform:uppercase;}
+.offer-chip .name{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;line-height:1.05;text-shadow:0 2px 8px rgba(0,0,0,.3);}
+.offer-chip .meta{font-size:11px;opacity:.92;margin-top:3px;}
+.offer-1{background:linear-gradient(135deg,#E8A074 0%,#C5604A 50%,#7B2A24 100%);}
+.offer-2{background:linear-gradient(135deg,#9FB7B4 0%,#4F807B 60%,#2A4F4C 100%);}
+.offer-3{background:linear-gradient(135deg,#F0C290 0%,#C68B4E 60%,#7B4520 100%);}
+.offer-4{background:linear-gradient(135deg,#B9A1C9 0%,#7A5A98 60%,#3E2A57 100%);}
+
+/* listing cards */
+.cards{padding:6px 22px 24px;display:flex;flex-direction:column;gap:18px;}
+.card{background:var(--white);border-radius:28px;overflow:hidden;box-shadow:var(--shadow);}
+.hero{position:relative;height:188px;border-radius:22px 22px 0 0;overflow:hidden;}
+.hero .heart{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:2;}
+.hero .heart.on svg path{fill:var(--burgundy);stroke:var(--burgundy);}
+.hero .badge{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.85);color:var(--burgundy);font-size:10.5px;font-weight:700;letter-spacing:.3px;padding:5px 9px;border-radius:10px;text-transform:uppercase;z-index:2;}
+.card-body{padding:14px 16px 16px;}
+.card-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.card-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--text);line-height:1.2;}
+.card-rating{display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;}
+.card-desc{font-size:12.5px;color:var(--muted);line-height:1.45;margin:5px 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.card-foot{display:flex;align-items:center;justify-content:space-between;}
+.card-loc{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+.card-price{font-size:14px;font-weight:700;color:var(--text);}
+.card-price small{font-weight:400;color:var(--muted);font-size:11.5px;}
+
+/* hero photo container — real images replace gradient placeholders */
+.hero{background:#E2D8C8;}
+.hero .photo,.det-hero .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 50%,rgba(0,0,0,.18) 100%);pointer-events:none;z-index:1;}
+.hero .heart,.hero .badge{z-index:3;}
+/* trips thumbnail photo */
+.trip .thumb{background:#E2D8C8;overflow:hidden;position:relative;}
+.trip .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+/* assistant rec card photo */
+.rec .img{background:#E2D8C8;overflow:hidden;position:relative;}
+.rec .img img{width:100%;height:100%;object-fit:cover;display:block;border-radius:14px;}
+
+/* ---------- Screen 3: Listing detail ---------- */
+.det-hero{position:relative;height:300px;overflow:hidden;}
+.det-back{position:absolute;top:54px;left:18px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.78);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:10;}
+.det-fav{position:absolute;top:54px;right:18px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.78);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:10;}
+.det-body{padding:18px 22px 140px;}
+.det-title{font-family:'Playfair Display',serif;font-size:26px;line-height:1.15;font-weight:600;color:var(--text);}
+.det-meta{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin-top:6px;}
+.host-row{display:flex;align-items:center;gap:12px;padding:14px 0;margin-top:14px;border-top:1px solid var(--divider);border-bottom:1px solid var(--divider);}
+.host-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#C68F4E,#7B4520);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Playfair Display',serif;font-size:18px;font-weight:600;}
+.host-name{font-size:14px;font-weight:600;}
+.host-role{font-size:11.5px;color:var(--muted);}
+.det-section-h{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;margin:22px 0 8px;}
+.det-desc{font-size:13.5px;color:var(--text);line-height:1.6;}
+.amen-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:10px;}
+.amen{background:var(--white);border-radius:18px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid var(--border);}
+.amen .name{font-size:10.5px;color:var(--text);font-weight:500;text-align:center;}
+.map-box{height:140px;border-radius:22px;background:linear-gradient(135deg,#EAD7B7,#D4B98A 50%,#A88347);position:relative;overflow:hidden;margin-top:10px;border:1px solid var(--border);}
+.map-box svg{position:absolute;inset:0;width:100%;height:100%;}
+.map-pin{position:absolute;left:50%;top:46%;transform:translate(-50%,-100%);width:28px;height:36px;}
+.review{background:var(--white);border:1px solid var(--border);border-radius:22px;padding:14px 16px;margin-top:10px;}
+.review .who{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.review .av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#B26770,#5A1F28);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:600;}
+.review .nm{font-size:13px;font-weight:600;}
+.review .dt{font-size:11px;color:var(--muted);}
+.review .txt{font-size:12.5px;color:var(--text);line-height:1.5;}
+.sticky-book{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);padding:14px 22px 22px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:14px;z-index:30;}
+.sticky-book .price{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);}
+.sticky-book .price small{display:block;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;color:var(--muted);}
+.sticky-book .btn{flex:1;max-width:170px;}
+
+/* ---------- Screen 4: Booking ---------- */
+.book-head{padding:54px 22px 16px;display:flex;align-items:center;gap:14px;}
+.book-back{width:40px;height:40px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
+.book-head h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;margin:0;}
+.book-body{padding:6px 22px 130px;}
+.cal{background:var(--white);border-radius:24px;padding:18px;border:1px solid var(--border);box-shadow:var(--shadow);}
+.cal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.cal-h .m{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;}
+.cal-h .nav{display:flex;gap:8px;}
+.cal-h .nav span{width:30px;height:30px;border-radius:50%;background:var(--cream-2);display:flex;align-items:center;justify-content:center;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:12px;}
+.cal-grid .dow{text-align:center;color:var(--muted);font-size:10.5px;font-weight:600;padding-bottom:6px;text-transform:uppercase;letter-spacing:.4px;}
+.cal-grid .d{aspect-ratio:1;display:flex;align-items:center;justify-content:center;color:var(--text);border-radius:10px;}
+.cal-grid .d.muted{color:#cdbfa7;}
+.cal-grid .d.in-range{background:rgba(91,15,22,.08);color:var(--burgundy);}
+.cal-grid .d.start,.cal-grid .d.end{background:var(--burgundy);color:#fff;font-weight:700;border-radius:12px;}
+.row{display:flex;justify-content:space-between;padding:11px 0;font-size:13.5px;}
+.row.muted{color:var(--muted);}
+.row.bold{font-weight:700;font-size:16px;color:var(--burgundy);}
+.row + .row{border-top:1px solid var(--divider);}
+.summary{margin-top:18px;background:var(--white);border-radius:24px;padding:6px 18px;border:1px solid var(--border);}
+.pay-list{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+.pay-row{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:13px 14px;display:flex;align-items:center;gap:12px;}
+.pay-row.sel{border-color:var(--burgundy);box-shadow:0 0 0 2px rgba(91,15,22,.12);}
+.pay-row .logo{width:42px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;letter-spacing:.5px;color:#fff;}
+.pay-row .grow{flex:1;}
+.pay-row .nm{font-size:14px;font-weight:600;}
+.pay-row .sub{font-size:11.5px;color:var(--muted);}
+.pay-row .radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);position:relative;}
+.pay-row.sel .radio{border-color:var(--burgundy);}
+.pay-row.sel .radio::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--burgundy);}
+.logo-visa{background:linear-gradient(135deg,#1a1f71,#3d4eb5);}
+.logo-apple{background:#000;}
+.logo-insta{background:linear-gradient(135deg,#d4334a,#7b1b2c);}
+
+.confirm-cta{position:absolute;left:0;right:0;bottom:0;padding:14px 22px 22px;background:rgba(246,241,230,.92);backdrop-filter:blur(10px);border-top:1px solid var(--border);}
+
+/* booking confirmed overlay */
+.confirmed-card{margin:24px 22px 0;background:var(--white);border-radius:28px;padding:34px 24px;text-align:center;box-shadow:var(--shadow);}
+.check-ring{width:96px;height:96px;border-radius:50%;background:rgba(91,15,22,.08);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;animation:pop .6s cubic-bezier(.34,1.56,.64,1) both;}
+.check-ring .inner{width:64px;height:64px;border-radius:50%;background:var(--burgundy);display:flex;align-items:center;justify-content:center;}
+@keyframes pop{0%{transform:scale(.2);opacity:0;}60%{transform:scale(1.08);opacity:1;}100%{transform:scale(1);}}
+.confirmed-card h3{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;margin:0 0 6px;}
+.confirmed-card p{font-size:13.5px;color:var(--muted);line-height:1.5;margin:0;}
+.confirmed-card .code{display:inline-block;margin-top:14px;padding:8px 14px;background:var(--cream-2);border-radius:14px;font-size:12.5px;font-weight:700;color:var(--burgundy);letter-spacing:.6px;}
+
+/* loading overlay */
+.proc-overlay{position:absolute;inset:0;background:rgba(43,43,43,.36);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:100;}
+.proc-overlay.show{display:flex;}
+.proc-card{background:var(--white);border-radius:24px;padding:26px 30px;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:var(--shadow-strong);}
+.spinner{width:36px;height:36px;border-radius:50%;border:3px solid var(--cream-2);border-top-color:var(--burgundy);animation:sp 1s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.proc-card .t{font-size:13px;font-weight:600;color:var(--text);}
+
+/* ---------- Screen 5: Trips ---------- */
+.trips-head{padding:8px 22px 6px;}
+.trips-list{padding:8px 22px 24px;display:flex;flex-direction:column;gap:14px;}
+.trip{background:var(--white);border-radius:24px;padding:14px;display:flex;gap:14px;align-items:center;box-shadow:var(--shadow);}
+.trip .thumb{width:78px;height:78px;border-radius:18px;flex-shrink:0;}
+.trip .info{flex:1;min-width:0;}
+.trip .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:3px 8px;border-radius:8px;margin-bottom:4px;}
+.pill-upcoming{background:rgba(91,15,22,.1);color:var(--burgundy);}
+.pill-active{background:rgba(63,125,85,.12);color:var(--green);}
+.pill-past{background:rgba(122,116,106,.14);color:var(--muted);}
+.trip .nm{font-family:'Playfair Display',serif;font-size:15.5px;font-weight:600;line-height:1.15;}
+.trip .dt{font-size:11.5px;color:var(--muted);margin-top:3px;}
+.trip .cd{font-size:11px;color:var(--burgundy);font-weight:700;letter-spacing:.5px;margin-top:4px;}
+
+/* ---------- Screen 6: Assistant ---------- */
+.chat-head{padding:8px 22px 14px;display:flex;align-items:center;gap:12px;}
+.ai-av{width:42px;height:42px;border-radius:50%;background:var(--burgundy);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Playfair Display',serif;font-weight:600;font-size:18px;box-shadow:var(--shadow);}
+.chat-head .who{flex:1;}
+.chat-head .nm{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;}
+.chat-head .st{font-size:11.5px;color:var(--green);display:flex;align-items:center;gap:5px;}
+.chat-head .st::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green);}
+.chat{padding:8px 18px 18px;display:flex;flex-direction:column;gap:10px;}
+.bub{max-width:78%;padding:11px 14px;border-radius:20px;font-size:13.5px;line-height:1.45;}
+.bub-ai{background:var(--white);border:1px solid var(--border);border-top-left-radius:6px;align-self:flex-start;color:var(--text);box-shadow:var(--shadow);}
+.bub-me{background:var(--burgundy);color:var(--cream);border-top-right-radius:6px;align-self:flex-end;}
+.suggests{display:flex;flex-wrap:wrap;gap:8px;align-self:flex-start;max-width:90%;}
+.sug{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:8px 12px;font-size:12px;font-weight:500;color:var(--burgundy);}
+.typing{align-self:flex-start;background:var(--white);border:1px solid var(--border);border-top-left-radius:6px;padding:12px 16px;border-radius:20px;display:flex;gap:4px;}
+.typing span{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bnc 1.2s infinite ease-in-out;}
+.typing span:nth-child(2){animation-delay:.15s;}
+.typing span:nth-child(3){animation-delay:.3s;}
+@keyframes bnc{0%,80%,100%{transform:scale(.6);opacity:.4;}40%{transform:scale(1);opacity:1;}}
+.rec-cards{display:flex;flex-direction:column;gap:10px;margin-top:4px;align-self:flex-start;width:88%;}
+.rec{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:10px;display:flex;gap:10px;box-shadow:var(--shadow);}
+.rec .img{width:60px;height:60px;border-radius:14px;flex-shrink:0;}
+.rec .nm{font-family:'Playfair Display',serif;font-size:13.5px;font-weight:600;line-height:1.15;}
+.rec .meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.rec .pr{font-size:12px;font-weight:700;color:var(--burgundy);margin-top:4px;}
+.chat-input{position:absolute;left:0;right:0;bottom:88px;padding:10px 16px 12px;background:rgba(246,241,230,.92);backdrop-filter:blur(10px);border-top:1px solid var(--border);display:flex;gap:10px;align-items:center;}
+.chat-input input{flex:1;background:var(--white);border:1px solid var(--border);border-radius:20px;padding:11px 16px;font-size:13.5px;outline:none;color:var(--text);}
+.chat-input input::placeholder{color:var(--muted);}
+.send-btn{width:40px;height:40px;border-radius:50%;background:var(--burgundy);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* ---------- Screen 7: Profile ---------- */
+.prof-wrap{padding:24px 22px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;}
+.prof-av{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#C68F4E,#5B0F16);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Playfair Display',serif;font-size:34px;font-weight:600;box-shadow:var(--shadow);margin-top:18px;}
+.prof-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;margin:0;}
+.prof-mail{font-size:13px;color:var(--muted);}
+.prof-list{width:100%;background:var(--white);border-radius:24px;border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-top:8px;}
+.prof-row{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--divider);font-size:14px;}
+.prof-row:last-child{border-bottom:none;}
+.prof-row .chev{margin-left:auto;color:var(--muted);}
+.prof-row .ic{width:34px;height:34px;border-radius:10px;background:var(--cream-2);display:flex;align-items:center;justify-content:center;}
+.coming{margin-top:8px;font-size:12px;color:var(--muted);background:var(--cream-2);padding:8px 14px;border-radius:14px;display:inline-block;}
+
+/* ---------- Search sheet ---------- */
+.sheet-backdrop{position:absolute;inset:0;background:rgba(43,43,43,.32);backdrop-filter:blur(4px);z-index:120;opacity:0;pointer-events:none;transition:opacity .25s ease;}
+.sheet-backdrop.show{opacity:1;pointer-events:auto;}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:rgba(246,241,230,.96);backdrop-filter:blur(20px);border-radius:28px 28px 0 0;padding:14px 22px 34px;z-index:130;transform:translateY(110%);transition:transform .35s cubic-bezier(.32,.72,.32,1);box-shadow:0 -10px 30px rgba(0,0,0,.1);}
+.sheet.show{transform:translateY(0);}
+.sheet .grab{width:42px;height:4px;background:var(--divider);border-radius:3px;margin:4px auto 16px;}
+.sheet h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;margin:0 0 12px;}
+.sheet input{width:100%;border:1px solid var(--border);background:var(--white);border-radius:18px;padding:13px 16px;font-size:14px;outline:none;color:var(--text);}
+.sheet .lbl{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:18px 0 10px;}
+.sheet .chips{display:flex;flex-wrap:wrap;gap:8px;}
+.sheet .chip{padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:14px;font-size:13px;font-weight:500;color:var(--text);}
+
+/* toast */
+.toast{position:absolute;top:60px;left:50%;transform:translate(-50%,-20px);background:var(--burgundy);color:var(--cream);font-size:12.5px;font-weight:600;padding:10px 16px;border-radius:14px;box-shadow:var(--shadow-strong);z-index:200;opacity:0;pointer-events:none;transition:transform .3s ease, opacity .3s ease;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<!-- =========== SPLASH =========== -->
+<div class="screen active" id="splash" data-tabbar="hide">
+  <div class="splash-wrap">
+    <div class="splash-hero">
+      <div class="logo-mark"><img src="./assets/logo-icon.png" alt="QuickIn"></div>
+      <h1 class="splash-title">QuickIn</h1>
+      <p class="splash-sub">A calm, warm way to find your next boutique stay along the coast.</p>
+    </div>
+    <div class="splash-actions">
+      <button class="btn btn-dark" onclick="goTo('discover')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M17.6 13.2c0-2.7 2.2-4 2.3-4.1-1.2-1.8-3.2-2-3.9-2-1.6-.2-3.2 1-4 1-.8 0-2.1-1-3.5-.9-1.8 0-3.5 1-4.4 2.7-1.9 3.3-.5 8.2 1.4 10.9.9 1.3 2 2.8 3.4 2.7 1.4-.1 1.9-.9 3.5-.9 1.6 0 2.1.9 3.5.9 1.5 0 2.4-1.3 3.3-2.6 1-1.5 1.5-3 1.5-3.1-.1 0-2.9-1.1-3.1-4.6zM15.1 5.4c.7-.9 1.2-2.1 1.1-3.4-1.1 0-2.3.7-3.1 1.6-.7.8-1.3 2.1-1.1 3.3 1.2.1 2.5-.6 3.1-1.5z"/></svg>
+        Sign in with Apple
+      </button>
+      <button class="btn btn-light" onclick="goTo('discover')">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34A21.99 21.99 0 0 0 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/><path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7C13.42 14.62 18.27 10.75 24 10.75z"/></svg>
+        Continue with Google
+      </button>
+      <button class="btn btn-text" onclick="goTo('discover')">Sign in with email</button>
+      <p style="font-size:11px;color:var(--muted);margin:6px 0 0;line-height:1.45;">By continuing you agree to QuickIn's Terms &amp; Privacy.</p>
+    </div>
+  </div>
+</div>
+
+<!-- =========== DISCOVER =========== -->
+<div class="screen" id="discover">
+  <div class="scroll">
+    <div class="discover-head">
+      <div class="brand-row">
+        <div class="brand"><img src="./assets/logo-icon.png" alt=""> QuickIn</div>
+        <button class="icon-btn" onclick="showToast('Notifications')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="1.8" stroke-linecap="round"><path d="M6 9a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        </button>
+      </div>
+      <h1 class="head-title">Find your <em>stay.</em></h1>
+      <p class="head-sub">Warm coastlines. Boutique homes. Curated for you.</p>
+      <div class="search-pill" onclick="openSheet()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <div class="grow">
+          <span class="label">Where to?</span>
+          <span class="hint">Anywhere · Any week · Add guests</span>
+        </div>
+        <div class="filter">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F6F1E6" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Best Offers <span class="more">See all</span></div>
+    <div class="h-scroll">
+      <div class="offer-chip offer-1" onclick="filterTo('Sahel')"><span class="tag">−20%</span><div class="name">Sahel</div><div class="meta">42 stays · from EGP 4,200</div></div>
+      <div class="offer-chip offer-2" onclick="filterTo('North Coast')"><span class="tag">Hot</span><div class="name">North Coast</div><div class="meta">86 stays · from EGP 3,500</div></div>
+      <div class="offer-chip offer-3" onclick="filterTo('Sokhna')"><span class="tag">−15%</span><div class="name">Sokhna</div><div class="meta">31 stays · from EGP 2,900</div></div>
+      <div class="offer-chip offer-4" onclick="filterTo('Marakia')"><span class="tag">Curated</span><div class="name">Marakia</div><div class="meta">18 stays · managed</div></div>
+    </div>
+
+    <div class="section-title">Stays for you <span class="more">Map view</span></div>
+    <div class="cards" id="cards-list">
+      <!-- listing cards -->
+      <div class="card" onclick="openListing('Sahel Beach House','EGP 5,200','./assets/photos/v1.jpg','A whitewashed villa steps from the soft sand and the calm North Coast tide.','Sidi Abdel Rahman · Sahel')">
+        <div class="hero">
+          <img class="photo" src="./assets/photos/v1.jpg" alt="Sahel Beach House" loading="eager" decoding="async"/>
+          <div class="badge">Best Offer</div>
+          <button class="heart" onclick="event.stopPropagation();toggleHeart(this);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9C.7 8.4 2.6 4 6.5 4 9 4 10.5 5.5 12 7.5 13.5 5.5 15 4 17.5 4 21.4 4 23.3 8.4 21.5 12 19 16.5 12 21 12 21z"/></svg></button>
+        </div>
+        <div class="card-body">
+          <div class="card-row"><span class="card-title">Sahel Beach House</span><span class="card-rating"><svg width="12" height="12" viewBox="0 0 24 24" fill="#5B0F16"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg> 4.92 <small style="color:var(--muted);font-weight:400;">(128)</small></span></div>
+          <div class="card-desc">A whitewashed villa steps from the soft sand and the calm North Coast tide. Sleeps 8.</div>
+          <div class="card-foot"><span class="card-loc">📍 Sidi Abdel Rahman · Sahel</span><span class="card-price">EGP 5,200 <small>/ night</small></span></div>
+        </div>
+      </div>
+
+      <div class="card" onclick="openListing('Marakia Boutique Villa','EGP 6,400','./assets/photos/v2.jpg','A modern white villa inside Marakia with calm gardens and a quiet pool deck.','Marakia · North Coast')">
+        <div class="hero">
+          <img class="photo" src="./assets/photos/v2.jpg" alt="Marakia Boutique Villa" loading="lazy" decoding="async"/>
+          <button class="heart on" onclick="event.stopPropagation();toggleHeart(this);"><svg width="18" height="18" viewBox="0 0 24 24" fill="#5B0F16" stroke="#5B0F16" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9C.7 8.4 2.6 4 6.5 4 9 4 10.5 5.5 12 7.5 13.5 5.5 15 4 17.5 4 21.4 4 23.3 8.4 21.5 12 19 16.5 12 21 12 21z"/></svg></button>
+        </div>
+        <div class="card-body">
+          <div class="card-row"><span class="card-title">Marakia Boutique Villa</span><span class="card-rating"><svg width="12" height="12" viewBox="0 0 24 24" fill="#5B0F16"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg> 4.86 <small style="color:var(--muted);font-weight:400;">(94)</small></span></div>
+          <div class="card-desc">A modern white villa inside Marakia with calm gardens and a quiet pool deck.</div>
+          <div class="card-foot"><span class="card-loc">📍 Marakia · North Coast</span><span class="card-price">EGP 6,400 <small>/ night</small></span></div>
+        </div>
+      </div>
+
+      <div class="card" onclick="openListing('Hacienda Cliff Retreat','EGP 7,800','./assets/photos/v3.jpg','A Greek-style cliff house with whitewashed walls perched above a turquoise cove.','Hacienda Bay · Sahel')">
+        <div class="hero">
+          <img class="photo" src="./assets/photos/v3.jpg" alt="Hacienda Cliff Retreat" loading="lazy" decoding="async"/>
+          <div class="badge">Managed</div>
+          <button class="heart" onclick="event.stopPropagation();toggleHeart(this);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9C.7 8.4 2.6 4 6.5 4 9 4 10.5 5.5 12 7.5 13.5 5.5 15 4 17.5 4 21.4 4 23.3 8.4 21.5 12 19 16.5 12 21 12 21z"/></svg></button>
+        </div>
+        <div class="card-body">
+          <div class="card-row"><span class="card-title">Hacienda Cliff Retreat</span><span class="card-rating"><svg width="12" height="12" viewBox="0 0 24 24" fill="#5B0F16"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg> 5.00 <small style="color:var(--muted);font-weight:400;">(46)</small></span></div>
+          <div class="card-desc">A Greek-style cliff house with whitewashed walls perched above a turquoise cove.</div>
+          <div class="card-foot"><span class="card-loc">📍 Hacienda Bay · Sahel</span><span class="card-price">EGP 7,800 <small>/ night</small></span></div>
+        </div>
+      </div>
+
+      <div class="card" onclick="openListing('Sokhna Pool Chalet','EGP 3,900','./assets/photos/v4.jpg','Earth-toned chalet with a private pool and a wide terrace facing the Red Sea.','Ain Sokhna')">
+        <div class="hero">
+          <img class="photo" src="./assets/photos/v4.jpg" alt="Sokhna Pool Chalet" loading="lazy" decoding="async"/>
+          <button class="heart" onclick="event.stopPropagation();toggleHeart(this);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9C.7 8.4 2.6 4 6.5 4 9 4 10.5 5.5 12 7.5 13.5 5.5 15 4 17.5 4 21.4 4 23.3 8.4 21.5 12 19 16.5 12 21 12 21z"/></svg></button>
+        </div>
+        <div class="card-body">
+          <div class="card-row"><span class="card-title">Sokhna Pool Chalet</span><span class="card-rating"><svg width="12" height="12" viewBox="0 0 24 24" fill="#5B0F16"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg> 4.78 <small style="color:var(--muted);font-weight:400;">(212)</small></span></div>
+          <div class="card-desc">Earth-toned chalet with a private pool and a wide terrace facing the Red Sea.</div>
+          <div class="card-foot"><span class="card-loc">📍 Ain Sokhna</span><span class="card-price">EGP 3,900 <small>/ night</small></span></div>
+        </div>
+      </div>
+
+      <div class="card" onclick="openListing('Almaza Beach Retreat','EGP 4,600','./assets/photos/v5.jpg','A luxury beach house at Almaza Bay — linen, brass and breeze. Slow mornings, long afternoons.','Almaza Bay · Sahel')">
+        <div class="hero">
+          <img class="photo" src="./assets/photos/v5.jpg" alt="Almaza Beach Retreat" loading="lazy" decoding="async"/>
+          <button class="heart" onclick="event.stopPropagation();toggleHeart(this);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9C.7 8.4 2.6 4 6.5 4 9 4 10.5 5.5 12 7.5 13.5 5.5 15 4 17.5 4 21.4 4 23.3 8.4 21.5 12 19 16.5 12 21 12 21z"/></svg></button>
+        </div>
+        <div class="card-body">
+          <div class="card-row"><span class="card-title">Almaza Beach Retreat</span><span class="card-rating"><svg width="12" height="12" viewBox="0 0 24 24" fill="#5B0F16"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg> 4.81 <small style="color:var(--muted);font-weight:400;">(67)</small></span></div>
+          <div class="card-desc">A luxury beach house at Almaza Bay — linen, brass and breeze. Slow mornings, long afternoons.</div>
+          <div class="card-foot"><span class="card-loc">📍 Almaza Bay · Sahel</span><span class="card-price">EGP 4,600 <small>/ night</small></span></div>
+        </div>
+      </div>
+
+      <div class="card" onclick="openListing('Telal Boutique Chalet','EGP 5,900','./assets/photos/v6.jpg','Mediterranean architecture with hand-painted tiles, an outdoor kitchen, and a shaded courtyard.','Telal · Sahel')">
+        <div class="hero">
+          <img class="photo" src="./assets/photos/v6.jpg" alt="Telal Boutique Chalet" loading="lazy" decoding="async"/>
+          <button class="heart" onclick="event.stopPropagation();toggleHeart(this);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9C.7 8.4 2.6 4 6.5 4 9 4 10.5 5.5 12 7.5 13.5 5.5 15 4 17.5 4 21.4 4 23.3 8.4 21.5 12 19 16.5 12 21 12 21z"/></svg></button>
+        </div>
+        <div class="card-body">
+          <div class="card-row"><span class="card-title">Telal Boutique Chalet</span><span class="card-rating"><svg width="12" height="12" viewBox="0 0 24 24" fill="#5B0F16"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg> 4.74 <small style="color:var(--muted);font-weight:400;">(155)</small></span></div>
+          <div class="card-desc">Mediterranean architecture with hand-painted tiles, an outdoor kitchen, and a shaded courtyard.</div>
+          <div class="card-foot"><span class="card-loc">📍 Telal · Sahel</span><span class="card-price">EGP 5,900 <small>/ night</small></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== LISTING DETAIL =========== -->
+<div class="screen" id="listing">
+  <div class="scroll no-tabbar">
+    <div class="det-hero" id="det-hero">
+      <img class="photo" id="det-photo" src="./assets/photos/v1.jpg" alt="Sahel Beach House" decoding="async"/>
+      <button class="det-back" onclick="goBack('discover')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B2B2B" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <button class="det-fav" onclick="toggleHeart(this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9C.7 8.4 2.6 4 6.5 4 9 4 10.5 5.5 12 7.5 13.5 5.5 15 4 17.5 4 21.4 4 23.3 8.4 21.5 12 19 16.5 12 21 12 21z"/></svg>
+      </button>
+    </div>
+    <div class="det-body">
+      <h1 class="det-title" id="det-title">Sahel Beach House</h1>
+      <div class="det-meta">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#5B0F16"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg>
+        <span><strong>4.92</strong> · 128 reviews</span>
+        <span style="color:var(--divider);">·</span>
+        <span id="det-loc">Sidi Abdel Rahman · Sahel</span>
+      </div>
+      <div class="host-row">
+        <div class="host-avatar">N</div>
+        <div>
+          <div class="host-name">Hosted by Nour</div>
+          <div class="host-role">Superhost · 4 years on QuickIn</div>
+        </div>
+      </div>
+      <h3 class="det-section-h">About this stay</h3>
+      <p class="det-desc" id="det-desc">A whitewashed villa steps from the soft sand and the calm North Coast tide. Open-plan living, a hand-built fireplace, and a wide shaded terrace for slow lunches.</p>
+      <h3 class="det-section-h">What's included</h3>
+      <div class="amen-grid">
+        <div class="amen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="1.8" stroke-linecap="round"><path d="M5 12a10 10 0 0 1 14 0"/><path d="M8.5 15.5a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1.2" fill="#5B0F16"/></svg><span class="name">Wi-Fi</span></div>
+        <div class="amen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="1.8" stroke-linecap="round"><path d="M3 18c2 0 2-1 4-1s2 1 4 1 2-1 4-1 2 1 4 1"/><path d="M3 14c2 0 2-1 4-1s2 1 4 1 2-1 4-1 2 1 4 1"/><path d="M7 10V6h4"/></svg><span class="name">Pool</span></div>
+        <div class="amen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-4l2-5h11l4 5v4h-2M5 13h14"/></svg><span class="name">Parking</span></div>
+        <div class="amen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M9 3v6M15 3v6"/></svg><span class="name">Kitchen</span></div>
+        <div class="amen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="6" width="18" height="10" rx="2"/><path d="M7 16v3M17 16v3M7 10h.01M11 10h.01M15 10h.01"/></svg><span class="name">A/C</span></div>
+        <div class="amen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="1.8" stroke-linecap="round"><path d="M3 19h18"/><path d="M3 15c3 0 3-2 6-2s3 2 6 2 3-2 6-2"/><circle cx="8" cy="8" r="3"/></svg><span class="name">Beachfront</span></div>
+        <div class="amen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="1.8" stroke-linecap="round"><path d="M6 19V8a3 3 0 0 1 3-3h4a5 5 0 0 1 0 10H6"/><path d="M6 21v-2"/></svg><span class="name">Breakfast</span></div>
+        <div class="amen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/></svg><span class="name">Sea view</span></div>
+      </div>
+      <h3 class="det-section-h">Where you'll be</h3>
+      <div class="map-box">
+        <svg viewBox="0 0 360 140" preserveAspectRatio="xMidYMid slice">
+          <path d="M0 50 Q60 60 120 55 T240 60 T360 50 L360 140 L0 140 Z" fill="#9AB8C0" opacity=".35"/>
+          <path d="M0 70 Q60 80 120 75 T240 80 T360 72 L360 140 L0 140 Z" fill="#7FA0A7" opacity=".3"/>
+          <path d="M40 30 L80 50 L120 35 L160 55 L200 40 L240 60 L280 45 L320 65" stroke="#8C6E3A" stroke-width="1.5" fill="none" stroke-dasharray="3 4" opacity=".6"/>
+          <circle cx="60" cy="30" r="2" fill="#8C6E3A"/><circle cx="300" cy="100" r="2" fill="#8C6E3A"/>
+        </svg>
+        <div class="map-pin">
+          <svg width="28" height="36" viewBox="0 0 28 36"><path d="M14 0C6.3 0 0 6.1 0 13.6 0 24 14 36 14 36s14-12 14-22.4C28 6.1 21.7 0 14 0z" fill="#5B0F16"/><circle cx="14" cy="13" r="5" fill="#F6F1E6"/></svg>
+        </div>
+      </div>
+      <h3 class="det-section-h">Recent reviews</h3>
+      <div class="review">
+        <div class="who"><div class="av">F</div><div><div class="nm">Farida</div><div class="dt">2 weeks ago</div></div></div>
+        <div class="txt">“Truly a calm escape. Nour was warm and the house felt like a home, not a rental.”</div>
+      </div>
+      <div class="review">
+        <div class="who"><div class="av" style="background:linear-gradient(135deg,#7A1C25,#3E0A10);">A</div><div><div class="nm">Adam</div><div class="dt">1 month ago</div></div></div>
+        <div class="txt">“Walking distance to the beach, plenty of light, and the kitchen had everything we needed.”</div>
+      </div>
+    </div>
+  </div>
+  <div class="sticky-book">
+    <div class="price" id="det-price">EGP 5,200<small>per night · 4 nights</small></div>
+    <button class="btn btn-primary" onclick="startBooking()">Book now</button>
+  </div>
+</div>
+
+<!-- =========== BOOKING =========== -->
+<div class="screen" id="booking">
+  <div class="scroll no-tabbar">
+    <div class="book-head">
+      <button class="book-back" onclick="goBack('listing')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B2B2B" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <h2>Confirm booking</h2>
+    </div>
+    <div class="book-body" id="book-body">
+      <div class="cal">
+        <div class="cal-h">
+          <div class="m">July 2026</div>
+          <div class="nav"><span>‹</span><span>›</span></div>
+        </div>
+        <div class="cal-grid">
+          <div class="dow">S</div><div class="dow">M</div><div class="dow">T</div><div class="dow">W</div><div class="dow">T</div><div class="dow">F</div><div class="dow">S</div>
+          <div class="d muted">28</div><div class="d muted">29</div><div class="d muted">30</div><div class="d">1</div><div class="d">2</div><div class="d">3</div><div class="d">4</div>
+          <div class="d">5</div><div class="d">6</div><div class="d">7</div><div class="d">8</div><div class="d">9</div><div class="d">10</div><div class="d">11</div>
+          <div class="d">12</div><div class="d">13</div><div class="d">14</div><div class="d start">15</div><div class="d in-range">16</div><div class="d in-range">17</div><div class="d in-range">18</div>
+          <div class="d end">19</div><div class="d">20</div><div class="d">21</div><div class="d">22</div><div class="d">23</div><div class="d">24</div><div class="d">25</div>
+          <div class="d">26</div><div class="d">27</div><div class="d">28</div><div class="d">29</div><div class="d">30</div><div class="d">31</div><div class="d muted">1</div>
+        </div>
+      </div>
+
+      <div class="summary">
+        <div class="row"><span id="b-name">Sahel Beach House</span><span style="color:var(--muted);">15–19 Jul</span></div>
+        <div class="row muted"><span><span id="b-nightly">EGP 5,200</span> × 4 nights</span><span id="b-subtotal">EGP 20,800</span></div>
+        <div class="row muted"><span>Service fee</span><span>EGP 950</span></div>
+        <div class="row muted"><span>Cleaning fee</span><span>EGP 400</span></div>
+        <div class="row bold"><span>Total</span><span id="b-total">EGP 22,150</span></div>
+      </div>
+
+      <h3 style="font-family:'Playfair Display',serif;font-size:17px;font-weight:600;margin:22px 0 4px;">Payment</h3>
+      <div class="pay-list">
+        <div class="pay-row sel" onclick="selectPay(this)"><div class="logo logo-visa">VISA</div><div class="grow"><div class="nm">Visa · 4291</div><div class="sub">Expires 09/28</div></div><div class="radio"></div></div>
+        <div class="pay-row" onclick="selectPay(this)"><div class="logo logo-apple"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M17.6 13.2c0-2.7 2.2-4 2.3-4.1-1.2-1.8-3.2-2-3.9-2-1.6-.2-3.2 1-4 1-.8 0-2.1-1-3.5-.9-1.8 0-3.5 1-4.4 2.7-1.9 3.3-.5 8.2 1.4 10.9.9 1.3 2 2.8 3.4 2.7 1.4-.1 1.9-.9 3.5-.9 1.6 0 2.1.9 3.5.9 1.5 0 2.4-1.3 3.3-2.6 1-1.5 1.5-3 1.5-3.1-.1 0-2.9-1.1-3.1-4.6z"/></svg></div><div class="grow"><div class="nm">Apple Pay</div><div class="sub">Face ID required</div></div><div class="radio"></div></div>
+        <div class="pay-row" onclick="selectPay(this)"><div class="logo logo-insta">IPN</div><div class="grow"><div class="nm">InstaPay</div><div class="sub">Bank-to-bank, instant</div></div><div class="radio"></div></div>
+      </div>
+    </div>
+    <div class="confirm-cta">
+      <button class="btn btn-primary" onclick="confirmBooking()">Confirm Booking · <span id="cta-total">EGP 22,150</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- =========== CONFIRMED =========== -->
+<div class="screen" id="confirmed">
+  <div class="scroll no-tabbar">
+    <div class="book-head">
+      <button class="book-back" onclick="goTo('discover')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B2B2B" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <h2>You're booked</h2>
+    </div>
+    <div class="confirmed-card">
+      <div class="check-ring"><div class="inner">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F6F1E6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </div></div>
+      <h3 id="c-name">Sahel Beach House</h3>
+      <p>15 – 19 July 2026 · 4 nights<br/>Get-away time. We've sent the confirmation to your inbox.</p>
+      <div class="code">Reservation · <span id="c-code">QKN-A4F2</span></div>
+    </div>
+    <div style="padding:18px 22px;display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-light" onclick="goTo('trips')">View in Trips</button>
+      <button class="btn btn-text" onclick="goTo('discover')">Back to discover</button>
+    </div>
+  </div>
+</div>
+
+<!-- =========== TRIPS =========== -->
+<div class="screen" id="trips">
+  <div class="scroll">
+    <div class="trips-head">
+      <div class="brand-row" style="margin-bottom:6px;">
+        <div class="brand"><img src="./assets/logo-icon.png" alt=""> QuickIn</div>
+      </div>
+      <h1 class="head-title" style="font-size:30px;">Your <em>trips.</em></h1>
+      <p class="head-sub" style="margin-bottom:6px;">Booked, en route and remembered.</p>
+    </div>
+    <div class="trips-list">
+      <div class="trip" onclick="openListing('Sahel Beach House','EGP 5,200','./assets/photos/v1.jpg','A whitewashed villa steps from the soft sand and the calm North Coast tide.','Sidi Abdel Rahman · Sahel')">
+        <div class="thumb"><img src="./assets/photos/v1.jpg" alt="Sahel Beach House" loading="lazy" decoding="async"/></div>
+        <div class="info"><span class="pill pill-upcoming">Upcoming</span><div class="nm">Sahel Beach House</div><div class="dt">15 – 19 Jul 2026 · 4 nights</div><div class="cd">QKN-A4F2</div></div>
+      </div>
+      <div class="trip" onclick="openListing('Almaza Beach Retreat','EGP 4,600','./assets/photos/v5.jpg','A luxury beach house at Almaza Bay — linen, brass and breeze. Slow mornings, long afternoons.','Almaza Bay · Sahel')">
+        <div class="thumb"><img src="./assets/photos/v5.jpg" alt="Almaza Beach Retreat" loading="lazy" decoding="async"/></div>
+        <div class="info"><span class="pill pill-active">Checked in</span><div class="nm">Almaza Beach Retreat</div><div class="dt">8 – 12 Jun 2026 · 4 nights</div><div class="cd">QKN-B7K9</div></div>
+      </div>
+      <div class="trip" onclick="openListing('Mountain View Terrace','EGP 5,400','./assets/photos/v8.jpg','A poolside terrace at dusk — Mediterranean lines and a quiet courtyard.','Marassi · Sahel')">
+        <div class="thumb"><img src="./assets/photos/v8.jpg" alt="Mountain View Terrace" loading="lazy" decoding="async"/></div>
+        <div class="info"><span class="pill pill-past">Past stay</span><div class="nm">Mountain View Terrace</div><div class="dt">2 – 6 May 2026 · 4 nights</div><div class="cd">QKN-X3M1</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== ASSISTANT =========== -->
+<div class="screen" id="assistant">
+  <div class="scroll" style="bottom:152px;">
+    <div class="chat-head">
+      <div class="ai-av">Q</div>
+      <div class="who">
+        <div class="nm">QuickIn AI</div>
+        <div class="st">Online · ready to help</div>
+      </div>
+    </div>
+    <div class="chat" id="chat">
+      <div class="bub bub-ai">Marhaba! I'm your QuickIn concierge. I can help you find a stay, plan dates, or answer anything about a reservation.</div>
+      <div class="bub bub-ai">What kind of trip are you dreaming about?</div>
+      <div class="suggests">
+        <button class="sug" onclick="sendCanned('Show me beach houses in Sahel')">Beach houses in Sahel</button>
+        <button class="sug" onclick="sendCanned('Quiet stays under EGP 4,000')">Quiet under EGP 4,000</button>
+        <button class="sug" onclick="sendCanned('What can I do in Marakia?')">Things in Marakia</button>
+      </div>
+    </div>
+  </div>
+  <div class="chat-input">
+    <input id="chat-input" type="text" placeholder="Ask QuickIn AI…" />
+    <button class="send-btn" onclick="sendTyped()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F6F1E6" stroke-width="2" stroke-linecap="round"><path d="M3 20l18-8L3 4l3 8-3 8z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- =========== PROFILE =========== -->
+<div class="screen" id="profile">
+  <div class="scroll">
+    <div class="prof-wrap">
+      <div class="prof-av">A</div>
+      <h2 class="prof-name">Ahmed Farahat</h2>
+      <span class="prof-mail">tech@example.com</span>
+      <span class="coming">More profile features coming soon</span>
+      <div class="prof-list">
+        <div class="prof-row"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="2" stroke-linecap="round"><path d="M12 21s-7-4.5-9.5-9C.7 8.4 2.6 4 6.5 4 9 4 10.5 5.5 12 7.5 13.5 5.5 15 4 17.5 4 21.4 4 23.3 8.4 21.5 12 19 16.5 12 21 12 21z"/></svg></div>Saved stays<span class="chev">›</span></div>
+        <div class="prof-row"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg></div>Payment methods<span class="chev">›</span></div>
+        <div class="prof-row"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></div>Identity verified<span class="chev">›</span></div>
+        <div class="prof-row"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></div>Settings<span class="chev">›</span></div>
+        <div class="prof-row" onclick="goTo('splash')"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B0F16" stroke-width="2" stroke-linecap="round"><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/><path d="M13 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8"/></svg></div>Sign out<span class="chev">›</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== STATUS BAR (rendered above all) =========== -->
+<div class="statusbar">
+  <span>9:41</span>
+  <div class="right">
+    <svg width="18" height="11" viewBox="0 0 18 11" fill="#2B2B2B"><rect y="7" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="6" rx="1"/><rect x="10" y="3" width="3" height="8" rx="1"/><rect x="15" y="1" width="3" height="10" rx="1"/></svg>
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="#2B2B2B" stroke-width="1.4" stroke-linecap="round"><path d="M1 4a10 10 0 0 1 14 0"/><path d="M3.5 6.5a6.5 6.5 0 0 1 9 0"/><path d="M6 9a3 3 0 0 1 4 0"/></svg>
+    <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="2.5" stroke="#2B2B2B" stroke-width="1.2"/><rect x="3" y="3" width="16" height="6" rx="1.2" fill="#2B2B2B"/><rect x="22" y="4" width="2" height="4" rx="1" fill="#2B2B2B"/></svg>
+  </div>
+</div>
+<div class="notch"></div>
+
+<!-- =========== TAB BAR =========== -->
+<div class="tabbar" id="tabbar">
+  <button class="tab active" data-tab="discover" onclick="goTab('discover')">
+    <svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7A746A" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path class="fill" fill="#7A746A" stroke="none" d="M16 8l-2.8 5.2L8 16l2.8-5.2z"/></svg>
+    Discover
+  </button>
+  <button class="tab" data-tab="trips" onclick="goTab('trips')">
+    <svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7A746A" stroke-width="1.8" stroke-linecap="round"><path d="M20 7H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1z"/><path d="M8 7V4h8v3"/></svg>
+    Trips
+  </button>
+  <button class="tab" data-tab="assistant" onclick="goTab('assistant')">
+    <svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7A746A" stroke-width="1.8" stroke-linecap="round"><path d="M21 12c0 4.4-4 8-9 8a10 10 0 0 1-3.5-.6L4 21l1.6-4A7.5 7.5 0 0 1 3 12c0-4.4 4-8 9-8s9 3.6 9 8z"/></svg>
+    Assistant
+  </button>
+  <button class="tab" data-tab="profile" onclick="goTab('profile')">
+    <svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7A746A" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+    Profile
+  </button>
+</div>
+<div class="home-indicator"></div>
+
+<!-- =========== SEARCH SHEET =========== -->
+<div class="sheet-backdrop" id="sheet-bd" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <h3>Where to?</h3>
+  <input type="text" placeholder="Search destinations" />
+  <div class="lbl">Popular near you</div>
+  <div class="chips">
+    <button class="chip" onclick="filterTo('Sahel')">Sahel</button>
+    <button class="chip" onclick="filterTo('Hacienda')">Hacienda</button>
+    <button class="chip" onclick="filterTo('Marakia')">Marakia</button>
+    <button class="chip" onclick="filterTo('Sokhna')">Sokhna</button>
+  </div>
+  <div class="lbl">When</div>
+  <div class="chips">
+    <button class="chip">This weekend</button>
+    <button class="chip">Next week</button>
+    <button class="chip">Choose dates</button>
+  </div>
+</div>
+
+<!-- processing overlay -->
+<div class="proc-overlay" id="proc">
+  <div class="proc-card"><div class="spinner"></div><div class="t">Securing your stay…</div></div>
+</div>
+
+<!-- toast -->
+<div class="toast" id="toast">Filtering by Sahel</div>
+
+</div>
+
+<script>
+const screens = ['splash','discover','listing','booking','confirmed','trips','assistant','profile'];
+const tabScreens = ['discover','trips','assistant','profile'];
+let current = 'splash';
+
+function goTo(id){
+  if(id === current) return;
+  const cur = document.getElementById(current);
+  const next = document.getElementById(id);
+  if(!next) return;
+  // determine direction (within tabbar group = no slide; instead instant swap for tabs)
+  const fromTab = tabScreens.includes(current);
+  const toTab = tabScreens.includes(id);
+  if(fromTab && toTab){
+    cur.classList.remove('active');
+    next.classList.add('active');
+  } else {
+    // slide
+    cur.classList.remove('active');
+    cur.classList.add('exit-left');
+    next.classList.add('active');
+    setTimeout(()=>{cur.classList.remove('exit-left');}, 420);
+  }
+  current = id;
+  updateTabbar();
+}
+
+function goBack(id){
+  const cur = document.getElementById(current);
+  const next = document.getElementById(id);
+  cur.classList.remove('active');
+  // slide it back to right
+  cur.style.transition = 'transform .38s cubic-bezier(.32,.72,.32,1)';
+  cur.style.transform = 'translateX(100%)';
+  next.classList.remove('exit-left');
+  next.classList.add('active');
+  setTimeout(()=>{cur.style.transition=''; cur.style.transform='';}, 420);
+  current = id;
+  updateTabbar();
+}
+
+function goTab(id){
+  goTo(id);
+}
+
+function updateTabbar(){
+  const tb = document.getElementById('tabbar');
+  const cur = document.getElementById(current);
+  const hide = cur && cur.dataset.tabbar === 'hide';
+  // also hide on listing / booking / confirmed
+  const noTab = ['splash','listing','booking','confirmed'].includes(current);
+  tb.classList.toggle('hidden', noTab || hide);
+  // active highlight
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.tab === current);
+  });
+}
+
+function toggleHeart(el){
+  el.classList.toggle('on');
+}
+
+function openSheet(){
+  document.getElementById('sheet-bd').classList.add('show');
+  document.getElementById('sheet').classList.add('show');
+}
+function closeSheet(){
+  document.getElementById('sheet-bd').classList.remove('show');
+  document.getElementById('sheet').classList.remove('show');
+}
+function filterTo(name){
+  closeSheet();
+  showToast('Filtering by ' + name);
+}
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+// Listing detail
+function openListing(name, price, photoUrl, desc, loc){
+  document.getElementById('det-title').textContent = name;
+  document.getElementById('det-loc').textContent = loc;
+  document.getElementById('det-desc').textContent = desc + ' Open-plan living, hand-built wood accents, and a wide shaded terrace for slow lunches.';
+  const hero = document.getElementById('det-hero');
+  hero.className = 'det-hero';
+  const photo = document.getElementById('det-photo');
+  if(photo && photoUrl){
+    photo.src = photoUrl;
+    photo.alt = name;
+  }
+  document.getElementById('det-price').innerHTML = price + '<small>per night · 4 nights</small>';
+  // also stash for booking
+  document.getElementById('b-name').textContent = name;
+  const num = parseInt(price.replace(/[^0-9]/g,''),10);
+  document.getElementById('b-nightly').textContent = 'EGP ' + num.toLocaleString();
+  const sub = num * 4;
+  const total = sub + 950 + 400;
+  document.getElementById('b-subtotal').textContent = 'EGP ' + sub.toLocaleString();
+  document.getElementById('b-total').textContent = 'EGP ' + total.toLocaleString();
+  document.getElementById('cta-total').textContent = 'EGP ' + total.toLocaleString();
+  document.getElementById('c-name').textContent = name;
+  // generate reservation code
+  const code = 'QKN-' + Math.random().toString(36).slice(2,6).toUpperCase();
+  document.getElementById('c-code').textContent = code;
+  goTo('listing');
+  // scroll detail to top
+  setTimeout(()=>{
+    const s = document.querySelector('#listing .scroll');
+    if(s) s.scrollTop = 0;
+  }, 50);
+}
+
+function startBooking(){ goTo('booking'); }
+
+function selectPay(row){
+  document.querySelectorAll('#booking .pay-row').forEach(r=>r.classList.remove('sel'));
+  row.classList.add('sel');
+}
+
+function confirmBooking(){
+  const p = document.getElementById('proc');
+  p.classList.add('show');
+  setTimeout(()=>{
+    p.classList.remove('show');
+    goTo('confirmed');
+  }, 900);
+}
+
+// Chat
+function appendBubble(text, who){
+  const chat = document.getElementById('chat');
+  const b = document.createElement('div');
+  b.className = 'bub bub-' + who;
+  b.textContent = text;
+  chat.appendChild(b);
+  chat.parentElement.scrollTop = chat.parentElement.scrollHeight;
+  return b;
+}
+function appendTyping(){
+  const chat = document.getElementById('chat');
+  const t = document.createElement('div');
+  t.className = 'typing';
+  t.id = 'typing-bubble';
+  t.innerHTML = '<span></span><span></span><span></span>';
+  chat.appendChild(t);
+  chat.parentElement.scrollTop = chat.parentElement.scrollHeight;
+}
+function removeTyping(){
+  const t = document.getElementById('typing-bubble');
+  if(t) t.remove();
+}
+function appendRecs(){
+  const chat = document.getElementById('chat');
+  const wrap = document.createElement('div');
+  wrap.className = 'rec-cards';
+  wrap.innerHTML = `
+    <div class="rec" onclick="openListing('Sahel Beach House','EGP 5,200','./assets/photos/v1.jpg','A whitewashed villa steps from the soft sand and the calm North Coast tide.','Sidi Abdel Rahman · Sahel')">
+      <div class="img"><img src="./assets/photos/v1.jpg" alt="Sahel Beach House" loading="lazy" decoding="async"/></div>
+      <div><div class="nm">Sahel Beach House</div><div class="meta">Sahel · 4.92 (128)</div><div class="pr">EGP 5,200 / night</div></div>
+    </div>
+    <div class="rec" onclick="openListing('Hacienda Cliff Retreat','EGP 7,800','./assets/photos/v3.jpg','A Greek-style cliff house with whitewashed walls perched above a turquoise cove.','Hacienda Bay · Sahel')">
+      <div class="img"><img src="./assets/photos/v3.jpg" alt="Hacienda Cliff Retreat" loading="lazy" decoding="async"/></div>
+      <div><div class="nm">Hacienda Cliff Retreat</div><div class="meta">Hacienda Bay · 5.00 (46)</div><div class="pr">EGP 7,800 / night</div></div>
+    </div>
+  `;
+  chat.appendChild(wrap);
+  chat.parentElement.scrollTop = chat.parentElement.scrollHeight;
+}
+
+function sendCanned(text){
+  appendBubble(text, 'me');
+  appendTyping();
+  setTimeout(()=>{
+    removeTyping();
+    let reply = "Lovely — here are two boutique stays I think you'll love. Both are well-rated and have warm sea-facing terraces.";
+    if(text.toLowerCase().includes('marakia')) reply = "Marakia is one of our managed locations — calm beaches, a small marina, and tucked-away cafés. Great for a slow weekend.";
+    if(text.toLowerCase().includes('under')) reply = "Got it. Here are two quiet stays under EGP 4,000 — both with strong reviews from past QuickIn guests.";
+    appendBubble(reply, 'ai');
+    if(!text.toLowerCase().includes('marakia')) setTimeout(appendRecs, 250);
+  }, 700);
+}
+
+function sendTyped(){
+  const inp = document.getElementById('chat-input');
+  const v = inp.value.trim();
+  if(!v) return;
+  inp.value = '';
+  appendBubble(v, 'me');
+  appendTyping();
+  setTimeout(()=>{
+    removeTyping();
+    appendBubble("Got it — I'll keep that in mind. Want me to surface a few stays that match?", 'ai');
+  }, 700);
+}
+
+document.getElementById('chat-input').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') sendTyped();
+});
+
+updateTabbar();
+</script>
+</body>
+</html>

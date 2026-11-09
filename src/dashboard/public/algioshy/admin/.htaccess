@@ -1,0 +1,32 @@
+# ─────────────────────────────────────────────────────────────────
+#  Admin area security
+# ─────────────────────────────────────────────────────────────────
+
+# Deny direct web access to config and helper files
+<FilesMatch "^(config\.php|config\.example\.php|db\.php|auth\.php|schema\.sql|setup-admin\.php)$">
+    Require all denied
+</FilesMatch>
+
+# Also deny anything inside /includes or .env variants
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Force HTTPS on the admin area
+RewriteEngine On
+RewriteCond %{HTTPS} !=on
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# Prevent directory listing
+Options -Indexes
+
+# Security headers for admin pages
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Cache-Control "no-store, no-cache, must-revalidate, private"
+</IfModule>
+
+# PHP error hide in production (errors still go to error_log)
+php_flag display_errors off

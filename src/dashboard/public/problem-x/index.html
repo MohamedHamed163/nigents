@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Problem-X — Work Portfolio</title>
+  <meta name="description" content="Software studio Problem-X — shipped apps, websites and tools. Workspace, App, Droob, SmartCollegeSchool, SpecMaster, Nigents." />
+  <meta property="og:title" content="Problem-X — Work Portfolio" />
+  <meta property="og:description" content="Real apps. Live in production. Built by Problem-X." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/problem-x/screens/workspace-hub.png" />
+  <meta name="theme-color" content="#2563EB" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Theme — Problem-X white + blue ──────────────────── */
+    :root {
+      --bg-page:     #ffffff;
+      --bg-off:      #f8fafc;
+      --bg-soft:     #f1f5f9;
+      --bg-card:     #ffffff;
+      --border:      #e2e8f0;
+      --border-strong: #cbd5e1;
+      --text-deep:   #0f172a;
+      --text-body:   #334155;
+      --text-soft:   #475569;
+      --text-muted:  #64748b;
+      --text-faint:  #94a3b8;
+      --blue-50:     #eff6ff;
+      --blue-100:    #dbeafe;
+      --blue-200:    #bfdbfe;
+      --blue-300:    #93c5fd;
+      --blue-500:    #3b82f6;
+      --blue-600:    #2563eb;
+      --blue-700:    #1d4ed8;
+      --blue-800:    #1e40af;
+      --blue-900:    #1e3a8a;
+      --green:       #10b981;
+      --amber:       #f59e0b;
+      --rose:        #f43f5e;
+      --purple:      #8b5cf6;
+      --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.06);
+      --shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 18px 40px -12px rgba(15, 23, 42, 0.14);
+      --shadow-xl: 0 28px 60px -18px rgba(15, 23, 42, 0.22);
+      --shadow-2xl: 0 40px 80px -22px rgba(15, 23, 42, 0.28);
+      --shadow-blue: 0 10px 30px -8px rgba(37, 99, 235, 0.35);
+      --shadow-blue-lg: 0 22px 60px -16px rgba(37, 99, 235, 0.4);
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      --radius-2xl: 22px;
+      --gutter: clamp(16px, 4vw, 40px);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg-page);
+      color: var(--text-body);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+
+    /* Subtle blue ambient glow at the top */
+    body::before {
+      content: '';
+      position: fixed; top: -360px; left: 50%;
+      transform: translateX(-50%);
+      width: 1400px; height: 900px;
+      background:
+        radial-gradient(ellipse at center, rgba(37,99,235,0.16) 0%, transparent 65%),
+        radial-gradient(circle at 30% 20%, rgba(139,92,246,0.08) 0%, transparent 50%);
+      pointer-events: none; z-index: 0;
+      animation: pulseGlow 8s ease-in-out infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+      50% { opacity: 0.85; transform: translateX(-50%) scale(1.05); }
+    }
+    /* Dotted background pattern */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none; z-index: 0;
+      mask-image: radial-gradient(ellipse at center, #000 30%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 70%);
+    }
+
+    .top-banner {
+      height: 4px;
+      background: linear-gradient(90deg, var(--blue-700), var(--blue-500), var(--blue-700));
+      position: relative; z-index: 2;
+      background-size: 200% 100%;
+      animation: shimmer 6s linear infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── Nav ─────────────────────────────────────────────── */
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px var(--gutter); gap: 16px; flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+    }
+    /* Header brand — big logo + matching wordmark.
+       Logo is large (72px on desktop, 60px on phone) and "PROBLEM-X"
+       wordmark sits next to it in heavy bold matching the logo's weight. */
+    .nav-brand {
+      display: flex; align-items: center; gap: 16px;
+      color: var(--text-deep);
+      transition: transform .2s var(--ease-smooth);
+      flex-shrink: 0;
+    }
+    .nav-brand:hover { transform: scale(1.02); }
+    .nav-brand .mark {
+      width: 72px; height: 72px; border-radius: 16px;
+      background: var(--blue-50);
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 10px;
+      border: 1.5px solid var(--blue-100);
+      box-shadow: var(--shadow-md);
+      transition: background-color .2s, border-color .2s, box-shadow .2s;
+      flex-shrink: 0;
+    }
+    .nav-brand:hover .mark {
+      background: var(--blue-100);
+      border-color: var(--blue-200);
+      box-shadow: var(--shadow-lg);
+    }
+    .nav-brand .mark img { width: 100%; height: 100%; object-fit: contain; }
+    .nav-brand .mark-text {
+      display: flex; flex-direction: column; line-height: 1;
+    }
+    .nav-brand .mark-text .wordmark {
+      color: var(--text-deep);
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--text-deep) 0%, var(--blue-700) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-brand .mark-text .tagline {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      margin-top: 5px;
+      text-transform: uppercase;
+    }
+    @media (max-width: 640px) {
+      .nav-brand .mark { width: 60px; height: 60px; padding: 8px; border-radius: 14px; }
+      .nav-brand .mark-text .wordmark { font-size: 22px; }
+      .nav-brand .mark-text .tagline { font-size: 10px; letter-spacing: 0.14em; margin-top: 4px; }
+    }
+    @media (max-width: 440px) {
+      .nav-brand { gap: 12px; }
+      .nav-brand .mark { width: 52px; height: 52px; }
+      .nav-brand .mark-text .wordmark { font-size: 18px; }
+    }
+    .nav-links { display: flex; gap: 22px; align-items: center; font-size: 14px; flex-wrap: wrap; }
+    .nav-links a { color: var(--text-soft); transition: color .15s; font-weight: 500; position: relative; }
+    .nav-links a:not(.nav-cta)::after {
+      content: ''; position: absolute; bottom: -4px; left: 0; right: 0;
+      height: 2px; background: var(--blue-600); border-radius: 1px;
+      transform: scaleX(0); transition: transform .2s var(--ease-smooth);
+      transform-origin: center;
+    }
+    .nav-links a:not(.nav-cta):hover { color: var(--blue-600); }
+    .nav-links a:not(.nav-cta):hover::after { transform: scaleX(1); }
+    .nav-cta {
+      padding: 10px 20px; border-radius: 10px;
+      background: var(--blue-600); color: #fff;
+      font-weight: 600; font-size: 13.5px;
+      transition: transform .2s var(--ease-smooth), box-shadow .2s, background-color .15s;
+      box-shadow: var(--shadow-blue);
+    }
+    .nav-cta:hover { background: var(--blue-700); transform: translateY(-2px); box-shadow: var(--shadow-blue-lg); }
+
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 0 var(--gutter); position: relative; z-index: 2; }
+
+    /* ── Hero ─────────────────────────────────────────────── */
+    .hero { padding: clamp(70px, 11vw, 130px) 0 clamp(40px, 7vw, 80px); text-align: center; }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 16px;
+      background: var(--blue-50); color: var(--blue-700);
+      border-radius: 999px; font-size: 12px; font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 26px; border: 1px solid var(--blue-100);
+      box-shadow: 0 2px 6px -2px rgba(37, 99, 235, 0.15);
+      animation: floatY 4s ease-in-out infinite;
+    }
+    @keyframes floatY {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    .hero-eyebrow::before {
+      content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--blue-600);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+      animation: livePulse 2s ease-in-out infinite;
+    }
+    .hero h1 {
+      font-size: clamp(40px, 7.5vw, 88px);
+      font-weight: 900; line-height: 1.02;
+      letter-spacing: -0.045em; margin: 0 0 24px;
+      color: var(--text-deep);
+    }
+    .hero h1 .accent {
+      background: linear-gradient(135deg, var(--blue-600) 0%, var(--blue-500) 40%, var(--blue-800) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      position: relative; display: inline-block;
+    }
+    .hero h1 .accent::after {
+      content: ''; position: absolute; left: 0; right: 0; bottom: -6px;
+      height: 6px; border-radius: 6px;
+      background: linear-gradient(90deg, var(--blue-200), var(--blue-500), var(--blue-200));
+      opacity: 0.4;
+      animation: underlineWave 3s ease-in-out infinite;
+    }
+    @keyframes underlineWave {
+      0%, 100% { transform: scaleX(1); opacity: 0.4; }
+      50% { transform: scaleX(0.85); opacity: 0.7; }
+    }
+    .hero p.lede {
+      font-size: clamp(17px, 1.8vw, 20px);
+      color: var(--text-soft); max-width: 64ch; margin: 0 auto 30px;
+      line-height: 1.65;
+    }
+    .hero p.lede strong { color: var(--text-deep); font-weight: 700; }
+    .hero-stats {
+      display: flex; justify-content: center; gap: clamp(16px, 3vw, 28px);
+      margin-top: 44px; flex-wrap: wrap;
+    }
+    .hero-stat {
+      padding: 22px 32px; border-radius: var(--radius-lg);
+      background: var(--bg-card); border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      min-width: 170px;
+      transition: transform .25s var(--ease-spring), box-shadow .2s, border-color .2s;
+    }
+    .hero-stat:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--blue-200);
+    }
+    .hero-stat .v {
+      font-size: clamp(26px, 3.5vw, 36px);
+      font-weight: 900; letter-spacing: -0.025em;
+      background: linear-gradient(135deg, var(--blue-600) 0%, var(--blue-800) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-stat .l {
+      font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+      color: var(--text-muted); margin-top: 6px; text-transform: uppercase;
+    }
+
+    /* ── Section heading ─────────────────────────────────── */
+    .section-head { margin: clamp(60px, 9vw, 100px) 0 36px; text-align: center; }
+    .section-head .tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px;
+      background: var(--bg-card); color: var(--blue-700);
+      border-radius: 999px; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px; border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      text-transform: uppercase;
+    }
+    .section-head h2 {
+      font-size: clamp(30px, 4.2vw, 46px);
+      font-weight: 800; letter-spacing: -0.028em;
+      margin: 0 0 14px; line-height: 1.15;
+      color: var(--text-deep);
+    }
+    .section-head p { color: var(--text-soft); font-size: 16px; max-width: 60ch; margin: 0 auto; line-height: 1.65; }
+
+    /* ── Reveal-on-scroll ─────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity .7s var(--ease-smooth), transform .7s var(--ease-smooth);
+    }
+    .reveal.is-visible { opacity: 1; transform: translateY(0); }
+    .reveal[data-delay="100"] { transition-delay: .1s; }
+    .reveal[data-delay="200"] { transition-delay: .2s; }
+    .reveal[data-delay="300"] { transition-delay: .3s; }
+
+    /* ── Live iframe component ───────────────────────────── */
+    .live-frame {
+      position: relative; aspect-ratio: 16/9; overflow: hidden;
+      background: linear-gradient(135deg, var(--bg-soft) 0%, var(--blue-50) 100%);
+    }
+    /* The iframe is rendered at 1440x900 logical px then scaled by JS.
+       pointer-events: auto means the user can SCROLL inside the embedded
+       site and click links / interact with it normally. The modal-open
+       affordance is provided by the .open-overlay button below + by the
+       text area of the card body (clicking anywhere outside the iframe
+       opens the modal because clicks inside the iframe don't bubble to
+       the parent card — the iframe consumes them). */
+    .live-frame iframe {
+      position: absolute; top: 0; left: 0;
+      width: 1440px; height: 900px;
+      border: 0;
+      pointer-events: auto;
+      transform-origin: 0 0;
+      transition: opacity .35s var(--ease-smooth);
+      opacity: 0;
+      background: #fff;
+    }
+
+    /* "Open details ↗" pill — sits above the iframe in the bottom-right
+       of the preview. Clicks here open the project modal (not the iframe). */
+    .live-frame .open-overlay {
+      position: absolute; bottom: 10px; right: 10px;
+      z-index: 7;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: #fff;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.35);
+      transition: background-color 0.18s, transform 0.18s var(--ease-spring), box-shadow 0.2s;
+    }
+    .live-frame .open-overlay:hover {
+      background: var(--blue-600);
+      border-color: var(--blue-500);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.55);
+    }
+    .live-frame .open-overlay .arrow {
+      font-size: 13px; line-height: 1; transition: transform .15s;
+    }
+    .live-frame .open-overlay:hover .arrow { transform: translate(2px, -2px); }
+
+    /* Scroll hint that fades after a few seconds — appears bottom-LEFT so it
+       doesn't collide with the OPEN pill. Helps users discover the iframe
+       is interactive. */
+    .live-frame .scroll-hint {
+      position: absolute; bottom: 10px; left: 10px;
+      z-index: 6;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: var(--text-deep);
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      pointer-events: none;
+      opacity: 0; transform: translateY(6px);
+      animation: scrollHintIn .4s var(--ease-smooth) .6s forwards,
+                 scrollHintOut .5s var(--ease-smooth) 6s forwards;
+    }
+    @keyframes scrollHintIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scrollHintOut {
+      to { opacity: 0; transform: translateY(6px); pointer-events: none; }
+    }
+    .live-frame .scroll-hint::before {
+      content: ''; width: 11px; height: 11px;
+      background: currentColor;
+      mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'><path d='M12 2C7.6 2 4 5.6 4 10v4c0 4.4 3.6 8 8 8s8-3.6 8-8v-4c0-4.4-3.6-8-8-8zm0 2c3.3 0 6 2.7 6 6v4c0 3.3-2.7 6-6 6s-6-2.7-6-6v-4c0-3.3 2.7-6 6-6zm0 2c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1s1-.45 1-1V7c0-.55-.45-1-1-1z'/></svg>") center / contain no-repeat;
+      -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'><path d='M12 2C7.6 2 4 5.6 4 10v4c0 4.4 3.6 8 8 8s8-3.6 8-8v-4c0-4.4-3.6-8-8-8zm0 2c3.3 0 6 2.7 6 6v4c0 3.3-2.7 6-6 6s-6-2.7-6-6v-4c0-3.3 2.7-6 6-6zm0 2c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1s1-.45 1-1V7c0-.55-.45-1-1-1z'/></svg>") center / contain no-repeat;
+    }
+    .live-frame iframe.is-loaded { opacity: 1; }
+    /* Skeleton shimmer shown while the iframe loads */
+    .live-frame::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(110deg, var(--bg-soft) 30%, var(--bg-off) 50%, var(--bg-soft) 70%);
+      background-size: 200% 100%;
+      animation: skeletonShimmer 1.8s linear infinite;
+      z-index: 0;
+    }
+    .live-frame.is-loaded::before { display: none; }
+    @keyframes skeletonShimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    /* "Live" badge in the top-right of every live iframe */
+    .live-frame::after {
+      content: 'LIVE'; position: absolute; top: 10px; right: 10px;
+      padding: 4px 9px; border-radius: 999px;
+      background: rgba(15, 23, 42, 0.78); color: #fff;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 9.5px; font-weight: 800; letter-spacing: 0.14em;
+      z-index: 5; pointer-events: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      animation: livePulse 2s ease-in-out infinite;
+    }
+    @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+    /* ── Featured project (Workspace) ───────────────────────── */
+    .featured {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-2xl); overflow: hidden;
+      display: grid; grid-template-columns: 1.05fr 1fr;
+      gap: 0; min-height: 480px;
+      box-shadow: var(--shadow-lg);
+      cursor: pointer;
+      transition: border-color .25s var(--ease-smooth), transform .35s var(--ease-spring), box-shadow .25s;
+    }
+    .featured:hover {
+      border-color: var(--blue-300);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-2xl);
+    }
+    @media (max-width: 880px) { .featured { grid-template-columns: 1fr; } }
+
+    .featured-left { padding: clamp(28px, 4vw, 52px); display: flex; flex-direction: column; justify-content: center; }
+    .featured-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 12px; border-radius: 999px;
+      background: #ecfdf5; color: #047857;
+      border: 1px solid #a7f3d0;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em;
+      align-self: flex-start; margin-bottom: 18px;
+    }
+    .featured-tag::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      animation: livePulse 2s ease-in-out infinite;
+    }
+    .featured-left h3 {
+      font-size: clamp(34px, 5vw, 54px); font-weight: 900;
+      letter-spacing: -0.035em; margin: 0 0 10px; line-height: 1.02;
+      color: var(--text-deep);
+    }
+    .featured-left .tagline {
+      font-size: 15px; color: var(--blue-600);
+      font-weight: 700; letter-spacing: -0.005em; margin-bottom: 16px;
+    }
+    .featured-left p.desc {
+      color: var(--text-soft); font-size: 15.5px; line-height: 1.7;
+      max-width: 52ch; margin: 0 0 24px;
+    }
+    .featured-tech { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 24px; }
+    .tech-chip {
+      padding: 5px 11px; border-radius: 7px;
+      background: var(--bg-off); color: var(--text-soft);
+      border: 1px solid var(--border);
+      font-size: 11.5px; font-weight: 600;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      transition: background-color .15s, border-color .15s, color .15s;
+    }
+    .tech-chip:hover { background: var(--blue-50); border-color: var(--blue-200); color: var(--blue-700); }
+    .featured-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px; border-radius: 10px;
+      background: var(--blue-600); color: #fff;
+      font-weight: 600; font-size: 14px;
+      box-shadow: var(--shadow-blue);
+      transition: transform .2s var(--ease-spring), background-color .15s, box-shadow .2s;
+      border: none; cursor: pointer; font-family: inherit;
+    }
+    .btn-primary:hover { background: var(--blue-700); transform: translateY(-2px); box-shadow: var(--shadow-blue-lg); }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 11px 18px; border-radius: 10px;
+      border: 1px solid var(--border-strong); color: var(--text-deep);
+      font-weight: 600; font-size: 13.5px;
+      transition: border-color .15s, background-color .15s, transform .15s var(--ease-smooth);
+      background: var(--bg-card); cursor: pointer; font-family: inherit;
+    }
+    .btn-ghost:hover { border-color: var(--blue-500); color: var(--blue-700); background: var(--blue-50); transform: translateY(-1px); }
+
+    .store-badges { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+    .store-badge {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 9px 16px 9px 13px;
+      background: #0f172a; color: #fff;
+      border: 1px solid #0f172a; border-radius: 10px;
+      transition: transform .2s var(--ease-spring), background-color .15s;
+    }
+    .store-badge:hover { transform: translateY(-2px); background: #1e293b; }
+    .store-badge .ic { font-size: 22px; line-height: 1; }
+    .store-badge .copy { display: flex; flex-direction: column; line-height: 1.2; }
+    .store-badge .copy small { font-size: 9.5px; font-weight: 600; letter-spacing: 0.06em; opacity: 0.7; }
+    .store-badge .copy span { font-size: 14px; font-weight: 700; letter-spacing: -0.005em; }
+
+    .featured-right {
+      position: relative;
+      background: linear-gradient(135deg, var(--blue-50) 0%, #fff 100%);
+      border-left: 1px solid var(--border);
+      display: flex; align-items: stretch; justify-content: center;
+      min-height: 380px; overflow: hidden;
+    }
+    @media (max-width: 880px) {
+      .featured-right { border-left: none; border-top: 1px solid var(--border); }
+    }
+    .featured-right .live-frame {
+      flex: 1; aspect-ratio: auto; min-height: 100%;
+    }
+    .featured-icon-stack {
+      position: absolute; bottom: 18px; left: 18px; z-index: 6;
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 16px 10px 10px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+    }
+    .featured-icon-stack img { width: 44px; height: 44px; border-radius: 10px; }
+    .featured-icon-stack .name { font-size: 14px; font-weight: 800; letter-spacing: -0.01em; color: var(--text-deep); }
+    .featured-icon-stack .name small { display: block; font-size: 10px; font-weight: 600; opacity: 0.6; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; color: var(--text-muted); }
+
+    /* ── Project grid (cards) ─────────────────────────────── */
+    .projects {
+      display: grid; gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      margin-top: 8px;
+    }
+    .project {
+      position: relative; overflow: hidden;
+      background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: var(--radius-xl);
+      display: flex; flex-direction: column;
+      transition: transform .3s var(--ease-spring), border-color .2s, box-shadow .25s;
+      cursor: pointer;
+      text-align: left;
+      padding: 0;
+      font-family: inherit;
+      color: inherit;
+      box-shadow: var(--shadow-sm);
+    }
+    .project:hover {
+      transform: translateY(-6px);
+      border-color: var(--blue-300);
+      box-shadow: var(--shadow-xl);
+    }
+    .project::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 3px; background: var(--proj-color, var(--blue-600));
+      opacity: 0.9; z-index: 6;
+    }
+    .project-preview {
+      position: relative; aspect-ratio: 16/9; overflow: hidden;
+      background: linear-gradient(135deg, var(--proj-color, var(--blue-600)) 0%, rgba(15, 23, 42, 0.6) 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    .project-preview > img {
+      width: 100%; height: 100%; object-fit: cover; object-position: top center;
+      transition: transform .5s var(--ease-smooth);
+    }
+    .project:hover .project-preview > img { transform: scale(1.04); }
+    .project:hover .live-frame iframe { transform-origin: 0 0; }
+
+    /* Circular app-icon badge */
+    .project-app-icon {
+      position: absolute; left: 16px; bottom: -22px;
+      width: 56px; height: 56px; border-radius: 14px;
+      overflow: hidden; z-index: 7;
+      background: var(--bg-card);
+      border: 3px solid var(--bg-card);
+      box-shadow: var(--shadow-md);
+      transition: transform .25s var(--ease-spring);
+    }
+    .project:hover .project-app-icon { transform: translateY(-3px) scale(1.06); }
+    .project-app-icon img {
+      width: 100%; height: 100%; object-fit: cover; object-position: center;
+      display: block;
+    }
+    /* Droob card uses the icon AS the main preview */
+    .project-preview.icon-hero {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .project-preview.icon-hero::after {
+      content: 'UNDER CONSTRUCTION'; position: absolute; top: 12px; right: 12px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(15, 23, 42, 0.78); color: #fff;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 9px; font-weight: 800; letter-spacing: 0.16em;
+      pointer-events: none;
+    }
+    .project-preview.icon-hero img {
+      width: 38%; height: auto; aspect-ratio: 1/1;
+      border-radius: 22px; object-fit: cover;
+      box-shadow: 0 18px 40px -10px rgba(0,0,0,0.4);
+      border: 2px solid rgba(255,255,255,0.4);
+      animation: floatIcon 4s ease-in-out infinite;
+    }
+    @keyframes floatIcon {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .project.has-icon .project-body { padding-top: 38px; }
+    .project-body { padding: 24px 26px 26px; display: flex; flex-direction: column; flex: 1; }
+    .project-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+    .project-head .meta { flex: 1; min-width: 0; }
+    .project-head h3 {
+      font-size: 20px; font-weight: 800; letter-spacing: -0.02em;
+      margin: 0; line-height: 1.2; color: var(--text-deep);
+    }
+    .project-domain {
+      font-size: 12.5px; color: var(--text-muted);
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      margin-top: 3px; word-break: break-all;
+    }
+    .project-status {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 999px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+      background: #ecfdf5; color: #047857;
+      border: 1px solid #a7f3d0;
+      flex-shrink: 0; align-self: flex-start;
+    }
+    .project-status::before {
+      content: ''; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--green);
+      animation: livePulse 2s ease-in-out infinite;
+    }
+    .project-status.amber {
+      background: #fffbeb; color: #b45309; border-color: #fde68a;
+    }
+    .project-status.amber::before { background: var(--amber); }
+    .project p.desc {
+      color: var(--text-soft); font-size: 14px; line-height: 1.65;
+      margin: 0 0 14px; flex: 1;
+    }
+    .project-tech { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+    .project-cta {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 700; color: var(--blue-600);
+      letter-spacing: -0.005em;
+      margin-top: auto; padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .project-cta::after {
+      content: '→'; transition: transform .2s var(--ease-spring); display: inline-block;
+    }
+    .project:hover .project-cta::after { transform: translateX(4px); }
+
+    /* Per-project accent colors */
+    .project[data-c="blue"]   { --proj-color: var(--blue-600); }
+    .project[data-c="indigo"] { --proj-color: #4f46e5; }
+    .project[data-c="teal"]   { --proj-color: #14b8a6; }
+    .project[data-c="purple"] { --proj-color: var(--purple); }
+    .project[data-c="rose"]   { --proj-color: var(--rose); }
+    .project[data-c="amber"]  { --proj-color: var(--amber); }
+    .project[data-c="cyan"]   { --proj-color: #06b6d4; }
+
+    /* ── Project detail modal ─────────────────────────────── */
+    dialog.proj-dialog {
+      border: none; padding: 0; margin: auto;
+      max-width: 1080px; width: calc(100vw - 32px);
+      max-height: 92vh;
+      background: var(--bg-card);
+      color: var(--text-body);
+      border-radius: var(--radius-2xl);
+      box-shadow: var(--shadow-2xl), 0 0 0 1px var(--border);
+      overflow: hidden;
+    }
+    dialog.proj-dialog::backdrop {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      animation: backdropIn .3s var(--ease-smooth);
+    }
+    @keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+    dialog.proj-dialog[open] { animation: dialogPop .35s var(--ease-spring); }
+    @keyframes dialogPop {
+      from { opacity: 0; transform: translateY(20px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .pd-wrap { display: flex; flex-direction: column; max-height: 92vh; }
+    .pd-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 24px 28px 20px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--bg-off) 0%, var(--bg-card) 100%);
+    }
+    .pd-head-row { display: flex; gap: 14px; align-items: center; flex: 1; min-width: 0; }
+    .pd-head-left { flex: 1; min-width: 0; }
+    .pd-icon {
+      width: 56px; height: 56px; border-radius: 14px;
+      overflow: hidden; flex-shrink: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .pd-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pd-head .eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+      color: var(--proj-color, var(--blue-600));
+      margin-bottom: 6px;
+    }
+    .pd-head .eyebrow::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--proj-color, var(--blue-600));
+    }
+    .pd-head h2 {
+      font-size: clamp(22px, 3.5vw, 30px); font-weight: 800;
+      letter-spacing: -0.025em; margin: 0 0 5px; line-height: 1.15;
+      color: var(--text-deep);
+    }
+    .pd-head .domain {
+      font-size: 13px; color: var(--text-muted);
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+    }
+    .pd-close {
+      background: var(--bg-off); border: 1px solid var(--border);
+      color: var(--text-soft);
+      width: 36px; height: 36px; border-radius: 10px;
+      font-size: 20px; cursor: pointer; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: background-color .15s, border-color .15s, color .15s, transform .15s;
+      font-family: inherit; line-height: 1;
+    }
+    .pd-close:hover { background: var(--blue-50); border-color: var(--blue-200); color: var(--blue-700); transform: rotate(90deg); }
+
+    .pd-body { padding: 26px 30px; overflow-y: auto; flex: 1; }
+    .pd-gallery { display: grid; gap: 12px; grid-template-columns: 1fr; margin-bottom: 22px; }
+    .pd-gallery.two-col { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 700px) { .pd-gallery.two-col { grid-template-columns: 1fr; } }
+    .pd-shot {
+      width: 100%; border-radius: var(--radius-lg); overflow: hidden;
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--proj-color, var(--blue-600)) 0%, rgba(15, 23, 42, 0.5) 100%);
+      aspect-ratio: 16/9;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+    .pd-shot img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+    .pd-shot .live-frame { width: 100%; height: 100%; border-radius: var(--radius-lg); }
+    .pd-shot-caption {
+      position: absolute; bottom: 10px; left: 12px;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em;
+      color: #fff;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 4px 9px; border-radius: 5px;
+      backdrop-filter: blur(4px);
+      z-index: 8;
+    }
+
+    .pd-section { margin-top: 24px; }
+    .pd-section:first-child { margin-top: 0; }
+    .pd-section h3 {
+      font-size: 12px; font-weight: 800; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted); margin: 0 0 12px;
+    }
+    .pd-section p {
+      font-size: 15px; line-height: 1.75; color: var(--text-body);
+      margin: 0 0 12px;
+    }
+    .pd-section p strong { color: var(--text-deep); font-weight: 700; }
+    .pd-section ul.use-cases { margin: 0; padding-left: 0; list-style: none; }
+    .pd-section ul.use-cases li {
+      padding: 10px 0 10px 26px; position: relative;
+      font-size: 14.5px; line-height: 1.55; color: var(--text-body);
+      border-bottom: 1px dashed var(--border);
+    }
+    .pd-section ul.use-cases li:last-child { border-bottom: none; }
+    .pd-section ul.use-cases li::before {
+      content: ''; position: absolute; left: 0; top: 18px;
+      width: 16px; height: 2px; border-radius: 2px;
+      background: var(--proj-color, var(--blue-600));
+    }
+    .pd-section ul.use-cases li strong { color: var(--text-deep); font-weight: 700; margin-right: 6px; }
+
+    .pd-features { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+    .pd-feature {
+      padding: 14px 16px; border-radius: var(--radius-md);
+      background: var(--bg-off);
+      border: 1px solid var(--border);
+      font-size: 13.5px; color: var(--text-body); line-height: 1.5;
+      transition: border-color .2s, background-color .2s, transform .2s var(--ease-spring);
+    }
+    .pd-feature:hover {
+      border-color: var(--blue-200);
+      background: var(--blue-50);
+      transform: translateY(-2px);
+    }
+    .pd-feature strong {
+      display: block; font-weight: 800; color: var(--proj-color, var(--blue-600));
+      font-size: 12.5px; letter-spacing: 0.02em; margin-bottom: 4px;
+    }
+    .pd-tech { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pd-actions {
+      padding: 18px 30px; border-top: 1px solid var(--border);
+      background: var(--bg-off);
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+    }
+    .pd-actions > .left { margin-right: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* ── CTA / Contact ──────────────────────────────────── */
+    .cta {
+      margin: clamp(60px, 9vw, 100px) 0 60px;
+      padding: clamp(36px, 6vw, 64px);
+      background: linear-gradient(135deg, var(--blue-700) 0%, var(--blue-600) 50%, var(--blue-800) 100%);
+      border-radius: var(--radius-2xl); text-align: center;
+      position: relative; overflow: hidden;
+      color: #fff;
+      box-shadow: var(--shadow-blue-lg);
+    }
+    .cta::before {
+      content: ''; position: absolute; top: -120px; left: 50%;
+      transform: translateX(-50%); width: 800px; height: 400px;
+      background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.18) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .cta::after {
+      content: ''; position: absolute; inset: 0;
+      background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0);
+      background-size: 24px 24px;
+      pointer-events: none; opacity: 0.7;
+    }
+    .cta h2 {
+      font-size: clamp(28px, 4vw, 42px); font-weight: 800;
+      letter-spacing: -0.028em; margin: 0 0 14px; position: relative;
+      color: #fff;
+    }
+    .cta p { color: rgba(255,255,255,0.88); font-size: 16px; max-width: 52ch; margin: 0 auto 26px; position: relative; }
+    .cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; position: relative; }
+    .cta-actions .btn-primary {
+      background: #fff; color: var(--blue-700);
+      box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.3);
+    }
+    .cta-actions .btn-primary:hover { background: var(--blue-50); color: var(--blue-800); }
+    .cta-actions .btn-ghost {
+      background: transparent; color: #fff;
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+    .cta-actions .btn-ghost:hover { background: rgba(255, 255, 255, 0.1); border-color: #fff; color: #fff; }
+
+    /* WhatsApp + Email contact buttons */
+    .btn-whatsapp, .btn-email {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 12px 22px; border-radius: 10px;
+      font-weight: 600; font-size: 14px;
+      transition: transform .2s var(--ease-spring), box-shadow .2s, background-color .15s;
+      border: none; cursor: pointer; font-family: inherit;
+      text-decoration: none;
+    }
+    .btn-whatsapp {
+      background: #25D366; color: #fff;
+      box-shadow: 0 8px 22px -6px rgba(37, 211, 102, 0.55);
+    }
+    .btn-whatsapp:hover { background: #1ebe5a; transform: translateY(-2px); box-shadow: 0 14px 32px -6px rgba(37, 211, 102, 0.7); }
+    .btn-whatsapp svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .btn-email {
+      background: #fff; color: var(--blue-700);
+      box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.25);
+    }
+    .btn-email:hover { background: var(--blue-50); color: var(--blue-800); transform: translateY(-2px); }
+    .btn-email svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* Contact strip in the footer */
+    .footer-contact {
+      display: flex; justify-content: center; gap: clamp(16px, 4vw, 28px);
+      flex-wrap: wrap; margin-bottom: 18px;
+      padding-bottom: 18px; border-bottom: 1px solid var(--border);
+    }
+    .footer-contact a {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--text-soft); font-weight: 600; font-size: 13.5px;
+      transition: color .15s;
+    }
+    .footer-contact a:hover { color: var(--blue-600); }
+    .footer-contact a svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.8; }
+    .footer-contact a:hover svg { opacity: 1; }
+    .footer-contact .wa-color { color: #25D366; }
+    .footer-contact .wa-color:hover { color: #1ebe5a; }
+
+    /* ── Footer ──────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px var(--gutter);
+      text-align: center;
+      font-size: 13px; color: var(--text-muted);
+      background: var(--bg-off);
+    }
+    footer .row { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin-bottom: 8px; }
+    footer a { color: var(--text-soft); font-weight: 500; }
+    footer a:hover { color: var(--blue-600); }
+  </style>
+</head>
+<body>
+
+  <div class="top-banner"></div>
+
+  <nav class="nav">
+    <a class="nav-brand" href="/problem-x/" aria-label="Problem-X — software studio">
+      <span class="mark"><img src="/workspace/assets/problem-x-logo.png" alt="Problem-X" /></span>
+      <span class="mark-text">
+        <span class="wordmark">PROBLEM-X</span>
+        <span class="tagline">Software studio</span>
+      </span>
+    </a>
+    <div class="nav-links">
+      <a href="#projects">Projects</a>
+      <a href="#contact">Contact</a>
+      <a href="https://problem-x.com" target="_blank" rel="noopener">problem-x.com ↗</a>
+      <a class="nav-cta" href="https://nigents.com" target="_blank" rel="noopener">Nigents ↗</a>
+    </div>
+  </nav>
+
+  <!-- ── Hero ────────────────────────────────────────────── -->
+  <div class="wrap">
+    <section class="hero">
+      <span class="hero-eyebrow reveal">Software studio · Live in production</span>
+      <h1 class="reveal" data-delay="100">Work that <span class="accent">ships</span>.</h1>
+      <p class="lede reveal" data-delay="200">
+        Problem-X builds and maintains real apps for real users — <strong>mobile apps in stores</strong>,
+        SaaS dashboards, internal tools, and AI agents. Every site below is loading <strong>live, right now</strong>,
+        inside this page. Click any card to see screenshots, tech stack, and the story behind it.
+      </p>
+      <div class="hero-stats reveal" data-delay="300">
+        <div class="hero-stat"><div class="v">7</div><div class="l">Live products</div></div>
+        <div class="hero-stat"><div class="v">iOS · Android · Web</div><div class="l">Platforms shipped</div></div>
+        <div class="hero-stat"><div class="v">EG · SA · GCC</div><div class="l">Markets served</div></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ── Featured: Workspace ─────────────────────────────────── -->
+  <div class="wrap" id="featured">
+    <div class="section-head reveal">
+      <span class="tag">Featured</span>
+      <h2>Workspace — Home services &amp; construction on iOS</h2>
+      <p>The bilingual platform connecting Gulf homeowners with verified contractors and craftsmen — payments, chat, and project tracking in one app.</p>
+    </div>
+
+    <article class="featured reveal" data-open="workspace" tabindex="0" role="button" aria-label="Open Workspace project details">
+      <div class="featured-left">
+        <span class="featured-tag">Live · App Store + Play Store</span>
+        <h3>Workspace</h3>
+        <div class="tagline">example.com — iOS &amp; Android · Arabic + English</div>
+        <p class="desc">
+          A <strong>home-services &amp; construction marketplace</strong> for the Gulf market.
+          Homeowners post a project — bathroom renovation, AC install, paint job, plumbing fix,
+          tile work — and verified service providers (contractors, plumbers, electricians,
+          painters, carpenters) bid for the work. Customers chat in real time, track progress,
+          and pay via HyperPay. Bilingual Arabic + English with native iOS &amp; Android.
+        </p>
+        <div class="featured-tech">
+          <span class="tech-chip">SwiftUI iOS 18.6+</span>
+          <span class="tech-chip">Android Native</span>
+          <span class="tech-chip">Spring Boot</span>
+          <span class="tech-chip">MQTT realtime</span>
+          <span class="tech-chip">Firebase FCM</span>
+          <span class="tech-chip">HyperPay</span>
+          <span class="tech-chip">Google Maps</span>
+        </div>
+        <div class="featured-actions">
+          <button class="btn-primary" type="button" data-open="workspace">See full details →</button>
+          <a class="btn-ghost" href="https://example.com" target="_blank" rel="noopener" onclick="event.stopPropagation();">Visit example.com ↗</a>
+        </div>
+        <div class="store-badges">
+          <a class="store-badge" href="https://apps.apple.com/eg/app/workspace/id6752626102" target="_blank" rel="noopener" onclick="event.stopPropagation();">
+            <span class="ic"></span>
+            <span class="copy"><small>Download on the</small><span>App Store</span></span>
+          </a>
+          <a class="store-badge" href="https://play.google.com/store/apps/details?id=com.workspace.app&hl=ar" target="_blank" rel="noopener" onclick="event.stopPropagation();">
+            <span class="ic">▶</span>
+            <span class="copy"><small>GET IT ON</small><span>Google Play</span></span>
+          </a>
+        </div>
+      </div>
+      <div class="featured-right">
+        <div class="live-frame" data-src="https://example.com"></div>
+        <div class="featured-icon-stack">
+          <img src="/problem-x/screens/icons/workspace-icon.png" alt="Workspace app icon" />
+          <div class="name">Workspace<small>iOS · Android · Gulf market</small></div>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <!-- ── Other projects ──────────────────────────────────── -->
+  <div class="wrap" id="projects">
+    <div class="section-head reveal">
+      <span class="tag">Portfolio</span>
+      <h2>Click any project — every preview is the actual site, live</h2>
+      <p>Seven shipped products across home services, AI tooling, education, manufacturing and team operations — all running in production today, embedded right here.</p>
+    </div>
+
+    <div class="projects">
+
+      <!-- App — LIVE IFRAME -->
+      <button class="project has-icon reveal" data-c="teal" data-open="app" type="button">
+        <div class="project-preview">
+          <div class="live-frame" data-src="https://app.com"></div>
+          <div class="project-app-icon">
+            <img src="/problem-x/screens/icons/app-ios-icon.png" alt="App app icon" />
+          </div>
+        </div>
+        <div class="project-body">
+          <div class="project-head">
+            <div class="meta">
+              <h3>App</h3>
+              <div class="project-domain">app.com · iOS · Android</div>
+            </div>
+            <span class="project-status">Live</span>
+          </div>
+          <p class="desc">AI-powered job hunter built for Egypt — CV scoring, job aggregation across LinkedIn + Wuzzuf + Bayt, AI-rewritten resumes, portfolio site generator, and GPT-4o vision that turns career-fair photos into "apply now" links.</p>
+          <span class="project-cta">See details</span>
+        </div>
+      </button>
+
+      <!-- Droob — UNDER CONSTRUCTION (icon only, no iframe) -->
+      <button class="project has-icon reveal" data-c="amber" data-open="droob" type="button">
+        <div class="project-preview icon-hero">
+          <img src="/problem-x/screens/icons/droob-icon.png" alt="Droob app icon" loading="lazy" />
+          <div class="project-app-icon">
+            <img src="/problem-x/screens/icons/droob-icon.png" alt="Droob app icon" />
+          </div>
+        </div>
+        <div class="project-body">
+          <div class="project-head">
+            <div class="meta">
+              <h3>Droob</h3>
+              <div class="project-domain">iOS · online courses for students</div>
+            </div>
+            <span class="project-status amber">Building</span>
+          </div>
+          <p class="desc">Native SwiftUI iOS app for the Droob learning platform — students browse courses, enrol, watch video lessons, and track progress. The web site is still under construction; the iOS app is the focus.</p>
+          <span class="project-cta">See details</span>
+        </div>
+      </button>
+
+      <!-- SmartCollegeSchool — SCREENSHOT (blocks framing) -->
+      <button class="project reveal" data-c="blue" data-open="smartcollegeschool" type="button">
+        <div class="project-preview">
+          <img src="/problem-x/screens/smartcollegeschool.png" alt="SmartCollegeSchool homepage" loading="lazy" />
+        </div>
+        <div class="project-body">
+          <div class="project-head">
+            <div class="meta">
+              <h3>SmartCollegeSchool</h3>
+              <div class="project-domain">smartcollegeschool.com</div>
+            </div>
+            <span class="project-status">Live</span>
+          </div>
+          <p class="desc">K-12 school website with full admin system — student enrolment, IGCSE programme pages, photo galleries, school-life sections, and a content backoffice the school staff use day-to-day.</p>
+          <span class="project-cta">See details</span>
+        </div>
+      </button>
+
+      <!-- SpecMaster — LIVE IFRAME -->
+      <button class="project reveal" data-c="indigo" data-open="specmaster" type="button">
+        <div class="project-preview">
+          <div class="live-frame" data-src="https://specmaster.art"></div>
+        </div>
+        <div class="project-body">
+          <div class="project-head">
+            <div class="meta">
+              <h3>SpecMaster</h3>
+              <div class="project-domain">specmaster.art</div>
+            </div>
+            <span class="project-status">Live</span>
+          </div>
+          <p class="desc">Steel specification &amp; quotation platform for industrial engineers — replaces fragmented Excel sheets with a quote builder, spec catalog, project quotations, and a B2B customer portal for AlGioshy Steel.</p>
+          <span class="project-cta">See details</span>
+        </div>
+      </button>
+
+      <!-- Nigents — LIVE IFRAME -->
+      <button class="project reveal" data-c="purple" data-open="nigents" type="button">
+        <div class="project-preview">
+          <div class="live-frame" data-src="https://nigents.com"></div>
+        </div>
+        <div class="project-body">
+          <div class="project-head">
+            <div class="meta">
+              <h3>Nigents</h3>
+              <div class="project-domain">nigents.com</div>
+            </div>
+            <span class="project-status">Live</span>
+          </div>
+          <p class="desc">AI development team accessible via Telegram. Drop a task by voice or text and a fleet of AI agents — planner, backend, frontend, QA, reviewer, DevOps — implement, review, and ship it. Bilingual (Arabic + English) with 233 swappable skills.</p>
+          <span class="project-cta">See details</span>
+        </div>
+      </button>
+
+      <!-- Problem-X — SCREENSHOT (Shopify blocks framing) -->
+      <button class="project has-icon reveal" data-c="rose" data-open="problem-x" type="button">
+        <div class="project-preview">
+          <img src="/problem-x/screens/problem-x.png" alt="Problem-X Shopify store" loading="lazy" />
+          <div class="project-app-icon" style="background:#fff; padding:6px;">
+            <img src="/problem-x/screens/icons/problem-x-icon.png" alt="Problem-X logo" style="object-fit:contain;" />
+          </div>
+        </div>
+        <div class="project-body">
+          <div class="project-head">
+            <div class="meta">
+              <h3>Problem-X</h3>
+              <div class="project-domain">problem-x.com · Shopify</div>
+            </div>
+            <span class="project-status">Live</span>
+          </div>
+          <p class="desc">The studio's storefront and home — services, case studies, and the team behind every product on this page. Custom Shopify theme so the content team updates everything without engineering.</p>
+          <span class="project-cta">See details</span>
+        </div>
+      </button>
+
+      <!-- Workspace secondary — LIVE IFRAME -->
+      <button class="project has-icon reveal" data-c="cyan" data-open="workspace" type="button">
+        <div class="project-preview">
+          <div class="live-frame" data-src="https://example.com"></div>
+          <div class="project-app-icon">
+            <img src="/problem-x/screens/icons/workspace-icon.png" alt="Workspace app icon" />
+          </div>
+        </div>
+        <div class="project-body">
+          <div class="project-head">
+            <div class="meta">
+              <h3>Workspace (full details)</h3>
+              <div class="project-domain">example.com · iOS · Android</div>
+            </div>
+            <span class="project-status">Live</span>
+          </div>
+          <p class="desc">Home services &amp; construction marketplace for the Gulf market — bilingual iOS + Android apps, real-time chat, HyperPay payments, Google Maps integration. Featured above.</p>
+          <span class="project-cta">See details</span>
+        </div>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ── Contact CTA ───────────────────────────────────── -->
+  <div class="wrap" id="contact">
+    <section class="cta reveal">
+      <h2>Building something next?</h2>
+      <p>We take on a small number of new products each quarter. If you have an idea that needs shipping — not just designed — we'd love to talk.</p>
+      <div class="cta-actions">
+        <a class="btn-whatsapp" href="https://wa.me/966540329839?text=Hi%20Problem-X%20%E2%80%94%20I%27d%20like%20to%20chat%20about%20a%20project" target="_blank" rel="noopener" aria-label="WhatsApp +966 54 032 9839">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+          </svg>
+          WhatsApp us
+        </a>
+        <a class="btn-email" href="mailto:tech@problem-x.com">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="4" width="20" height="16" rx="3"/>
+            <path d="m2 7 10 6 10-6"/>
+          </svg>
+          tech@problem-x.com
+        </a>
+        <a class="btn-ghost" href="https://problem-x.com" target="_blank" rel="noopener">Visit Problem-X ↗</a>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="footer-contact">
+      <a href="https://wa.me/966540329839" target="_blank" rel="noopener" class="wa-color" aria-label="WhatsApp +966 54 032 9839">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+        </svg>
+        +966 54 032 9839
+      </a>
+      <a href="mailto:tech@problem-x.com">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="4" width="20" height="16" rx="3"/>
+          <path d="m2 7 10 6 10-6"/>
+        </svg>
+        tech@problem-x.com
+      </a>
+      <a href="https://problem-x.com" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M2 12h20"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        problem-x.com
+      </a>
+    </div>
+    <div class="row">
+      <span>© 2026 Problem-X</span>
+      <a href="https://nigents.com">nigents.com</a>
+      <a href="/workspace/">Workspace workspace</a>
+    </div>
+    <div style="margin-top:8px;">Hosted on nigents.com · Built by Problem-X</div>
+  </footer>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       Project detail dialogs — live iframes inside the modals too where
+       the target site allows embedding.
+       ══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- WORKSPACE -->
+  <dialog class="proj-dialog" id="dlg-workspace" style="--proj-color: var(--blue-600);">
+    <div class="pd-wrap">
+      <div class="pd-head">
+        <div class="pd-head-row">
+          <div class="pd-icon"><img src="/problem-x/screens/icons/workspace-icon.png" alt="Workspace app icon" /></div>
+          <div class="pd-head-left">
+            <div class="eyebrow">Featured · iOS · Android · Gulf market</div>
+            <h2>Workspace — Home services &amp; construction</h2>
+            <div class="domain">example.com</div>
+          </div>
+        </div>
+        <button class="pd-close" type="button" aria-label="Close" data-close>×</button>
+      </div>
+      <div class="pd-body">
+        <div class="pd-gallery">
+          <div class="pd-shot">
+            <div class="live-frame" data-src="https://example.com"></div>
+            <div class="pd-shot-caption">example.com — live preview</div>
+          </div>
+        </div>
+
+        <div class="pd-section">
+          <h3>About</h3>
+          <p>Workspace is a <strong>home-services &amp; construction marketplace</strong> for the Gulf market. Homeowners post a project — a bathroom renovation, an AC install, a paint job, plumbing or tile work, anything from a small repair to a full apartment refit — and verified service providers (contractors, plumbers, electricians, painters, carpenters) bid for the work.</p>
+          <p>Once the customer picks a provider, the platform handles the rest end-to-end: <strong>real-time chat</strong> over MQTT, <strong>project tracking</strong> with progress milestones, <strong>in-app payments</strong> via HyperPay (MADA, Visa, Apple Pay), and <strong>Google Maps integration</strong> so the provider knows exactly where they're going. Everything is fully bilingual Arabic + English with native iOS and Android apps.</p>
+        </div>
+
+        <div class="pd-section">
+          <h3>What customers use it for</h3>
+          <ul class="use-cases">
+            <li><strong>Renovations</strong> — kitchens, bathrooms, full apartment refits, room additions</li>
+            <li><strong>Repairs</strong> — plumbing leaks, AC issues, electrical faults, broken fixtures</li>
+            <li><strong>Skilled trades</strong> — tile work, painting, carpentry, gypsum, marble work</li>
+            <li><strong>Maintenance</strong> — recurring cleaning, AC servicing, garden upkeep</li>
+            <li><strong>Small tasks</strong> — TV mounting, furniture assembly, hanging shelves</li>
+          </ul>
+        </div>
+
+        <div class="pd-section">
+          <h3>Key features</h3>
+          <div class="pd-features">
+            <div class="pd-feature"><strong>Verified providers</strong>Background-checked contractors only — no walk-ins</div>
+            <div class="pd-feature"><strong>Real-time chat</strong>MQTT-backed messaging between customer + provider</div>
+            <div class="pd-feature"><strong>Project tracking</strong>Milestones, progress photos, status updates</div>
+            <div class="pd-feature"><strong>HyperPay checkout</strong>MADA, Visa, Apple Pay — Saudi-friendly</div>
+            <div class="pd-feature"><strong>Google Maps</strong>Provider gets exact pin to your address</div>
+            <div class="pd-feature"><strong>Bilingual UI</strong>Arabic + English, with full RTL support</div>
+            <div class="pd-feature"><strong>Phone OTP + Face ID</strong>Quick secure auth without passwords</div>
+            <div class="pd-feature"><strong>Push notifications</strong>Firebase FCM keeps both sides in the loop</div>
+          </div>
+        </div>
+
+        <div class="pd-section">
+          <h3>Tech stack</h3>
+          <div class="pd-tech">
+            <span class="tech-chip">SwiftUI (iOS 18.6+)</span>
+            <span class="tech-chip">Android Native</span>
+            <span class="tech-chip">Spring Boot</span>
+            <span class="tech-chip">MQTT</span>
+            <span class="tech-chip">Firebase Firestore</span>
+            <span class="tech-chip">Firebase FCM</span>
+            <span class="tech-chip">HyperPay</span>
+            <span class="tech-chip">Google Maps SDK</span>
+            <span class="tech-chip">Mixpanel</span>
+          </div>
+        </div>
+      </div>
+      <div class="pd-actions">
+        <div class="left">
+          <a class="store-badge" href="https://apps.apple.com/eg/app/workspace/id6752626102" target="_blank" rel="noopener">
+            <span class="ic"></span>
+            <span class="copy"><small>Download on the</small><span>App Store</span></span>
+          </a>
+          <a class="store-badge" href="https://play.google.com/store/apps/details?id=com.workspace.app&hl=ar" target="_blank" rel="noopener">
+            <span class="ic">▶</span>
+            <span class="copy"><small>GET IT ON</small><span>Google Play</span></span>
+          </a>
+        </div>
+        <a class="btn-primary" href="https://example.com" target="_blank" rel="noopener" style="text-decoration:none;">Visit example.com ↗</a>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- APP -->
+  <dialog class="proj-dialog" id="dlg-app" style="--proj-color: #14b8a6;">
+    <div class="pd-wrap">
+      <div class="pd-head">
+        <div class="pd-head-row">
+          <div class="pd-icon"><img src="/problem-x/screens/icons/app-ios-icon.png" alt="App app icon" /></div>
+          <div class="pd-head-left">
+            <div class="eyebrow">iOS · Android · Web · Egypt</div>
+            <h2>App — AI job hunter for Egypt</h2>
+            <div class="domain">app.com</div>
+          </div>
+        </div>
+        <button class="pd-close" type="button" aria-label="Close" data-close>×</button>
+      </div>
+      <div class="pd-body">
+        <div class="pd-gallery">
+          <div class="pd-shot">
+            <div class="live-frame" data-src="https://app.com"></div>
+            <div class="pd-shot-caption">app.com — live preview</div>
+          </div>
+        </div>
+        <div class="pd-section">
+          <h3>About</h3>
+          <p><em>"App"</em> is Egyptian Arabic for <em>"there's no work / I'm jobless"</em>. It's an <strong>end-to-end job-hunting platform for Egyptian students and graduates</strong> — the goal is to take someone from "I have a CV and no plan" to "I've applied to ten real jobs this week" without leaving the app.</p>
+          <p>Egyptian graduates face a job market that doesn't behave like the one their CVs were written for. Recruiters here screen for different signals. Job boards (LinkedIn, Wuzzuf, Bayt) don't talk to each other. Career fairs at GUC, Cairo Uni, AUC dump 60+ booths on students in one day with QR codes that get lost. App fixes all of that.</p>
+        </div>
+        <div class="pd-section">
+          <h3>The 7 things it does</h3>
+          <div class="pd-features">
+            <div class="pd-feature"><strong>CV vibe check</strong>AI scores your CV out of 100 with sub-scores (clarity, proof, market-fit, formatting); rewrites weak bullets — Arabic or English</div>
+            <div class="pd-feature"><strong>Job radar</strong>One search hits LinkedIn, Wuzzuf, and Bayt at once; ranks results against your CV</div>
+            <div class="pd-feature"><strong>CV glow-up PDF</strong>ATS-optimised templates with the AI rewrites baked in, section order tuned for Egyptian recruiters</div>
+            <div class="pd-feature"><strong>Portfolio drop</strong>Shareable mini-site at app.com/portfolio/your-name — comes with a QR code</div>
+            <div class="pd-feature"><strong>Skill roadmap</strong>8-week plan with concrete courses, portfolio tasks, and weekly checkpoints tied to your target role</div>
+            <div class="pd-feature"><strong>Job-fair capture</strong>Snap photos of every booth's QR or poster — GPT-4o vision extracts apply link, company, role into one tidy pile</div>
+            <div class="pd-feature"><strong>GUC Career Fair page</strong>Curated /guc-fair with every company at this year's fair — one tap opens their apply form</div>
+          </div>
+        </div>
+        <div class="pd-section">
+          <h3>Tech stack</h3>
+          <div class="pd-tech">
+            <span class="tech-chip">SwiftUI (iOS)</span>
+            <span class="tech-chip">Android Native</span>
+            <span class="tech-chip">Next.js (web)</span>
+            <span class="tech-chip">Node.js</span>
+            <span class="tech-chip">GPT-4o Vision</span>
+            <span class="tech-chip">Playwright (scrapers)</span>
+            <span class="tech-chip">PostgreSQL</span>
+            <span class="tech-chip">Arabic NLP</span>
+          </div>
+        </div>
+      </div>
+      <div class="pd-actions">
+        <a class="btn-primary" href="https://app.com" target="_blank" rel="noopener" style="text-decoration:none;">Visit app.com ↗</a>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- DROOB -->
+  <dialog class="proj-dialog" id="dlg-droob" style="--proj-color: var(--amber);">
+    <div class="pd-wrap">
+      <div class="pd-head">
+        <div class="pd-head-row">
+          <div class="pd-icon"><img src="/problem-x/screens/icons/droob-icon.png" alt="Droob app icon" /></div>
+          <div class="pd-head-left">
+            <div class="eyebrow">iOS · Education · Building</div>
+            <h2>Droob — Online courses for students</h2>
+            <div class="domain">DroobStudent · iOS native app</div>
+          </div>
+        </div>
+        <button class="pd-close" type="button" aria-label="Close" data-close>×</button>
+      </div>
+      <div class="pd-body">
+        <div class="pd-gallery">
+          <div class="pd-shot" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); display:flex; align-items:center; justify-content:center;">
+            <img src="/problem-x/screens/icons/droob-icon.png" alt="Droob iOS app icon" style="width:42%; height:auto; aspect-ratio:1/1; border-radius:28px; box-shadow:0 24px 60px -15px rgba(0,0,0,0.4); border:2px solid rgba(255,255,255,0.4);" />
+            <div class="pd-shot-caption">Droob iOS — app icon (site under construction)</div>
+          </div>
+        </div>
+        <div class="pd-section">
+          <h3>About</h3>
+          <p>Droob is the <strong>native SwiftUI student app</strong> for the Droob learning platform — online courses for students who want to keep studying on their phone. Browse the catalogue, enrol in a course, watch the video lessons, take notes, and pick up where you left off. Built for iOS 16+ with a clean, focused, distraction-free learner experience.</p>
+          <p>The marketing site is currently under construction — the iOS app is the focus while we finalise the public web presence.</p>
+        </div>
+        <div class="pd-section">
+          <h3>What students use it for</h3>
+          <ul class="use-cases">
+            <li><strong>Discover courses</strong> — browse the catalogue by subject and difficulty</li>
+            <li><strong>Enrol &amp; learn</strong> — sign up and start watching video lessons immediately</li>
+            <li><strong>Track progress</strong> — every lesson resumes exactly where you stopped</li>
+            <li><strong>Native iOS feel</strong> — smooth scrolling, Apple-style polish, no clunky web embeds</li>
+          </ul>
+        </div>
+        <div class="pd-section">
+          <h3>Tech stack</h3>
+          <div class="pd-tech">
+            <span class="tech-chip">SwiftUI</span>
+            <span class="tech-chip">iOS 16+</span>
+            <span class="tech-chip">Swift 5.9</span>
+            <span class="tech-chip">Xcode 15+</span>
+            <span class="tech-chip">Video streaming</span>
+            <span class="tech-chip">REST API</span>
+          </div>
+        </div>
+      </div>
+      <div class="pd-actions">
+        <span style="color:var(--text-muted);font-size:12.5px;">App Store badge + site coming soon</span>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- SMARTCOLLEGESCHOOL — uses screenshot inside modal -->
+  <dialog class="proj-dialog" id="dlg-smartcollegeschool" style="--proj-color: var(--blue-600);">
+    <div class="pd-wrap">
+      <div class="pd-head">
+        <div class="pd-head-row">
+          <div class="pd-head-left">
+            <div class="eyebrow">Education · K-12 school site &amp; admin</div>
+            <h2>SmartCollegeSchool</h2>
+            <div class="domain">smartcollegeschool.com</div>
+          </div>
+        </div>
+        <button class="pd-close" type="button" aria-label="Close" data-close>×</button>
+      </div>
+      <div class="pd-body">
+        <div class="pd-gallery">
+          <div class="pd-shot">
+            <img src="/problem-x/screens/smartcollegeschool.png" alt="SmartCollegeSchool homepage" />
+            <div class="pd-shot-caption">smartcollegeschool.com</div>
+          </div>
+        </div>
+        <div class="pd-section">
+          <h3>About</h3>
+          <p>Full <strong>K-12 school website</strong> with an admin system the school staff use every day — student enrolment, photo galleries, IGCSE programme pages, school-life sections, news posts, and a content-management backoffice. Built specifically around how SmartCollegeSchool runs admissions and communicates with parents.</p>
+        </div>
+        <div class="pd-section">
+          <h3>What's on the site</h3>
+          <ul class="use-cases">
+            <li><strong>Admissions flow</strong> — multi-step enrolment form parents complete from any device</li>
+            <li><strong>IGCSE programme</strong> — dedicated pages explaining the curriculum + subjects</li>
+            <li><strong>Photo galleries</strong> — school life, events, classrooms — updated weekly by staff</li>
+            <li><strong>Theatre, mosque, swimming pool</strong> — facility pages with hours and bookings</li>
+            <li><strong>News &amp; events</strong> — staff-managed news posts kept fresh from the admin</li>
+          </ul>
+        </div>
+        <div class="pd-section">
+          <h3>Key features</h3>
+          <div class="pd-features">
+            <div class="pd-feature"><strong>Admin CMS</strong>Staff manage pages, photos, news without engineering</div>
+            <div class="pd-feature"><strong>Enrolment workflow</strong>Multi-step form with validation</div>
+            <div class="pd-feature"><strong>SEO-tuned</strong>Optimised for local school discoverability</div>
+            <div class="pd-feature"><strong>Mobile-first</strong>Most traffic is parents on phones</div>
+          </div>
+        </div>
+        <div class="pd-section">
+          <h3>Tech stack</h3>
+          <div class="pd-tech">
+            <span class="tech-chip">Node.js</span>
+            <span class="tech-chip">MySQL</span>
+            <span class="tech-chip">Server-side render</span>
+            <span class="tech-chip">Admin CMS</span>
+          </div>
+        </div>
+      </div>
+      <div class="pd-actions">
+        <a class="btn-primary" href="https://smartcollegeschool.com" target="_blank" rel="noopener" style="text-decoration:none;">Visit site ↗</a>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- SPECMASTER -->
+  <dialog class="proj-dialog" id="dlg-specmaster" style="--proj-color: #4f46e5;">
+    <div class="pd-wrap">
+      <div class="pd-head">
+        <div class="pd-head-row">
+          <div class="pd-head-left">
+            <div class="eyebrow">Industrial · B2B SaaS · Steel</div>
+            <h2>SpecMaster — Steel specs &amp; quotation</h2>
+            <div class="domain">specmaster.art</div>
+          </div>
+        </div>
+        <button class="pd-close" type="button" aria-label="Close" data-close>×</button>
+      </div>
+      <div class="pd-body">
+        <div class="pd-gallery">
+          <div class="pd-shot">
+            <div class="live-frame" data-src="https://specmaster.art"></div>
+            <div class="pd-shot-caption">specmaster.art — live preview</div>
+          </div>
+        </div>
+        <div class="pd-section">
+          <h3>About</h3>
+          <p>SpecMaster is a <strong>steel specification &amp; quotation platform</strong> for industrial engineers and steel suppliers. It replaces what was previously done in fragmented Excel sheets with a proper quote builder, material spec sheets, project quotations, and a customer-facing portal for AlGioshy Steel and its B2B clients.</p>
+        </div>
+        <div class="pd-section">
+          <h3>Who uses it</h3>
+          <ul class="use-cases">
+            <li><strong>AlGioshy sales team</strong> — generates branded steel quotations in minutes instead of hours</li>
+            <li><strong>B2B clients</strong> — track their own projects, see past quotes, request new ones</li>
+            <li><strong>Engineering team</strong> — maintains the material catalog and spec sheets</li>
+          </ul>
+        </div>
+        <div class="pd-section">
+          <h3>Key features</h3>
+          <div class="pd-features">
+            <div class="pd-feature"><strong>Quote builder</strong>Pick materials, set quantities, branded PDF out</div>
+            <div class="pd-feature"><strong>Spec catalog</strong>Material database with technical data sheets</div>
+            <div class="pd-feature"><strong>Customer portal</strong>B2B clients log in to see their projects</div>
+            <div class="pd-feature"><strong>PDF export</strong>Branded quotes ready to email to the buyer</div>
+          </div>
+        </div>
+        <div class="pd-section">
+          <h3>Tech stack</h3>
+          <div class="pd-tech">
+            <span class="tech-chip">Node.js</span>
+            <span class="tech-chip">B2B SaaS</span>
+            <span class="tech-chip">PDF Generation</span>
+            <span class="tech-chip">MySQL</span>
+            <span class="tech-chip">Steel Industry</span>
+          </div>
+        </div>
+      </div>
+      <div class="pd-actions">
+        <a class="btn-primary" href="https://specmaster.art" target="_blank" rel="noopener" style="text-decoration:none;">Visit specmaster.art ↗</a>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- NIGENTS -->
+  <dialog class="proj-dialog" id="dlg-nigents" style="--proj-color: var(--purple);">
+    <div class="pd-wrap">
+      <div class="pd-head">
+        <div class="pd-head-row">
+          <div class="pd-head-left">
+            <div class="eyebrow">AI tooling · Telegram-native</div>
+            <h2>Nigents — AI development team</h2>
+            <div class="domain">nigents.com</div>
+          </div>
+        </div>
+        <button class="pd-close" type="button" aria-label="Close" data-close>×</button>
+      </div>
+      <div class="pd-body">
+        <div class="pd-gallery">
+          <div class="pd-shot">
+            <div class="live-frame" data-src="https://nigents.com"></div>
+            <div class="pd-shot-caption">nigents.com — live preview</div>
+          </div>
+        </div>
+        <div class="pd-section">
+          <h3>About</h3>
+          <p>Nigents is an <strong>AI development team accessible via Telegram</strong>. Drop a task by voice note or text and a fleet of AI agents — planner, backend, frontend, QA, reviewer, DevOps, security, architect — implement, review, and ship it. Plans go through a 233-skill catalog that can be activated per-agent on demand. Voice messages work in <strong>Arabic and English</strong>. Hosts the Workspace workspace as a sibling app.</p>
+        </div>
+        <div class="pd-section">
+          <h3>Key features</h3>
+          <div class="pd-features">
+            <div class="pd-feature"><strong>Telegram-native</strong>Send tasks by voice or text — no app to install</div>
+            <div class="pd-feature"><strong>8 specialist agents</strong>Planner, backend, frontend, QA, reviewer, DevOps, security, architect</div>
+            <div class="pd-feature"><strong>233 skills</strong>Activate per-agent capabilities on demand</div>
+            <div class="pd-feature"><strong>Multi-model</strong>Claude / Moonshot / GLM / OpenAI — switch any time</div>
+            <div class="pd-feature"><strong>GitLab pipelines</strong>Auto-deploys on every push to main</div>
+            <div class="pd-feature"><strong>Voice meetings</strong>Live AI voice meetings via Jitsi</div>
+            <div class="pd-feature"><strong>Bilingual</strong>Arabic + English voice + text</div>
+            <div class="pd-feature"><strong>MCP servers</strong>Pluggable tool integrations (Slack, Linear, more)</div>
+          </div>
+        </div>
+        <div class="pd-section">
+          <h3>Tech stack</h3>
+          <div class="pd-tech">
+            <span class="tech-chip">Node.js</span>
+            <span class="tech-chip">Telegram Bot API</span>
+            <span class="tech-chip">AI Agents</span>
+            <span class="tech-chip">MCP servers</span>
+            <span class="tech-chip">GitLab CI</span>
+            <span class="tech-chip">AWS EC2</span>
+            <span class="tech-chip">Whisper (voice)</span>
+            <span class="tech-chip">MySQL</span>
+          </div>
+        </div>
+      </div>
+      <div class="pd-actions">
+        <a class="btn-ghost" href="/workspace/flow.html" target="_blank" rel="noopener" style="text-decoration:none;">How it works</a>
+        <a class="btn-primary" href="https://nigents.com" target="_blank" rel="noopener" style="text-decoration:none;">Visit nigents.com ↗</a>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- PROBLEM-X — uses screenshot inside modal (Shopify blocks framing) -->
+  <dialog class="proj-dialog" id="dlg-problem-x" style="--proj-color: var(--rose);">
+    <div class="pd-wrap">
+      <div class="pd-head">
+        <div class="pd-head-row">
+          <div class="pd-icon" style="background:#fff; padding:6px;"><img src="/problem-x/screens/icons/problem-x-icon.png" alt="Problem-X logo" style="object-fit:contain;" /></div>
+          <div class="pd-head-left">
+            <div class="eyebrow">Studio · Shopify storefront</div>
+            <h2>Problem-X</h2>
+            <div class="domain">problem-x.com · Shopify</div>
+          </div>
+        </div>
+        <button class="pd-close" type="button" aria-label="Close" data-close>×</button>
+      </div>
+      <div class="pd-body">
+        <div class="pd-gallery">
+          <div class="pd-shot">
+            <img src="/problem-x/screens/problem-x.png" alt="Problem-X Shopify store" />
+            <div class="pd-shot-caption">problem-x.com</div>
+          </div>
+        </div>
+        <div class="pd-section">
+          <h3>About</h3>
+          <p>The studio's <strong>storefront and home</strong> — services, case studies, and the team behind every product on this page. Built on Shopify with a custom theme so the content team can update copy, services, and case studies without engineering involvement.</p>
+        </div>
+        <div class="pd-section">
+          <h3>Key features</h3>
+          <div class="pd-features">
+            <div class="pd-feature"><strong>Shopify-powered</strong>Self-serve content updates by the studio team</div>
+            <div class="pd-feature"><strong>Custom theme</strong>Brand-matched Liquid templates</div>
+            <div class="pd-feature"><strong>Case studies</strong>Showcasing the work in this portfolio</div>
+            <div class="pd-feature"><strong>SEO-tuned</strong>Optimised for inbound client enquiries</div>
+          </div>
+        </div>
+        <div class="pd-section">
+          <h3>Tech stack</h3>
+          <div class="pd-tech">
+            <span class="tech-chip">Shopify</span>
+            <span class="tech-chip">Liquid</span>
+            <span class="tech-chip">Custom theme</span>
+            <span class="tech-chip">Marketing site</span>
+          </div>
+        </div>
+      </div>
+      <div class="pd-actions">
+        <a class="btn-primary" href="https://problem-x.com" target="_blank" rel="noopener" style="text-decoration:none;">Visit problem-x.com ↗</a>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ── Live iframes: lazy-load + auto-scale ────────────────── */
+      // Each .live-frame holds an iframe at logical 1440×900 px. We compute
+      // a CSS transform scale so it visually fills its container, regardless
+      // of container width. Iframe src is only set when the element scrolls
+      // into view (IntersectionObserver), so the page boots fast.
+      var IFRAME_LOGICAL_W = 1440;
+      var IFRAME_LOGICAL_H = 900;
+
+      function rescaleFrames() {
+        document.querySelectorAll('.live-frame').forEach(function (frame) {
+          var iframe = frame.querySelector('iframe');
+          if (!iframe) return;
+          var w = frame.offsetWidth;
+          var h = frame.offsetHeight;
+          var scaleX = w / IFRAME_LOGICAL_W;
+          var scaleY = h / IFRAME_LOGICAL_H;
+          // Use the LARGER scale so the iframe always covers — like background-size: cover
+          var scale = Math.max(scaleX, scaleY);
+          iframe.style.transform = 'scale(' + scale + ')';
+        });
+      }
+
+      // Add the "Open details ↗" pill + scroll hint to every .live-frame.
+      // These are NOT inside the iframe — they sit above it (z-index higher)
+      // so the user always has a clear way to open the project modal even
+      // though the iframe itself is now fully interactive (scroll + click).
+      function addOverlayUI(frame) {
+        if (frame.querySelector('.open-overlay, .scroll-hint')) return;
+
+        // Always add the scroll hint — useful in cards AND modals so users
+        // know the live preview is interactive.
+        var hint = document.createElement('span');
+        hint.className = 'scroll-hint';
+        hint.textContent = 'Scroll inside';
+        frame.appendChild(hint);
+
+        // Skip the "Open details" button when the frame is inside a project
+        // modal — the user is ALREADY looking at the project details, and
+        // re-triggering openDialog from there would close+reopen this modal.
+        if (frame.closest('dialog.proj-dialog')) return;
+
+        var card = frame.closest('[data-open]');
+        var slug = card ? card.getAttribute('data-open') : null;
+        if (!slug) return;
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'open-overlay';
+        btn.innerHTML = 'Open details <span class="arrow" aria-hidden="true">↗</span>';
+        btn.setAttribute('aria-label', 'Open project details');
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          openDialog(slug);
+        });
+        frame.appendChild(btn);
+      }
+
+      // IntersectionObserver — inject iframe src + overlays when the frame
+      // is about to scroll into view.
+      var loaderObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          var frame = e.target;
+          var src = frame.getAttribute('data-src');
+          if (!src || frame.querySelector('iframe')) {
+            loaderObserver.unobserve(frame);
+            return;
+          }
+          var iframe = document.createElement('iframe');
+          iframe.setAttribute('loading', 'lazy');
+          iframe.setAttribute('referrerpolicy', 'no-referrer');
+          // Sandbox lets the embedded site scroll + run normally inside its
+          // box. We do NOT add allow-top-navigation, so clicks on links in
+          // the iframe can't navigate the parent page away.
+          iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-forms');
+          iframe.setAttribute('title', 'Live preview — interactive');
+          iframe.src = src;
+          iframe.addEventListener('load', function () {
+            iframe.classList.add('is-loaded');
+            frame.classList.add('is-loaded');
+            rescaleFrames();
+          });
+          frame.appendChild(iframe);
+          addOverlayUI(frame);
+          rescaleFrames();
+          loaderObserver.unobserve(frame);
+        });
+      }, { rootMargin: '300px' });
+
+      document.querySelectorAll('.live-frame[data-src]').forEach(function (frame) {
+        loaderObserver.observe(frame);
+      });
+
+      // Rescale on resize + when a modal opens (since its iframe was zero-sized while hidden)
+      window.addEventListener('resize', rescaleFrames);
+      if (window.ResizeObserver) {
+        new ResizeObserver(rescaleFrames).observe(document.body);
+      }
+
+      /* ── Scroll-reveal animations ─────────────────────────── */
+      var revealObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-visible');
+            revealObserver.unobserve(e.target);
+          }
+        });
+      }, { rootMargin: '-50px 0px', threshold: 0.1 });
+      document.querySelectorAll('.reveal').forEach(function (el) {
+        revealObserver.observe(el);
+      });
+
+      /* ── Project modal open / close ─────────────────────── */
+      function openDialog(slug) {
+        var dlg = document.getElementById('dlg-' + slug);
+        if (!dlg) return;
+        document.querySelectorAll('dialog.proj-dialog[open]').forEach(function (d) {
+          if (d !== dlg) try { d.close(); } catch (_) {}
+        });
+        if (typeof dlg.showModal === 'function') {
+          try { if (!dlg.open) dlg.showModal(); }
+          catch (_) { dlg.setAttribute('open', ''); }
+        } else {
+          dlg.setAttribute('open', '');
+        }
+        document.body.style.overflow = 'hidden';
+        // Modal iframes are zero-sized until shown — force rescale right after open
+        setTimeout(rescaleFrames, 50);
+        setTimeout(rescaleFrames, 350);
+      }
+      function closeDialog(dlg) {
+        if (!dlg) return;
+        try { if (typeof dlg.close === 'function') dlg.close(); } catch (_) {}
+        dlg.removeAttribute('open');
+        if (!document.querySelector('dialog.proj-dialog[open]')) {
+          document.body.style.overflow = '';
+        }
+      }
+
+      document.querySelectorAll('[data-open]').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+          var t = e.target;
+          // Don't intercept clicks on outbound links inside the card
+          if (t.closest('a') && !t.closest('[data-open]')) return;
+          // Don't intercept clicks on the live iframe area — the open-overlay
+          // button (which IS clickable) calls openDialog itself + stops
+          // propagation. Clicks anywhere else inside .live-frame (e.g. the
+          // LIVE badge area) should go to the embedded site, not open the
+          // modal — so they should be ignored here.
+          if (t.closest('.live-frame')) return;
+          openDialog(el.getAttribute('data-open'));
+        });
+        el.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            // Don't interfere if focus is inside an iframe / overlay button
+            if (e.target.closest('.live-frame')) return;
+            e.preventDefault();
+            openDialog(el.getAttribute('data-open'));
+          }
+        });
+      });
+
+      document.querySelectorAll('dialog.proj-dialog').forEach(function (dlg) {
+        dlg.addEventListener('click', function (e) {
+          if (e.target === dlg) closeDialog(dlg);
+        });
+        dlg.querySelectorAll('[data-close]').forEach(function (btn) {
+          btn.addEventListener('click', function () { closeDialog(dlg); });
+        });
+        dlg.addEventListener('cancel', function (e) {
+          e.preventDefault();
+          closeDialog(dlg);
+        });
+        dlg.addEventListener('close', function () {
+          if (!document.querySelector('dialog.proj-dialog[open]')) {
+            document.body.style.overflow = '';
+          }
+        });
+      });
+
+      function openFromHash() {
+        var h = (location.hash || '').replace(/^#/, '').trim();
+        if (h && document.getElementById('dlg-' + h)) openDialog(h);
+      }
+      window.addEventListener('hashchange', openFromHash);
+      openFromHash();
+    })();
+  </script>
+</body>
+</html>

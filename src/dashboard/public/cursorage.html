@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CursorAge — Your Cursor Ages When You Don't Move It</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #08080c; color: #e0e0e0; overflow-x: hidden; }
+
+        .bg-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+            background-size: 60px 60px; pointer-events: none; z-index: 0;
+        }
+        .bg-glow {
+            position: fixed; top: -30%; left: 30%; width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+            pointer-events: none; z-index: 0; animation: glowDrift 12s ease-in-out infinite;
+        }
+        .bg-glow2 {
+            position: fixed; bottom: -20%; right: 20%; width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%);
+            pointer-events: none; z-index: 0; animation: glowDrift 15s ease-in-out infinite reverse;
+        }
+        @keyframes glowDrift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(40px, 30px); } }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 60px 40px; position: relative;
+        }
+        .hero-content { position: relative; z-index: 1; max-width: 720px; text-align: center; }
+
+        .hero-icon-wrap {
+            width: 100px; height: 100px; margin: 0 auto 32px; position: relative;
+        }
+        .hero-icon-inner {
+            width: 100px; height: 100px; border-radius: 24px;
+            background: linear-gradient(135deg, #6366f1, #3b82f6);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 20px 60px rgba(99,102,241,0.3), 0 0 0 1px rgba(255,255,255,0.1);
+            animation: iconBreath 4s ease-in-out infinite;
+        }
+        @keyframes iconBreath { 0%,100% { transform: scale(1); box-shadow: 0 20px 60px rgba(99,102,241,0.3); } 50% { transform: scale(1.04); box-shadow: 0 24px 70px rgba(99,102,241,0.4); } }
+        .hero-icon-inner svg { width: 44px; height: 44px; }
+
+        .hero h1 {
+            font-size: 64px; font-weight: 900; letter-spacing: -2.5px;
+            background: linear-gradient(135deg, #6366f1, #3b82f6, #6366f1);
+            background-size: 200% 200%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: gradShift 4s ease-in-out infinite; margin-bottom: 8px;
+        }
+        @keyframes gradShift { 0%,100% { background-position:0% 50%; } 50% { background-position:100% 50%; } }
+        .hero .tagline { font-size: 20px; color: #a5b4fc; margin-bottom: 10px; }
+        .hero .subtitle { font-size: 15px; color: #556; max-width: 480px; margin: 0 auto 32px; line-height: 1.6; }
+
+        .badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+        .badge { padding: 6px 14px; border-radius: 18px; font-size: 11px; font-weight: 600; animation: bPop 0.5s ease-out both; }
+        .badge:nth-child(1) { animation-delay:0.1s; } .badge:nth-child(2) { animation-delay:0.2s; }
+        .badge:nth-child(3) { animation-delay:0.3s; } .badge:nth-child(4) { animation-delay:0.4s; }
+        @keyframes bPop { from { opacity:0; transform:scale(0.85) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .badge-indigo { background: rgba(99,102,241,0.12); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
+        .badge-blue { background: rgba(59,130,246,0.12); color: #93c5fd; border: 1px solid rgba(59,130,246,0.25); }
+        .badge-green { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+        .badge-violet { background: rgba(139,92,246,0.12); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.25); }
+
+        .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 15px 34px; text-decoration: none; border-radius: 13px;
+            font-weight: 700; font-size: 16px; cursor: pointer; border: none; transition: all 0.3s;
+        }
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #3b82f6); color: #fff; box-shadow: 0 8px 30px rgba(99,102,241,0.3); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(99,102,241,0.45); }
+        .btn-ghost { background: rgba(255,255,255,0.06); color: #ccc; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-ghost:hover { background: rgba(255,255,255,0.1); transform: translateY(-3px); }
+        .btn svg { width: 18px; height: 18px; }
+
+        .section-title { text-align: center; font-size: 34px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+        .section-sub { text-align: center; font-size: 15px; color: #8899bb; margin-bottom: 48px; }
+
+        /* Aging Demo */
+        .demo-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .screen-wrap {
+            max-width: 700px; margin: 0 auto; border-radius: 18px; overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 60px rgba(99,102,241,0.05);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .screen-bar {
+            background: #1c1c22; padding: 10px 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .sdot { width: 11px; height: 11px; border-radius: 50%; }
+        .sdot.r { background: #ff5f56; } .sdot.y { background: #ffbd2e; } .sdot.g { background: #27c93f; }
+        .screen-title { margin-left: 10px; font-size: 11px; color: #666; flex: 1; }
+        .screen-tag { padding: 3px 10px; border-radius: 10px; font-size: 10px; font-weight: 700; background: rgba(16,185,129,0.15); color: #34d399; }
+
+        .demo-canvas {
+            background: linear-gradient(135deg, #0d0d14, #0a0a12);
+            position: relative; height: 380px; overflow: hidden;
+        }
+
+        .notch-bar {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 220px; height: 28px; background: #000; border-radius: 0 0 14px 14px;
+        }
+
+        .demo-cursor-area {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+
+        .cursor-demo {
+            position: relative; width: 80px; height: 100px;
+            transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .cursor-demo svg { width: 100%; height: 100%; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); transition: all 1.5s; }
+
+        .stage-label {
+            text-align: center; margin-top: 16px;
+            font-size: 14px; font-weight: 700; letter-spacing: 0.5px;
+            transition: color 1.5s;
+        }
+        .stage-time {
+            text-align: center; margin-top: 4px;
+            font-size: 11px; color: #556; font-family: 'SF Mono', monospace;
+        }
+
+        .demo-timeline {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 0; align-items: center;
+        }
+        .timeline-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+            border: 2px solid #333; background: transparent;
+            transition: all 0.5s; position: relative;
+        }
+        .timeline-dot.active { border-color: #6366f1; background: #6366f1; box-shadow: 0 0 12px rgba(99,102,241,0.5); }
+        .timeline-dot.passed { border-color: #6366f1; background: rgba(99,102,241,0.3); }
+        .timeline-line {
+            width: 60px; height: 2px; background: #222; transition: background 0.5s;
+        }
+        .timeline-line.active { background: linear-gradient(90deg, #6366f1, #3b82f6); }
+
+        .demo-controls {
+            position: absolute; top: 50px; right: 20px;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .demo-btn {
+            padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 600;
+            background: rgba(99,102,241,0.1); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.15);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .demo-btn:hover, .demo-btn.active { background: rgba(99,102,241,0.25); border-color: rgba(99,102,241,0.4); }
+
+        /* Stages */
+        .stages-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .stages-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 900px; margin: 0 auto; }
+        .stage-card {
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px; padding: 24px 16px; text-align: center; transition: all 0.4s;
+            position: relative; overflow: hidden;
+        }
+        .stage-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .stage-card:hover { transform: translateY(-6px); border-color: rgba(99,102,241,0.2); }
+        .stage-card:hover::before { opacity: 1; }
+        .stage-card:nth-child(1) { --accent: #3b82f6; }
+        .stage-card:nth-child(2) { --accent: #eab308; }
+        .stage-card:nth-child(3) { --accent: #f97316; }
+        .stage-card:nth-child(4) { --accent: #6b7280; }
+        .stage-icon { width: 48px; height: 60px; margin: 0 auto 14px; }
+        .stage-icon svg { width: 100%; height: 100%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+        .stage-card h3 { font-size: 15px; color: #fff; margin-bottom: 4px; }
+        .stage-card p { font-size: 12px; color: #8899bb; line-height: 1.4; }
+        .stage-timer { font-size: 10px; color: #556; margin-top: 8px; font-family: 'SF Mono', monospace; }
+
+        /* How */
+        .how-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; }
+        .how-card {
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px; padding: 28px; transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .how-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,#6366f1,transparent); opacity:0; transition:opacity 0.3s; }
+        .how-card:hover { transform: translateY(-4px); border-color: rgba(99,102,241,0.2); }
+        .how-card:hover::before { opacity: 1; }
+        .how-num { font-size: 28px; font-weight: 900; background: linear-gradient(135deg,#6366f1,#3b82f6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom: 10px; }
+        .how-card h3 { font-size: 16px; color: #fff; margin-bottom: 6px; }
+        .how-card p { font-size: 13px; color: #8899bb; line-height: 1.5; }
+
+        /* Install */
+        .install-section { padding: 60px 40px; position: relative; z-index: 1; }
+        .install-card {
+            max-width: 700px; margin: 0 auto;
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px; padding: 24px;
+        }
+        .install-card h3 { font-size: 15px; margin-bottom: 12px; }
+        .code-block {
+            background: #060610; border-radius: 10px; padding: 14px;
+            font-family: 'SF Mono','Fira Code',monospace; font-size: 12px; line-height: 2; margin-bottom: 12px;
+        }
+        .cm { color: #556; } .cp { color: #a5b4fc; } .cc { color: #e0e0e0; } .ch { color: #fbbf24; }
+
+        .download-section {
+            background: linear-gradient(135deg, #060610, #0a0a18, #060610);
+            padding: 80px 40px; text-align: center; position: relative; z-index: 1;
+        }
+
+        footer { padding: 24px; text-align: center; color: #334; font-size: 11px; border-top: 1px solid rgba(255,255,255,0.03); }
+    </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="bg-glow2"></div>
+
+<div class="hero">
+    <div class="hero-content">
+        <div class="hero-icon-wrap">
+            <div class="hero-icon-inner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    <line x1="1" y1="1" x2="23" y2="23" stroke-width="2" opacity="0.3"/>
+                </svg>
+            </div>
+        </div>
+        <h1>CursorAge</h1>
+        <p class="tagline">Your Cursor Ages When You Stop Moving</p>
+        <p class="subtitle">Leave your mouse idle and watch your cursor grow old — wrinkles, cracks, and a walking cane. Move it again and it snaps back to young.</p>
+        <div class="badges">
+            <span class="badge badge-indigo">4 Aging Stages</span>
+            <span class="badge badge-blue">Custom Timer</span>
+            <span class="badge badge-green">Instant Reset</span>
+            <span class="badge badge-violet">100% Native Swift</span>
+        </div>
+        <div class="cta-row">
+            <a href="/downloads/CursorAge-1.0.0.dmg" class="btn btn-primary" download>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download CursorAge.dmg
+            </a>
+            <a href="#demo" class="btn btn-ghost">See Demo</a>
+        </div>
+    </div>
+</div>
+
+<div class="demo-section" id="demo">
+    <div class="section-title">Live Aging Demo</div>
+    <div class="section-sub">Watch the cursor age through all 4 stages</div>
+    <div class="screen-wrap">
+        <div class="screen-bar">
+            <div class="sdot r"></div><div class="sdot y"></div><div class="sdot g"></div>
+            <div class="screen-title">CursorAge — Aging Engine</div>
+            <div class="screen-tag">LIVE</div>
+        </div>
+        <div class="demo-canvas">
+            <div class="notch-bar"></div>
+
+            <div class="demo-cursor-area">
+                <div class="cursor-demo" id="cursorDemo">
+                    <svg id="cursorSvg" viewBox="0 0 40 56" fill="none">
+                        <path id="arrowPath" d="M4 2 L4 48 L14 38 L20 50 L25 46 L18 34 L30 34 Z" fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="stage-label" id="stageLabel" style="color: #3b82f6;">Fresh</div>
+                <div class="stage-time" id="stageTime">idle: 0s</div>
+            </div>
+
+            <div class="demo-timeline">
+                <div class="timeline-dot active" id="dot0"></div>
+                <div class="timeline-line" id="line0"></div>
+                <div class="timeline-dot" id="dot1"></div>
+                <div class="timeline-line" id="line1"></div>
+                <div class="timeline-dot" id="dot2"></div>
+                <div class="timeline-line" id="line2"></div>
+                <div class="timeline-dot" id="dot3"></div>
+            </div>
+
+            <div class="demo-controls">
+                <div class="demo-btn active" onclick="setDemoStage(0)">Fresh</div>
+                <div class="demo-btn" onclick="setDemoStage(1)">Tired</div>
+                <div class="demo-btn" onclick="setDemoStage(2)">Old</div>
+                <div class="demo-btn" onclick="setDemoStage(3)">Ancient</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stages-section">
+    <div class="section-title">4 Stages of Aging</div>
+    <div class="section-sub">The longer you idle, the older your cursor gets</div>
+    <div class="stages-grid">
+        <div class="stage-card">
+            <div class="stage-icon">
+                <svg viewBox="0 0 40 56" fill="none">
+                    <path d="M4 2 L4 48 L14 38 L20 50 L25 46 L18 34 L30 34 Z" fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h3>Fresh</h3>
+            <p>Clean, sharp, bright white. Just moved.</p>
+            <div class="stage-timer">0s — threshold</div>
+        </div>
+        <div class="stage-card">
+            <div class="stage-icon">
+                <svg viewBox="0 0 40 56" fill="none" style="transform: rotate(7deg); opacity: 0.8;">
+                    <path d="M4 2 L4 48 L14 38 L20 50 L25 46 L18 34 L30 34 Z" fill="#e8e2cc" stroke="black" stroke-width="1.5" stroke-linejoin="round" opacity="0.8"/>
+                    <line x1="8" y1="14" x2="12" y2="17" stroke="black" stroke-width="0.8" opacity="0.4"/>
+                    <line x1="16" y1="14" x2="20" y2="17" stroke="black" stroke-width="0.8" opacity="0.4"/>
+                </svg>
+            </div>
+            <h3>Tired</h3>
+            <p>Yellowish tint, slight droop, squinting eyes.</p>
+            <div class="stage-timer">threshold x2.5</div>
+        </div>
+        <div class="stage-card">
+            <div class="stage-icon">
+                <svg viewBox="0 0 40 56" fill="none" style="transform: rotate(17deg); opacity: 0.55;">
+                    <path d="M4 2 L4 48 L14 38 L20 50 L25 46 L18 34 L30 34 Z" fill="#b3a893" stroke="black" stroke-width="1.5" stroke-linejoin="round" opacity="0.6"/>
+                    <path d="M6 10 Q9 13 12 10" stroke="black" stroke-width="0.7" fill="none" opacity="0.3"/>
+                    <path d="M8 14 Q11 17 14 14" stroke="black" stroke-width="0.7" fill="none" opacity="0.3"/>
+                    <path d="M22 20 L26 28 L30 26" stroke="black" stroke-width="0.6" fill="none" opacity="0.25"/>
+                </svg>
+            </div>
+            <h3>Old</h3>
+            <p>Gray, wrinkled, cracked. Struggling to point.</p>
+            <div class="stage-timer">threshold x5</div>
+        </div>
+        <div class="stage-card">
+            <div class="stage-icon">
+                <svg viewBox="0 0 40 56" fill="none" style="transform: rotate(28deg); opacity: 0.3;">
+                    <path d="M4 2 L4 48 L14 38 L20 50 L25 46 L18 34 L30 34 Z" fill="#7a7570" stroke="black" stroke-width="1.5" stroke-linejoin="round" opacity="0.4"/>
+                    <path d="M6 10 Q9 13 12 10" stroke="black" stroke-width="0.6" fill="none" opacity="0.2"/>
+                    <path d="M8 14 Q11 17 14 14" stroke="black" stroke-width="0.6" fill="none" opacity="0.2"/>
+                    <path d="M22 20 L26 28 L30 26" stroke="black" stroke-width="0.5" fill="none" opacity="0.15"/>
+                    <circle cx="28" cy="6" r="1.5" fill="white" opacity="0.15"/>
+                    <circle cx="32" cy="12" r="1" fill="white" opacity="0.1"/>
+                    <path d="M24 30 L30 48 Q32 50 33 47" stroke="#8B6914" stroke-width="1.5" fill="none" opacity="0.4"/>
+                </svg>
+            </div>
+            <h3>Ancient</h3>
+            <p>Barely visible, crumbling, walking with a cane.</p>
+            <div class="stage-timer">threshold x5+</div>
+        </div>
+    </div>
+</div>
+
+<div class="how-section">
+    <div class="section-title">How It Works</div>
+    <div class="section-sub">Three steps to an aging cursor</div>
+    <div class="how-grid">
+        <div class="how-card">
+            <div class="how-num">01</div>
+            <h3>Launch & Set Timer</h3>
+            <p>Open CursorAge. Set the aging threshold with the slider — from 5 seconds to 2 minutes.</p>
+        </div>
+        <div class="how-card">
+            <div class="how-num">02</div>
+            <h3>Stop Moving</h3>
+            <p>Leave your mouse alone. After the threshold, the cursor starts aging — drooping, graying, wrinkling.</p>
+        </div>
+        <div class="how-card">
+            <div class="how-num">03</div>
+            <h3>Move to Reset</h3>
+            <p>Move your mouse and the cursor instantly snaps back to fresh. Close the window — it keeps running.</p>
+        </div>
+    </div>
+</div>
+
+<div class="install-section">
+    <div class="section-title">Installation</div>
+    <div class="section-sub">Get started in seconds</div>
+    <div class="install-card">
+        <h3>Quick Install</h3>
+        <div class="code-block">
+            <span class="cm"># 1. Open the DMG and drag to Applications</span><br>
+            <span class="cp">$</span> <span class="cc">open CursorAge.dmg</span><br><br>
+            <span class="cm"># 2. Fix quarantine (unsigned app)</span><br>
+            <span class="cp">$</span> <span class="ch">xattr -cr</span> <span class="cc">/Applications/CursorAge.app</span><br><br>
+            <span class="cm"># 3. Re-sign the app</span><br>
+            <span class="cp">$</span> <span class="ch">codesign --force --deep --sign -</span> <span class="cc">/Applications/CursorAge.app</span><br><br>
+            <span class="cm"># 4. Launch!</span><br>
+            <span class="cp">$</span> <span class="cc">open /Applications/CursorAge.app</span>
+        </div>
+        <p style="font-size:12px;color:#8899bb;">Uses NSEvent global monitor for cursor tracking. No special permissions needed.</p>
+    </div>
+</div>
+
+<div class="download-section">
+    <div class="section-title" style="margin-bottom:12px;">Keep Your Cursor Young</div>
+    <div class="section-sub">Download CursorAge and never let your cursor get old again</div>
+    <a href="/downloads/CursorAge-1.0.0.dmg" class="btn btn-primary" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download CursorAge.dmg
+    </a>
+</div>
+
+<footer>MacAppsBundle &mdash; CursorAge &mdash; Built with SwiftUI + NSEvent</footer>
+
+<script>
+const stages = [
+    { name: 'Fresh', color: '#3b82f6', fill: '#ffffff', opacity: 1, rotation: 0, blur: 0, extra: '' },
+    { name: 'Tired', color: '#eab308', fill: '#e8e2cc', opacity: 0.8, rotation: 7, blur: 0.5, extra: '<line x1="8" y1="14" x2="12" y2="17" stroke="black" stroke-width="0.8" opacity="0.4"/><line x1="16" y1="14" x2="20" y2="17" stroke="black" stroke-width="0.8" opacity="0.4"/>' },
+    { name: 'Old', color: '#f97316', fill: '#b3a893', opacity: 0.55, rotation: 17, blur: 1.0, extra: '<path d="M6 10 Q9 13 12 10" stroke="black" stroke-width="0.7" fill="none" opacity="0.3"/><path d="M8 14 Q11 17 14 14" stroke="black" stroke-width="0.7" fill="none" opacity="0.3"/><path d="M22 20 L26 28 L30 26" stroke="black" stroke-width="0.6" fill="none" opacity="0.25"/>' },
+    { name: 'Ancient', color: '#6b7280', fill: '#7a7570', opacity: 0.3, rotation: 28, blur: 2.0, extra: '<path d="M6 10 Q9 13 12 10" stroke="black" stroke-width="0.6" fill="none" opacity="0.2"/><path d="M8 14 Q11 17 14 14" stroke="black" stroke-width="0.6" fill="none" opacity="0.2"/><circle cx="28" cy="6" r="1.5" fill="white" opacity="0.15"/><circle cx="32" cy="12" r="1" fill="white" opacity="0.1"/><path d="M24 30 L30 48 Q32 50 33 47" stroke="#8B6914" stroke-width="1.5" fill="none" opacity="0.4"/>' }
+];
+
+let currentStage = 0;
+let demoTimer = null;
+let elapsed = 0;
+let autoPlay = true;
+
+function setDemoStage(idx) {
+    currentStage = idx;
+    elapsed = idx * 10;
+    updateDemo();
+
+    document.querySelectorAll('.demo-btn').forEach((b, i) => {
+        b.classList.toggle('active', i === idx);
+    });
+
+    if (autoPlay) {
+        clearInterval(demoTimer);
+        autoPlay = false;
+    }
+}
+
+function updateDemo() {
+    const s = stages[currentStage];
+    const svg = document.getElementById('cursorSvg');
+    const label = document.getElementById('stageLabel');
+    const time = document.getElementById('stageTime');
+    const demo = document.getElementById('cursorDemo');
+
+    svg.innerHTML = `<path d="M4 2 L4 48 L14 38 L20 50 L25 46 L18 34 L30 34 Z" fill="${s.fill}" stroke="black" stroke-width="1.5" stroke-linejoin="round" opacity="${s.opacity}"/>${s.extra}`;
+
+    demo.style.transform = `rotate(${s.rotation}deg)`;
+    demo.style.filter = `blur(${s.blur}px)`;
+    demo.style.opacity = s.opacity;
+
+    label.textContent = s.name;
+    label.style.color = s.color;
+    time.textContent = `idle: ${elapsed}s`;
+
+    for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById('dot' + i);
+        dot.className = 'timeline-dot' + (i === currentStage ? ' active' : (i < currentStage ? ' passed' : ''));
+        if (i < 3) {
+            const line = document.getElementById('line' + i);
+            line.className = 'timeline-line' + (i < currentStage ? ' active' : '');
+        }
+    }
+}
+
+demoTimer = setInterval(() => {
+    if (!autoPlay) return;
+    elapsed++;
+    if (elapsed < 10) currentStage = 0;
+    else if (elapsed < 25) currentStage = 1;
+    else if (elapsed < 50) currentStage = 2;
+    else { currentStage = 3; if (elapsed >= 60) { elapsed = 0; currentStage = 0; } }
+
+    document.querySelectorAll('.demo-btn').forEach((b, i) => {
+        b.classList.toggle('active', i === currentStage);
+    });
+
+    updateDemo();
+}, 300);
+
+updateDemo();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotchHQ — Your Notch, Now Useful</title>
+    <meta name="description" content="Hover at the notch to unlock a command center with Music, Notes, Timer, Calculator, Clipboard, AI Chat, and System Stats. A tiny macOS utility that lives in the dead space above your screen." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --border: #2a2a35;
+            --bg-secondary: #141116;
+            --nhq-red: #ef4444;
+            --nhq-red-2: #dc2626;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-sans); background: #08080c; color: #e0e0e0; overflow-x: hidden; }
+
+        /* ── Site nav (Nigents) ───────────────────────────── */
+        .site-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, #06060a 0%, transparent 100%);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .nav-logo { width: 40px; height: 40px; background: #ff570a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: #09080c; }
+        .nav-title { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+        .nav-links { display: flex; align-items: center; gap: 24px; }
+        .nav-link { color: #a0a0a0; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover { color: #fff; }
+        .nav-link.active { color: #ff570a; }
+        .nav-cta { padding: 10px 20px; border: 1px solid #ff570a; color: #ff570a; text-decoration: none; font-size: 14px; font-weight: 600; transition: all 0.2s; border-radius: 6px; }
+        .nav-cta:hover { background: #ff570a; color: #09080c; }
+        .nav-toggle { display: none; width: 44px; height: 44px; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 10px; color: #fff; cursor: pointer; }
+        .nav-toggle-icon-close { display: none; font-size: 28px; }
+        body.nav-open .nav-toggle-icon-open { display: none; }
+        body.nav-open .nav-toggle-icon-close { display: block; }
+        .nav-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 998; }
+        body.nav-open .nav-backdrop { display: block; }
+        body.nav-open { overflow: hidden; }
+        @media (max-width: 900px) {
+            .site-nav { padding: 16px 20px; }
+            .nav-toggle { display: flex; }
+            .nav-links { display: none; position: fixed; top: 72px; left: 16px; right: 16px; flex-direction: column; align-items: stretch; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 12px; z-index: 999; }
+            body.nav-open .nav-links { display: flex; }
+            .nav-link, .nav-cta { padding: 12px; text-align: center; }
+        }
+
+        .bg-grid {
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 60px 60px; pointer-events: none; z-index: 0;
+        }
+
+        /* ── Hero ────────────────────────────────────────── */
+        .hero {
+            min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 120px 24px 60px; text-align: center; position: relative;
+            background: radial-gradient(ellipse at 50% 30%, rgba(239,68,68,0.08) 0%, transparent 65%);
+        }
+        .hero-notch {
+            width: 220px; height: 36px;
+            margin: 0 auto 24px;
+            background: #000;
+            border-radius: 0 0 22px 22px;
+            position: relative;
+            box-shadow: 0 14px 40px rgba(239,68,68,0.18);
+        }
+        .hero-notch::after {
+            content:''; position: absolute; inset: 6px 18px 0 18px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(239,68,68,0.35), transparent 70%);
+        }
+        .hero h1 { font-size: clamp(40px, 7vw, 64px); font-weight: 900; letter-spacing: -2px; color: #fff; margin-bottom: 6px; }
+        .hero .sub { font-size: clamp(16px, 2.4vw, 20px); color: var(--nhq-red); font-weight: 700; margin-bottom: 12px; }
+        .hero .desc { font-size: 16px; color: #64748b; max-width: 520px; margin: 0 auto 32px; line-height: 1.6; }
+
+        .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+        .badge { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid; }
+        .badge-red    { color: #ef4444; border-color: rgba(239,68,68,.25);  background: rgba(239,68,68,.06); }
+        .badge-yellow { color: #eab308; border-color: rgba(234,179,8,.25);  background: rgba(234,179,8,.06); }
+        .badge-orange { color: #f97316; border-color: rgba(249,115,22,.25); background: rgba(249,115,22,.06); }
+        .badge-blue   { color: #3b82f6; border-color: rgba(59,130,246,.25); background: rgba(59,130,246,.06); }
+        .badge-green  { color: #22c55e; border-color: rgba(34,197,94,.25);  background: rgba(34,197,94,.06); }
+        .badge-pink   { color: #ec4899; border-color: rgba(236,72,153,.25); background: rgba(236,72,153,.06); }
+
+        .ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 32px; border-radius: 14px;
+            font-weight: 700; font-size: 15px; cursor: pointer; text-decoration: none;
+            border: none; transition: all .25s; font-family: inherit;
+        }
+        .btn-primary { background: var(--nhq-red); color: #fff; box-shadow: 0 8px 28px rgba(239,68,68,0.32); }
+        .btn-primary:hover { background: var(--nhq-red-2); transform: translateY(-2px); box-shadow: 0 14px 36px rgba(239,68,68,0.45); }
+        .btn-outline { background: transparent; color: #94a3b8; border: 1px solid rgba(255,255,255,.1); }
+        .btn-outline:hover { border-color: rgba(255,255,255,.25); color: #fff; }
+
+        /* ── Section heads ───────────────────────────────── */
+        .section { padding: 80px 24px; position: relative; z-index: 1; }
+        .section-head { text-align: center; margin-bottom: 48px; }
+        .section-head .label {
+            display: inline-block; padding: 4px 12px; border-radius: 12px;
+            font-size: 11px; font-weight: 700; letter-spacing: .5px;
+            margin-bottom: 12px; border: 1px solid;
+        }
+        .label-red  { color: #ef4444; border-color: rgba(239,68,68,.2);  background: rgba(239,68,68,.06); }
+        .label-blue { color: #3b82f6; border-color: rgba(59,130,246,.2); background: rgba(59,130,246,.06); }
+        .section-head h2 { font-size: clamp(24px, 4vw, 36px); font-weight: 900; color: #fff; letter-spacing: -1px; margin-bottom: 8px; }
+        .section-head p { font-size: 15px; color: #64748b; }
+
+        /* ── Demo (notch panel tabs) ─────────────────────── */
+        .demo-wrap {
+            max-width: 420px; margin: 0 auto; border-radius: 20px; overflow: hidden;
+            border: 1px solid rgba(255,255,255,.06); background: #0c0c12;
+            box-shadow: 0 40px 100px rgba(0,0,0,.5), 0 0 60px rgba(239,68,68,.04);
+            position: relative;
+        }
+        .demo-bar {
+            background: #14141c; padding: 10px 14px;
+            display: flex; align-items: center; gap: 6px;
+            border-bottom: 1px solid rgba(255,255,255,.04);
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
+        .demo-bar-title { flex: 1; text-align: center; font-size: 10px; color: #4a4a5a; font-weight: 600; }
+        .demo-body { padding: 14px; min-height: 320px; position: relative; padding-bottom: 48px; }
+
+        .demo-page { display: none; animation: fadeIn .2s; }
+        .demo-page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Now Playing head: album art + title/artist */
+        .demo-np-head { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
+        .demo-album-art {
+            width: 60px; height: 60px; border-radius: 10px; flex-shrink: 0;
+            background: linear-gradient(135deg, #ef4444, #7f1d1d);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: rgba(255,255,255,.85);
+            box-shadow: 0 8px 20px rgba(239,68,68,.28), inset 0 1px 0 rgba(255,255,255,.12);
+            position: relative; overflow: hidden;
+        }
+        .demo-album-art::after {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.15), transparent 50%);
+            pointer-events: none;
+        }
+        .demo-music-title { font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+        .demo-music-artist { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.5); }
+
+        /* Wave visualizer — 20 bars, multi-layered sine feel */
+        .demo-waves {
+            display: flex; gap: 3px; justify-content: center; align-items: flex-end;
+            height: 28px; margin: 6px 0 14px;
+        }
+        .demo-wave-bar {
+            width: 4px; background: #ef4444; border-radius: 2px;
+            animation: waveAnim 1.4s ease-in-out infinite;
+            will-change: height, opacity;
+        }
+        @keyframes waveAnim {
+            0%, 100% { height: 5px;  opacity: 0.35; }
+            50%      { height: 28px; opacity: 0.9; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .demo-wave-bar { animation: none; height: 10px; opacity: 0.55; }
+        }
+        .demo-progress { height: 4px; background: rgba(255,255,255,.1); border-radius: 2px; margin-bottom: 6px; position: relative; overflow: hidden; }
+        .demo-progress-fill { position: absolute; left: 0; top: 0; height: 100%; background: #ef4444; border-radius: 2px; animation: progressAnim 8s linear infinite; }
+        @keyframes progressAnim { from { width: 0; } to { width: 100%; } }
+        .demo-time { display: flex; justify-content: space-between; font-size: 9px; color: rgba(255,255,255,.35); font-weight: 600; margin-bottom: 16px; }
+        .demo-controls { display: flex; align-items: center; justify-content: center; gap: 24px; margin-bottom: 12px; }
+        .demo-ctrl { font-size: 18px; color: rgba(255,255,255,.5); cursor: pointer; transition: all .15s; }
+        .demo-ctrl:hover { color: #fff; }
+        .demo-play { width: 48px; height: 48px; background: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; cursor: pointer; box-shadow: 0 6px 20px rgba(239,68,68,.35); }
+        .demo-vol { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+        .demo-vol-bar { flex: 1; height: 3px; background: rgba(255,255,255,.1); border-radius: 2px; position: relative; }
+        .demo-vol-fill { position: absolute; left: 0; top: 0; height: 100%; width: 65%; background: #ef4444; border-radius: 2px; }
+        .demo-vol span { font-size: 9px; color: rgba(255,255,255,.35); }
+
+        .demo-note-input { display: flex; gap: 4px; margin-bottom: 10px; }
+        .demo-note-input input {
+            flex: 1; background: rgba(234,179,8,.08); border: 1px solid rgba(234,179,8,.2);
+            border-radius: 6px; padding: 6px 8px; color: #fff; font-size: 11px; outline: none; font-family: inherit;
+        }
+        .demo-note { background: rgba(234,179,8,.06); border: 1px solid rgba(234,179,8,.1); border-radius: 6px; padding: 6px 8px; margin-bottom: 4px; display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,.7); }
+        .demo-note .t { color: rgba(234,179,8,.55); font-size: 9px; }
+
+        .demo-timer-display { text-align: center; font-size: 36px; font-weight: 900; color: #f97316; font-variant-numeric: tabular-nums; margin: 16px 0 8px; }
+        .demo-timer-modes { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; }
+        .demo-timer-mode { padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; border: 1px solid rgba(249,115,22,.15); background: rgba(249,115,22,.06); color: rgba(255,255,255,.4); transition: all .15s; }
+        .demo-timer-mode.active { background: rgba(249,115,22,.2); border-color: rgba(249,115,22,.4); color: #f97316; }
+
+        .demo-calc-display { text-align: right; font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 6px; padding: 0 4px; }
+        .demo-calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+        .demo-calc-btn { padding: 10px; text-align: center; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .1s; }
+        .demo-calc-btn:active { transform: scale(.93); }
+        .demo-calc-btn.num { background: rgba(255,255,255,.05); color: #fff; border: 1px solid rgba(255,255,255,.06); }
+        .demo-calc-btn.op  { background: rgba(59,130,246,.25); color: #60a5fa; border: 1px solid rgba(59,130,246,.3); }
+        .demo-calc-btn.fn  { background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.08); }
+        .demo-calc-btn.clr { background: rgba(239,68,68,.25); color: #f87171; border: 1px solid rgba(239,68,68,.3); }
+
+        .demo-stat { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.04); border-radius: 6px; margin-bottom: 4px; }
+        .demo-stat .si { font-size: 12px; }
+        .demo-stat .sl { width: 44px; font-size: 10px; font-weight: 700; }
+        .demo-stat .sb { flex: 1; height: 4px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+        .demo-stat .sf { height: 100%; border-radius: 2px; }
+        .demo-stat .sv { font-size: 10px; font-weight: 700; min-width: 60px; text-align: right; }
+
+        .demo-tabs {
+            display: flex; position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(255,255,255,.02); border-top: 1px solid rgba(255,255,255,.04);
+        }
+        .demo-tab { flex: 1; text-align: center; padding: 8px 0; cursor: pointer; font-size: 9px; font-weight: 600; color: rgba(255,255,255,.2); transition: all .2s; }
+        .demo-tab:hover { color: rgba(255,255,255,.5); }
+        .demo-tab.active { color: var(--tc); }
+        .demo-tab .ti { font-size: 12px; display: block; margin-bottom: 1px; }
+
+        /* ── Features grid ───────────────────────────────── */
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 820px; margin: 0 auto; }
+        @media (max-width: 700px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 420px) { .features-grid { grid-template-columns: 1fr; } }
+        .feat {
+            background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06);
+            border-radius: 16px; padding: 24px 20px; text-align: center; transition: all .3s;
+            position: relative; overflow: hidden;
+        }
+        .feat::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background: linear-gradient(90deg, transparent, var(--nhq-red), transparent);
+            opacity: 0; transition: opacity .3s;
+        }
+        .feat:hover { transform: translateY(-4px); border-color: rgba(239,68,68,.2); }
+        .feat:hover::before { opacity: 1; }
+        .feat .icon { font-size: 28px; margin-bottom: 10px; display: block; }
+        .feat h3 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+        .feat p { font-size: 12.5px; color: #64748b; line-height: 1.55; }
+
+        /* ── Install ────────────────────────────────────── */
+        .install-card {
+            max-width: 700px; margin: 0 auto;
+            background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06);
+            border-radius: 16px; padding: 28px;
+        }
+        .install-card h3 { font-size: 16px; font-weight: 800; margin-bottom: 14px; color: #fff; }
+        .code {
+            background: #06060a; border-radius: 10px; padding: 16px;
+            font-family: 'SF Mono', 'JetBrains Mono', monospace; font-size: 12px; line-height: 2.2;
+            border: 1px solid rgba(255,255,255,.04); overflow-x: auto;
+        }
+        .cm { color: #4a5568; } .cp { color: #22c55e; } .cc { color: #cbd5e1; } .ch { color: #fbbf24; }
+
+        .dl-section { padding: 80px 24px; text-align: center; position: relative; z-index: 1; background: linear-gradient(180deg, #06060a, #09090f, #06060a); }
+        .dl-section h2 { font-size: clamp(24px, 4vw, 36px); font-weight: 900; color: #fff; margin-bottom: 8px; letter-spacing: -1px; }
+        .dl-section p { color: #64748b; margin-bottom: 28px; font-size: 15px; }
+
+        footer {
+            padding: 24px; text-align: center; font-size: 12px; color: #334;
+            border-top: 1px solid rgba(255,255,255,.03);
+        }
+        footer a { color: #ef4444; text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+
+        @media (max-width: 640px) {
+            .hero { padding: 110px 20px 50px; }
+            .section, .dl-section { padding: 60px 20px; }
+            .install-card { padding: 20px; }
+            .demo-wrap { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Site nav -->
+<nav class="site-nav">
+    <a href="/" class="nav-brand">
+        <div class="nav-logo">N</div>
+        <span class="nav-title">Nigents</span>
+    </a>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">
+        <span class="nav-toggle-icon-open" aria-hidden="true">☰</span>
+        <span class="nav-toggle-icon-close" aria-hidden="true">×</span>
+    </button>
+    <div class="nav-links" id="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/how-it-works.html" class="nav-link">How it works</a>
+            <a href="/skills.html" class="nav-link">AI Skills</a>
+        <a href="/materials.html" class="nav-link">Free Materials</a>
+        <a href="/crazy-apps.html" class="nav-link active">Crazy apps</a>
+        <a href="/opencode-kits.html" class="nav-link">OpenCode kits</a>
+        <a href="/apps/" class="nav-link">Apps</a>
+        <a href="/login.html" class="nav-cta">Login →</a>
+    </div>
+</nav>
+<div class="nav-backdrop" id="nav-backdrop" aria-hidden="true" hidden></div>
+
+<div class="bg-grid"></div>
+
+<!-- Hero -->
+<div class="hero">
+    <div class="hero-notch" aria-hidden="true"></div>
+    <h1>NotchHQ</h1>
+    <p class="sub">Your Notch, Now Useful</p>
+    <p class="desc">Hover at the notch to unlock a command center with Music Controls, Notes, Timer, Calculator, Clipboard, AI Chat, and System Stats — all living in the dead space above your screen.</p>
+    <div class="badges">
+        <span class="badge badge-red">Now Playing</span>
+        <span class="badge badge-yellow">Notes</span>
+        <span class="badge badge-orange">Timer</span>
+        <span class="badge badge-blue">Calculator</span>
+        <span class="badge badge-green">Clipboard</span>
+        <span class="badge badge-pink">AI Chat</span>
+    </div>
+    <div class="ctas">
+        <a href="/downloads/NotchHQ-1.0.0.dmg" download class="btn btn-primary">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download NotchHQ.dmg
+        </a>
+        <a href="#demo" class="btn btn-outline">See Demo</a>
+    </div>
+</div>
+
+<!-- Demo -->
+<div class="section" id="demo">
+    <div class="section-head">
+        <span class="label label-red">Live Demo</span>
+        <h2>Try It Right Here</h2>
+        <p>Click the tabs to explore each tool</p>
+    </div>
+    <div class="demo-wrap">
+        <div class="demo-bar">
+            <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+            <div class="demo-bar-title">NotchHQ Panel</div>
+        </div>
+        <div class="demo-body">
+            <!-- Now Playing — album art + wave visualizer -->
+            <div class="demo-page active" id="p0">
+                <div class="demo-np-head">
+                    <div class="demo-album-art" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    </div>
+                    <div>
+                        <div class="demo-music-title">Blinding Lights</div>
+                        <div class="demo-music-artist">The Weeknd</div>
+                    </div>
+                </div>
+                <div class="demo-waves" aria-hidden="true">
+                    <div class="demo-wave-bar" style="animation-delay:-0.00s;opacity:.55"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.08s"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.18s;opacity:.75"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.28s"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.12s;opacity:.6"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.36s"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.45s;opacity:.8"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.22s"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.05s;opacity:.65"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.52s"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.30s;opacity:.7"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.14s"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.42s;opacity:.9"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.60s"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.20s;opacity:.55"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.10s"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.38s;opacity:.75"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.48s"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.16s;opacity:.65"></div>
+                    <div class="demo-wave-bar" style="animation-delay:-0.02s"></div>
+                </div>
+                <div class="demo-progress"><div class="demo-progress-fill"></div></div>
+                <div class="demo-time"><span>1:23</span><span>-2:17</span></div>
+                <div class="demo-controls">
+                    <span class="demo-ctrl" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+                    </span>
+                    <div class="demo-play" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="none"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                    </div>
+                    <span class="demo-ctrl" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                    </span>
+                </div>
+                <div class="demo-vol">
+                    <span aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
+                    <div class="demo-vol-bar"><div class="demo-vol-fill"></div></div>
+                    <span aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></span>
+                </div>
+            </div>
+            <!-- Notes -->
+            <div class="demo-page" id="p1">
+                <div class="demo-note-input"><input placeholder="Quick note..." /><span style="color:#eab308;font-size:14px;cursor:pointer">+</span></div>
+                <div class="demo-note"><span>Buy groceries</span><span class="t">14:32</span></div>
+                <div class="demo-note"><span>Call dentist</span><span class="t">12:05</span></div>
+                <div class="demo-note"><span>Review PR #42</span><span class="t">10:18</span></div>
+            </div>
+            <!-- Timer -->
+            <div class="demo-page" id="p2">
+                <div class="demo-timer-display">3:42</div>
+                <div class="demo-timer-modes">
+                    <div class="demo-timer-mode active">Stopwatch</div>
+                    <div class="demo-timer-mode">Countdown</div>
+                </div>
+                <div style="display:flex;justify-content:center;gap:16px;margin-top:12px">
+                    <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5)" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    </div>
+                    <div style="width:44px;height:44px;border-radius:50%;background:#f97316;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 4px 16px rgba(249,115,22,.4)" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" stroke="none"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                    </div>
+                    <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5)" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                    </div>
+                </div>
+            </div>
+            <!-- Calculator -->
+            <div class="demo-page" id="p3">
+                <div class="demo-calc-display">42</div>
+                <div class="demo-calc-grid">
+                    <div class="demo-calc-btn clr">C</div><div class="demo-calc-btn fn">±</div><div class="demo-calc-btn fn">%</div><div class="demo-calc-btn op">÷</div>
+                    <div class="demo-calc-btn num">7</div><div class="demo-calc-btn num">8</div><div class="demo-calc-btn num">9</div><div class="demo-calc-btn op">×</div>
+                    <div class="demo-calc-btn num">4</div><div class="demo-calc-btn num">5</div><div class="demo-calc-btn num">6</div><div class="demo-calc-btn op">−</div>
+                    <div class="demo-calc-btn num">1</div><div class="demo-calc-btn num">2</div><div class="demo-calc-btn num">3</div><div class="demo-calc-btn op">+</div>
+                </div>
+            </div>
+            <!-- Clipboard -->
+            <div class="demo-page" id="p4">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <span style="font-size:11px;font-weight:700;color:#22c55e">Clipboard</span>
+                    <span style="font-size:9px;color:#22c55e;padding:3px 8px;border-radius:4px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2)">Capture</span>
+                </div>
+                <div class="demo-note" style="border-color:rgba(34,197,94,.12)"><span>The quick brown fox…</span><span style="color:#22c55e;font-size:9px;cursor:pointer">copy</span></div>
+                <div class="demo-note" style="border-color:rgba(34,197,94,.12)"><span>https://github.com/…</span><span style="color:#22c55e;font-size:9px;cursor:pointer">copy</span></div>
+                <div class="demo-note" style="border-color:rgba(34,197,94,.12)"><span>Meeting at 3pm</span><span style="color:#22c55e;font-size:9px;cursor:pointer">copy</span></div>
+            </div>
+            <!-- AI Chat -->
+            <div class="demo-page" id="p5">
+                <div style="text-align:center;padding:32px 0;color:rgba(255,255,255,.35);font-size:12px">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 8px;color:#ec4899" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+                    AI Chat powered by GPT-4o-mini
+                    <span style="font-size:10px;color:rgba(255,255,255,.18);display:block;margin-top:6px">Add your API key in Settings to enable</span>
+                </div>
+            </div>
+            <!-- Stats -->
+            <div class="demo-page" id="p6">
+                <div class="demo-stat"><span class="si" style="color:#3b82f6" aria-hidden="true"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg></span><span class="sl" style="color:#3b82f6">CPU</span><div class="sb"><div class="sf" style="width:23%;background:#3b82f6"></div></div><span class="sv" style="color:#60a5fa">23%</span></div>
+                <div class="demo-stat"><span class="si" style="color:#a855f7" aria-hidden="true"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="2" x2="9" y2="4"/><line x1="15" y1="2" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="22"/><line x1="15" y1="20" x2="15" y2="22"/><line x1="20" y1="9" x2="22" y2="9"/><line x1="20" y1="14" x2="22" y2="14"/><line x1="2" y1="9" x2="4" y2="9"/><line x1="2" y1="14" x2="4" y2="14"/></svg></span><span class="sl" style="color:#a855f7">RAM</span><div class="sb"><div class="sf" style="width:62%;background:#a855f7"></div></div><span class="sv" style="color:#c084fc">9.8 GB</span></div>
+                <div class="demo-stat"><span class="si" style="color:#f97316" aria-hidden="true"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg></span><span class="sl" style="color:#f97316">Disk</span><div class="sb"><div class="sf" style="width:45%;background:#f97316"></div></div><span class="sv" style="color:#fb923c">256 GB</span></div>
+                <div class="demo-stat"><span class="si" style="color:#22c55e" aria-hidden="true"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/><line x1="14" y1="10" x2="14" y2="14"/></svg></span><span class="sl" style="color:#22c55e">Batt</span><div class="sb"><div class="sf" style="width:87%;background:#22c55e"></div></div><span class="sv" style="color:#4ade80">87%</span></div>
+            </div>
+            <!-- Tabs -->
+            <div class="demo-tabs">
+                <div class="demo-tab active" style="--tc:#ef4444" onclick="tab(0)"><span class="ti" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>Now</div>
+                <div class="demo-tab" style="--tc:#eab308" onclick="tab(1)"><span class="ti" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>Notes</div>
+                <div class="demo-tab" style="--tc:#f97316" onclick="tab(2)"><span class="ti" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><polyline points="12 9 12 13 15 15"/><line x1="9" y1="1" x2="15" y2="1"/></svg></span>Timer</div>
+                <div class="demo-tab" style="--tc:#3b82f6" onclick="tab(3)"><span class="ti" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="14" x2="12.01" y2="14"/><line x1="16" y1="14" x2="16.01" y2="14"/><line x1="8" y1="18" x2="8.01" y2="18"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>Calc</div>
+                <div class="demo-tab" style="--tc:#22c55e" onclick="tab(4)"><span class="ti" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></span>Clip</div>
+                <div class="demo-tab" style="--tc:#ec4899" onclick="tab(5)"><span class="ti" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg></span>AI</div>
+                <div class="demo-tab" style="--tc:#a855f7" onclick="tab(6)"><span class="ti" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></span>Stats</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features -->
+<div class="section">
+    <div class="section-head">
+        <span class="label label-blue">Features</span>
+        <h2>7 Tools in Your Notch</h2>
+        <p>Hover to open, tap a tab, get things done</p>
+    </div>
+    <div class="features-grid">
+        <div class="feat"><span class="icon" style="color:#ef4444" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><h3>Now Playing</h3><p>Album artwork, 20-bar wave visualizer, play/pause, next/prev, volume. Detects Music, Spotify, YouTube &amp; Chrome tabs.</p></div>
+        <div class="feat"><span class="icon" style="color:#eab308" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span><h3>Quick Notes</h3><p>Jot down thoughts instantly. Auto-saved to disk.</p></div>
+        <div class="feat"><span class="icon" style="color:#f97316" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><polyline points="12 9 12 13 15 15"/><line x1="9" y1="1" x2="15" y2="1"/></svg></span><h3>Timer</h3><p>Stopwatch &amp; countdown with presets. Beep when done.</p></div>
+        <div class="feat"><span class="icon" style="color:#3b82f6" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="14" x2="12.01" y2="14"/><line x1="16" y1="14" x2="16.01" y2="14"/><line x1="8" y1="18" x2="8.01" y2="18"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span><h3>Calculator</h3><p>Full calculator with +, −, ×, ÷, %, ±.</p></div>
+        <div class="feat"><span class="icon" style="color:#22c55e" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></span><h3>Clipboard</h3><p>Capture &amp; paste from history. Up to 20 items.</p></div>
+        <div class="feat"><span class="icon" style="color:#ec4899" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg></span><h3>AI Chat</h3><p>Stream responses from GPT-4o-mini right in your notch.</p></div>
+        <div class="feat"><span class="icon" style="color:#a855f7" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></span><h3>System Stats</h3><p>CPU, RAM, disk, battery, uptime — live updated.</p></div>
+        <div class="feat"><span class="icon" style="color:#ef4444" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span><h3>Notch Native</h3><p>Expands from the notch with a spring animation.</p></div>
+        <div class="feat"><span class="icon" style="color:#94a3b8" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><h3>No Setup</h3><p>Works out of the box. Add API key for AI.</p></div>
+    </div>
+</div>
+
+<!-- Install -->
+<div class="section">
+    <div class="section-head">
+        <span class="label label-blue">Install</span>
+        <h2>Get Started</h2>
+        <p>Up and running in under a minute</p>
+    </div>
+    <div class="install-card">
+        <h3>Quick Install</h3>
+        <div class="code">
+            <span class="cm"># 1. Open the DMG and drag to Applications</span><br>
+            <span class="cp">$</span> <span class="cc">open NotchHQ.dmg</span><br><br>
+            <span class="cm"># 2. Fix quarantine (unsigned build)</span><br>
+            <span class="cp">$</span> <span class="ch">xattr -cr</span> <span class="cc">/Applications/NotchHQ.app</span><br><br>
+            <span class="cm"># 3. Ad-hoc re-sign the app</span><br>
+            <span class="cp">$</span> <span class="ch">codesign --force --deep --sign -</span> <span class="cc">/Applications/NotchHQ.app</span><br><br>
+            <span class="cm"># 4. Launch!</span><br>
+            <span class="cp">$</span> <span class="cc">open /Applications/NotchHQ.app</span>
+        </div>
+        <p style="font-size:12px;color:#64748b;margin-top:14px;line-height:1.6">Hover your mouse at the top center of the screen (notch area) to reveal the panel. Move away to collapse. Add your OpenAI API key in Settings for AI chat.</p>
+    </div>
+</div>
+
+<!-- Download -->
+<div class="dl-section">
+    <h2>Ready to Notch?</h2>
+    <p>Turn dead space into your command center</p>
+    <a href="/downloads/NotchHQ-1.0.0.dmg" download class="btn btn-primary" style="font-size:16px;padding:16px 40px">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download NotchHQ.dmg
+    </a>
+</div>
+
+<footer>
+    <a href="/crazy-apps.html">← All Crazy Apps</a> &nbsp;·&nbsp;
+    Nigents — NotchHQ — Built with SwiftUI
+</footer>
+
+<script>
+// ── 7-tab panel ────────────────────────────────────────
+function tab(i) {
+    document.querySelectorAll('.demo-page').forEach(function (p, idx) { p.classList.toggle('active', idx === i); });
+    document.querySelectorAll('.demo-tab').forEach(function (t, idx) { t.classList.toggle('active', idx === i); });
+}
+
+// ── Nav toggle ─────────────────────────────────────────
+(function () {
+    var toggle = document.getElementById('nav-toggle');
+    var backdrop = document.getElementById('nav-backdrop');
+    if (!toggle) return;
+    function setOpen(open) {
+        document.body.classList.toggle('nav-open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (backdrop) backdrop.hidden = !open;
+    }
+    toggle.addEventListener('click', function () { setOpen(!document.body.classList.contains('nav-open')); });
+    if (backdrop) backdrop.addEventListener('click', function () { setOpen(false); });
+    document.getElementById('nav-links').querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () { setOpen(false); });
+    });
+})();
+</script>
+
+</body>
+</html>

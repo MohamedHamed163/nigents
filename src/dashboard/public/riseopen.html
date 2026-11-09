@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Rise&Open — Launch any Mac app by raising a single finger at your camera. Apple Vision framework, 5 gesture slots, 100% local processing.">
+    <title>Rise&amp;Open — Launch Apps with Finger Gestures | Nigents</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09080c;
+            --bg2: #111018;
+            --border: #2a2a35;
+            --text: #ffffff;
+            --muted: #a0a0b0;
+            --dim: #555568;
+            --p: #8B5CF6;
+            --p2: #EC4899;
+            --font: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(139,92,246,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139,92,246,0.03) 1px, transparent 1px);
+            background-size: 55px 55px;
+            pointer-events: none; z-index: 0;
+        }
+
+        /* ─── NAV ─────────────────────────────── */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 18px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, var(--bg) 0%, transparent 100%);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .nav-logo {
+            width: 38px; height: 38px; border-radius: 8px;
+            background: #ff570a;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 18px; color: var(--bg);
+        }
+        .nav-name { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+        .nav-links { display: flex; align-items: center; gap: 22px; }
+        .nav-link { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }
+        .nav-link:hover { color: var(--text); }
+        .nav-back {
+            padding: 9px 18px; border: 1px solid var(--border);
+            color: var(--muted); text-decoration: none;
+            font-size: 13px; font-weight: 600; border-radius: 8px; transition: all .2s;
+        }
+        .nav-back:hover { border-color: var(--p); color: var(--p); }
+        .nav-toggle {
+            display: none; width: 42px; height: 42px;
+            align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text); cursor: pointer; font-size: 20px;
+        }
+        @media (max-width: 860px) {
+            .nav-toggle { display: flex; }
+            .nav-links {
+                display: none; position: fixed;
+                top: 68px; left: 16px; right: 16px;
+                flex-direction: column; align-items: stretch;
+                background: var(--bg2); border: 1px solid var(--border);
+                border-radius: 14px; padding: 14px; z-index: 999;
+            }
+            body.nav-open .nav-links { display: flex; }
+            .nav { padding: 16px 20px; }
+        }
+
+        /* ─── HERO ────────────────────────────── */
+        .hero {
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 120px 24px 60px; position: relative; z-index: 1;
+        }
+        .hero::before {
+            content: '';
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 700px; height: 500px;
+            background: radial-gradient(ellipse at 50% 35%, rgba(139,92,246,0.09) 0%, transparent 65%);
+            pointer-events: none;
+        }
+        .hero-inner {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 52px; width: 100%; max-width: 1000px; position: relative; z-index: 1;
+        }
+
+        /* ── ANIMATED SCENE ── */
+        .hero-scene {
+            width: 100%; max-width: 680px;
+            position: relative; height: clamp(240px, 38vw, 320px);
+        }
+        .hero-scene svg {
+            width: 100%; height: 100%;
+            overflow: visible;
+        }
+
+        /* laptop screen glow pulse */
+        @keyframes screenGlow {
+            0%,100% { opacity: .55; }
+            50% { opacity: .85; }
+        }
+        .laptop-screen-glow { animation: screenGlow 2.8s ease-in-out infinite; }
+
+        /* camera blink */
+        @keyframes camBlink { 0%,85%,100% { opacity: .6; } 90% { opacity: 1; } 95% { opacity:.2; } }
+        .cam-dot { animation: camBlink 3s linear infinite; }
+
+        /* detection beam pulse */
+        @keyframes beamPulse { 0%,100% { opacity: 0; stroke-dashoffset: 0; } 20%,80% { opacity: .7; } 50% { opacity: 1; stroke-dashoffset: -30; } }
+        .det-beam { stroke-dasharray: 8 10; animation: beamPulse 2.4s ease-in-out infinite; }
+        .det-beam-2 { stroke-dasharray: 8 10; animation: beamPulse 2.4s ease-in-out infinite; animation-delay: .4s; }
+
+        /* finger raise sequence */
+        @keyframes f1Up { 0%,10%,90%,100%{transform:translateY(0)} 20%,80%{transform:translateY(-18px)} }
+        @keyframes f2Up { 0%,25%,90%,100%{transform:translateY(0)} 35%,80%{transform:translateY(-22px)} }
+        @keyframes f3Up { 0%,45%,90%,100%{transform:translateY(0)} 55%,80%{transform:translateY(-20px)} }
+        .finger-1 { transform-origin: 50% 100%; animation: f1Up 6s ease-in-out infinite; }
+        .finger-2 { transform-origin: 50% 100%; animation: f2Up 6s ease-in-out infinite; animation-delay:.3s; }
+        .finger-3 { transform-origin: 50% 100%; animation: f3Up 6s ease-in-out infinite; animation-delay:.6s; }
+
+        /* tip glow when raised */
+        @keyframes tipGlow { 0%,15%,85%,100%{opacity:0;r:4} 30%,70%{opacity:.9;r:7} }
+        .tip-glow-1 { animation: tipGlow 6s ease-in-out infinite; }
+        .tip-glow-2 { animation: tipGlow 6s ease-in-out infinite; animation-delay: .3s; }
+        .tip-glow-3 { animation: tipGlow 6s ease-in-out infinite; animation-delay: .6s; }
+
+        /* app icon launch */
+        @keyframes iconLaunch { 0%,60%{opacity:0;transform:translate(0,0) scale(.4)} 70%,90%{opacity:1;transform:translate(-30px,-40px) scale(1)} 100%{opacity:0;transform:translate(-45px,-65px) scale(.7)} }
+        @keyframes iconLaunch2 { 0%,70%{opacity:0;transform:translate(0,0) scale(.4)} 80%,92%{opacity:1;transform:translate(20px,-50px) scale(1)} 100%{opacity:0;transform:translate(30px,-70px) scale(.6)} }
+        .launch-icon-1 { animation: iconLaunch 6s ease-in-out infinite; }
+        .launch-icon-2 { animation: iconLaunch2 6s ease-in-out infinite; animation-delay:.5s; }
+
+        /* hold progress ring */
+        @keyframes progressRing {
+            0%,30%{stroke-dashoffset:100;opacity:0}
+            40%{opacity:.9}
+            75%{stroke-dashoffset:0;opacity:.9}
+            85%,100%{stroke-dashoffset:0;opacity:0}
+        }
+        .hold-ring { animation: progressRing 6s ease-in-out infinite; }
+
+        /* ── HERO TEXT ── */
+        .hero-text { text-align: center; max-width: 620px; }
+        .hero-kicker {
+            display: inline-block;
+            font-size: 11px; font-weight: 700; letter-spacing: .18em;
+            text-transform: uppercase; color: rgba(167,139,250,.8);
+            border: 1px solid rgba(139,92,246,.28); border-radius: 3px;
+            padding: 6px 14px; margin-bottom: 18px;
+        }
+        .hero-h1 {
+            font-size: clamp(40px, 6.5vw, 68px); font-weight: 900;
+            letter-spacing: -2.5px; line-height: 1.04; margin-bottom: 10px;
+            background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 50%, #8B5CF6 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: gradShift 3.5s ease-in-out infinite;
+        }
+        @keyframes gradShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .hero-tagline { font-size: 18px; color: var(--muted); margin-bottom: 10px; }
+        .hero-sub { font-size: 14px; color: var(--dim); max-width: 460px; margin: 0 auto 28px; line-height: 1.65; }
+
+        .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
+        .badge {
+            padding: 5px 12px; border-radius: 999px; font-size: 11px; font-weight: 600;
+            animation: bPop .5s ease-out both;
+        }
+        .badge:nth-child(1){animation-delay:.08s} .badge:nth-child(2){animation-delay:.16s}
+        .badge:nth-child(3){animation-delay:.24s} .badge:nth-child(4){animation-delay:.32s}
+        @keyframes bPop { from{opacity:0;transform:scale(.82) translateY(8px)} to{opacity:1;transform:none} }
+        .b-purple { background:rgba(139,92,246,.12); color:#a78bfa; border:1px solid rgba(139,92,246,.25); }
+        .b-pink   { background:rgba(236,72,153,.12);  color:#f472b6; border:1px solid rgba(236,72,153,.25); }
+        .b-green  { background:rgba(16,185,129,.12);  color:#34d399; border:1px solid rgba(16,185,129,.25); }
+        .b-orange { background:rgba(245,158,11,.12);  color:#fbbf24; border:1px solid rgba(245,158,11,.25); }
+
+        .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 32px; text-decoration: none; border-radius: 12px;
+            font-weight: 700; font-size: 15px; cursor: pointer; border: none; transition: all .3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            color: #fff; box-shadow: 0 8px 28px rgba(139,92,246,.3);
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 38px rgba(139,92,246,.45); }
+        .btn-ghost {
+            background: rgba(255,255,255,.055); color: #bbb;
+            border: 1px solid rgba(255,255,255,.1);
+        }
+        .btn-ghost:hover { background: rgba(255,255,255,.09); transform: translateY(-3px); }
+
+        /* ─── DEMO SECTION ────────────────────── */
+        .demo-section { padding: 72px 24px; position: relative; z-index: 1; }
+        .section-label {
+            text-align: center; font-size: 11px; font-weight: 700;
+            letter-spacing: .18em; text-transform: uppercase;
+            color: rgba(139,92,246,.7); margin-bottom: 10px;
+        }
+        .section-title { text-align: center; font-size: clamp(24px,4vw,34px); font-weight: 800; color: var(--text); margin-bottom: 6px; }
+        .section-sub { text-align: center; font-size: 14px; color: var(--muted); margin-bottom: 38px; }
+
+        .screen-wrap {
+            max-width: 900px; margin: 0 auto;
+            border-radius: 18px; overflow: hidden;
+            box-shadow: 0 40px 90px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06);
+        }
+        .screen-bar {
+            background: #18181f; padding: 10px 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .sdot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+        .sdot.r{background:#ff5f56} .sdot.y{background:#ffbd2e} .sdot.g{background:#27c93f}
+        .screen-title-bar { margin-left: 8px; font-size: 11px; color: #555; flex: 1; }
+        .screen-live {
+            padding: 3px 9px; border-radius: 8px; font-size: 10px; font-weight: 700;
+            background: rgba(139,92,246,.15); color: #a78bfa; letter-spacing: .06em;
+        }
+
+        .demo-canvas {
+            background: linear-gradient(160deg, #0c0c15 0%, #080810 100%);
+            position: relative; height: clamp(320px, 46vw, 500px); overflow: hidden;
+        }
+
+        /* Camera viewport */
+        .cam-viewport {
+            position: absolute; top: 18px; left: 18px;
+            width: clamp(200px, 30%, 290px); aspect-ratio: 4/3;
+            border-radius: 14px; overflow: hidden;
+            border: 1.5px solid rgba(139,92,246,.35);
+            background: #000;
+        }
+        #camCanvas { width: 100%; height: 100%; display: block; }
+
+        /* finger chips panel */
+        .finger-panel {
+            position: absolute; top: 18px; right: 18px;
+            display: flex; flex-direction: column; gap: 7px;
+            width: clamp(150px, 22%, 210px);
+        }
+        .f-chip {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 12px; border-radius: 10px;
+            background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06);
+            font-size: 11px; cursor: pointer; transition: all .25s; user-select: none;
+        }
+        .f-chip.active {
+            border-color: var(--fc);
+            background: color-mix(in srgb, var(--fc) 12%, transparent);
+        }
+        .f-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #2a2a38; transition: all .25s; flex-shrink: 0;
+        }
+        .f-chip.active .f-dot { background: var(--fc); box-shadow: 0 0 8px var(--fc); }
+        .f-name { flex: 1; font-weight: 600; color: var(--muted); }
+        .f-chip.active .f-name { color: var(--fc); }
+        .f-app { font-size: 10px; color: var(--dim); }
+
+        /* status + hold bar */
+        .demo-status {
+            position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+            white-space: nowrap;
+            padding: 6px 18px; border-radius: 999px; font-size: 11px; font-weight: 600;
+            transition: all .3s;
+        }
+        .hold-wrap {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: min(320px, 60%);
+        }
+        .hold-bar-outer {
+            height: 30px; border-radius: 10px;
+            background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+            overflow: hidden; position: relative;
+        }
+        .hold-bar-fill {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, #8B5CF6, #EC4899);
+            transition: width .1s linear; border-radius: 10px;
+        }
+        .hold-bar-label {
+            position: absolute; inset: 0; display: flex;
+            align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; color: #fff;
+            text-shadow: 0 1px 4px rgba(0,0,0,.5);
+        }
+        .demo-hint {
+            text-align: center; font-size: 11px; color: var(--dim);
+            margin-top: 7px; font-weight: 500;
+        }
+
+        /* Toolbar */
+        .screen-toolbar {
+            background: #0e0e16; padding: 10px 14px;
+            display: flex; gap: 8px; align-items: center; justify-content: center;
+            flex-wrap: wrap; border-top: 1px solid rgba(255,255,255,.04);
+        }
+        .chip {
+            display: flex; align-items: center; gap: 5px;
+            padding: 6px 13px; border-radius: 8px; font-size: 11px; font-weight: 600;
+            background: rgba(139,92,246,.09); color: #a78bfa; cursor: pointer;
+            transition: all .2s; border: 1px solid rgba(139,92,246,.14); user-select: none;
+        }
+        .chip:hover { background: rgba(139,92,246,.18); }
+        .chip.active { background: rgba(139,92,246,.24); border-color: rgba(139,92,246,.4); color: #c4b5fd; }
+
+        /* ─── 5 FINGERS SECTION ────────────────── */
+        .fingers-section { padding: 72px 24px; position: relative; z-index: 1; }
+        .fingers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px; max-width: 900px; margin: 0 auto;
+        }
+        .finger-card {
+            background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.05);
+            border-radius: 14px; padding: 22px 16px; text-align: center; transition: all .3s;
+        }
+        .finger-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--fc);
+            box-shadow: 0 8px 28px color-mix(in srgb, var(--fc) 14%, transparent);
+        }
+        .finger-icon {
+            width: 60px; height: 70px; margin: 0 auto 12px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .finger-card h3 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+        .finger-card p { font-size: 11px; color: var(--muted); line-height: 1.55; }
+
+        /* ─── HOW ─────────────────────────────── */
+        .how-section { padding: 72px 24px; position: relative; z-index: 1; }
+        .how-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 18px; max-width: 860px; margin: 0 auto;
+        }
+        .how-card {
+            background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.05);
+            border-radius: 16px; padding: 24px; transition: all .3s; position: relative; overflow: hidden;
+        }
+        .how-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, #8B5CF6, #EC4899, transparent);
+            opacity: 0; transition: opacity .3s;
+        }
+        .how-card:hover { transform: translateY(-4px); border-color: rgba(139,92,246,.22); }
+        .how-card:hover::before { opacity: 1; }
+        .how-num {
+            font-size: 30px; font-weight: 900; margin-bottom: 10px;
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .how-card h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+        .how-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+        /* ─── INSTALL ─────────────────────────── */
+        .install-section { padding: 60px 24px; position: relative; z-index: 1; }
+        .install-card {
+            max-width: 700px; margin: 0 auto;
+            background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.06);
+            border-radius: 18px; padding: 28px; overflow: hidden;
+        }
+        .install-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+        .code-block {
+            background: #06060f; border-radius: 10px; padding: 16px 18px;
+            font-family: 'SF Mono','Fira Code',monospace; font-size: 12px;
+            line-height: 2.1; margin-bottom: 16px; overflow-x: auto;
+            border: 1px solid rgba(255,255,255,.04);
+        }
+        .cm{color:#445} .cp{color:#34d399} .cc{color:#e0e0e0} .ch{color:#fbbf24}
+
+        /* ─── DOWNLOAD CTA ────────────────────── */
+        .dl-section {
+            padding: 80px 24px;
+            background: linear-gradient(160deg, #08080f, #0d0818, #08080f);
+            text-align: center; position: relative; z-index: 1; overflow: hidden;
+        }
+        .dl-section::before {
+            content: '';
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            width: 500px; height: 300px;
+            background: radial-gradient(ellipse, rgba(139,92,246,.09), transparent 70%);
+            pointer-events: none;
+        }
+        .dl-note { font-size: 12px; color: var(--dim); margin-top: 16px; }
+
+        footer {
+            padding: 24px; text-align: center; font-size: 11px;
+            color: var(--dim); border-top: 1px solid rgba(255,255,255,.04);
+            position: relative; z-index: 1;
+        }
+        footer a { color: rgba(139,92,246,.7); text-decoration: none; }
+        footer a:hover { color: #a78bfa; }
+
+        @media (max-width: 640px) {
+            .hero { padding: 100px 16px 48px; }
+            .hero-inner { gap: 36px; }
+            .demo-section, .fingers-section, .how-section, .install-section, .dl-section { padding: 56px 16px; }
+            .screen-toolbar { gap: 5px; }
+            .chip { padding: 5px 10px; font-size: 10px; }
+            .finger-panel { width: 140px; }
+            .f-chip { padding: 6px 8px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+    <a href="/" class="nav-brand">
+        <div class="nav-logo">N</div>
+        <span class="nav-name">Nigents</span>
+    </a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">&#9776;</button>
+    <div class="nav-links" id="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/crazy-apps.html" class="nav-link">Crazy apps</a>
+        <a href="/materials.html" class="nav-link">Free Materials</a>
+        <a href="/crazy-apps.html" class="nav-back">All apps</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-inner">
+
+        <!-- ── Animated scene: MacBook + hand gesture ── -->
+        <div class="hero-scene" aria-hidden="true">
+            <svg viewBox="0 0 680 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+                <!-- ── MacBook body ── -->
+                <!-- Base/keyboard -->
+                <rect x="100" y="238" width="300" height="18" rx="5"
+                      fill="#1a1a28" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                <rect x="90" y="254" width="320" height="6" rx="3"
+                      fill="#141420" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                <!-- Lid -->
+                <rect x="112" y="70" width="276" height="172" rx="10"
+                      fill="#1a1a28" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                <!-- Screen glow area -->
+                <rect x="112" y="70" width="276" height="172" rx="10"
+                      fill="url(#screenGrad)" class="laptop-screen-glow"/>
+                <!-- Screen bezel -->
+                <rect x="120" y="78" width="260" height="156" rx="6"
+                      fill="#050510" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                <!-- Screen content: subtle UI -->
+                <rect x="128" y="88" width="244" height="136" rx="4" fill="#080816"/>
+                <!-- App grid dots on screen -->
+                <rect x="138" y="100" width="28" height="28" rx="6" fill="rgba(139,92,246,0.20)"/>
+                <rect x="174" y="100" width="28" height="28" rx="6" fill="rgba(59,130,246,0.18)"/>
+                <rect x="210" y="100" width="28" height="28" rx="6" fill="rgba(16,185,129,0.18)"/>
+                <rect x="246" y="100" width="28" height="28" rx="6" fill="rgba(245,158,11,0.18)"/>
+                <rect x="282" y="100" width="28" height="28" rx="6" fill="rgba(236,72,153,0.18)"/>
+                <!-- Bottom bar on screen -->
+                <rect x="138" y="190" width="244" height="18" rx="4" fill="rgba(255,255,255,0.03)"/>
+                <!-- Camera dot on lid -->
+                <circle cx="250" cy="74" r="3" fill="#8B5CF6" class="cam-dot"/>
+                <!-- Camera label -->
+                <text x="250" y="68" text-anchor="middle" font-size="6" fill="rgba(139,92,246,0.7)" font-family="-apple-system,sans-serif">CAM</text>
+
+                <!-- ── Detection beams (camera to hand) ── -->
+                <line x1="250" y1="74" x2="488" y2="148"
+                      stroke="#8B5CF6" stroke-width="1.5" class="det-beam"/>
+                <line x1="250" y1="74" x2="498" y2="120"
+                      stroke="#EC4899" stroke-width="1.5" class="det-beam-2"/>
+
+                <!-- Hold progress ring around fingertip -->
+                <circle cx="494" cy="110" r="16"
+                        stroke="#8B5CF6" stroke-width="2"
+                        stroke-dasharray="100" stroke-dashoffset="100"
+                        class="hold-ring" fill="none"/>
+
+                <!-- ── Hand SVG ── (side view, palm facing camera) -->
+                <!-- Palm -->
+                <rect x="460" y="178" width="68" height="70" rx="14"
+                      fill="#2a2038" stroke="rgba(139,92,246,0.3)" stroke-width="1.5"/>
+                <!-- Thumb (left side) -->
+                <rect x="444" y="196" width="22" height="38" rx="10"
+                      fill="#2a2038" stroke="rgba(139,92,246,0.25)" stroke-width="1.5"/>
+
+                <!-- Finger 1 — Index — animated raise -->
+                <g class="finger-1">
+                    <rect x="462" y="144" width="16" height="42" rx="7"
+                          fill="#2a2038" stroke="#8B5CF6" stroke-width="1.5"/>
+                    <circle cx="470" cy="144" r="4" fill="#8B5CF6" class="tip-glow-1"/>
+                    <circle cx="470" cy="144" r="10" fill="rgba(139,92,246,0.25)" class="tip-glow-1"/>
+                </g>
+                <!-- Finger 2 — Middle — animated raise -->
+                <g class="finger-2">
+                    <rect x="480" y="140" width="16" height="46" rx="7"
+                          fill="#2a2038" stroke="#EC4899" stroke-width="1.5"/>
+                    <circle cx="488" cy="140" r="4" fill="#EC4899" class="tip-glow-2"/>
+                    <circle cx="488" cy="140" r="10" fill="rgba(236,72,153,0.25)" class="tip-glow-2"/>
+                </g>
+                <!-- Finger 3 — Ring — animated raise -->
+                <g class="finger-3">
+                    <rect x="498" y="148" width="16" height="38" rx="7"
+                          fill="#2a2038" stroke="rgba(245,158,11,0.7)" stroke-width="1.5"/>
+                    <circle cx="506" cy="148" r="3.5" fill="#F59E0B" class="tip-glow-3"/>
+                </g>
+                <!-- Finger 4 — Pinky -->
+                <rect x="516" y="160" width="13" height="30" rx="6"
+                      fill="#2a2038" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+
+                <!-- ── Launched app icon 1 ── -->
+                <g class="launch-icon-1">
+                    <rect x="458" y="130" width="26" height="26" rx="7" fill="rgba(139,92,246,0.85)"/>
+                    <path d="M465 143 L471 143 M471 143 L471 137 M471 143 L477 143"
+                          stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </g>
+                <!-- ── Launched app icon 2 ── -->
+                <g class="launch-icon-2">
+                    <rect x="478" y="116" width="22" height="22" rx="6" fill="rgba(236,72,153,0.85)"/>
+                    <circle cx="489" cy="127" r="5" stroke="white" stroke-width="1.8" fill="none"/>
+                </g>
+
+                <!-- Vision framework label -->
+                <rect x="108" y="158" width="130" height="18" rx="4" fill="rgba(139,92,246,0.10)"/>
+                <text x="173" y="170" text-anchor="middle" font-size="9" fill="rgba(167,139,250,0.85)"
+                      font-family="-apple-system,sans-serif" font-weight="600">Apple Vision Framework</text>
+
+                <defs>
+                    <linearGradient id="screenGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="rgba(139,92,246,0.10)"/>
+                        <stop offset="100%" stop-color="rgba(236,72,153,0.06)"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <!-- ── Hero text block ── -->
+        <div class="hero-text">
+            <p class="hero-kicker">macOS &middot; Apple Vision Framework</p>
+            <h1 class="hero-h1">Rise&amp;Open</h1>
+            <p class="hero-tagline">Launch Apps with Finger Gestures</p>
+            <p class="hero-sub">Hold a single finger up to your FaceTime camera and the mapped app opens instantly. Five fingers, five apps, zero wearables — all processing happens locally on your Mac.</p>
+            <div class="badges">
+                <span class="badge b-purple">Apple Vision</span>
+                <span class="badge b-pink">5 Gesture Slots</span>
+                <span class="badge b-green">Any App</span>
+                <span class="badge b-orange">100% Local</span>
+            </div>
+            <div class="cta-row">
+                <a href="/downloads/RiseOpen-1.0.0.dmg" download class="btn btn-primary">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 3v13M7 11l5 5 5-5M3 20h18"/></svg>
+                    Download DMG
+                </a>
+                <a href="#demo" class="btn btn-ghost">Try Demo</a>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- INTERACTIVE DEMO -->
+<section class="demo-section" id="demo">
+    <p class="section-label">Live Simulation</p>
+    <h2 class="section-title">Interactive Gesture Demo</h2>
+    <p class="section-sub">Click a finger chip or press keys 1–5. Hold one finger to watch the app launch.</p>
+
+    <div class="screen-wrap">
+        <div class="screen-bar">
+            <div class="sdot r"></div><div class="sdot y"></div><div class="sdot g"></div>
+            <div class="screen-title-bar">FaceTime Camera &mdash; Rise&amp;Open Detecting</div>
+            <div class="screen-live">SIMULATING</div>
+        </div>
+        <div class="demo-canvas" id="demoCanvas">
+
+            <!-- Camera feed -->
+            <div class="cam-viewport">
+                <canvas id="camCanvas" width="320" height="240"></canvas>
+            </div>
+
+            <!-- Finger chips panel -->
+            <div class="finger-panel">
+                <div class="f-chip" data-idx="0" style="--fc:#8B5CF6">
+                    <div class="f-dot"></div>
+                    <span class="f-name">Thumb</span>
+                    <span class="f-app">Safari</span>
+                </div>
+                <div class="f-chip" data-idx="1" style="--fc:#3B82F6">
+                    <div class="f-dot"></div>
+                    <span class="f-name">Index</span>
+                    <span class="f-app">Messages</span>
+                </div>
+                <div class="f-chip" data-idx="2" style="--fc:#10B981">
+                    <div class="f-dot"></div>
+                    <span class="f-name">Middle</span>
+                    <span class="f-app">Mail</span>
+                </div>
+                <div class="f-chip" data-idx="3" style="--fc:#F59E0B">
+                    <div class="f-dot"></div>
+                    <span class="f-name">Ring</span>
+                    <span class="f-app">Music</span>
+                </div>
+                <div class="f-chip" data-idx="4" style="--fc:#EC4899">
+                    <div class="f-dot"></div>
+                    <span class="f-name">Pinky</span>
+                    <span class="f-app">Notes</span>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="demo-status" id="demoStatus"
+                 style="background:rgba(16,185,129,0.10);color:#34d399;border:1px solid rgba(16,185,129,0.2);">
+                Ready — show your hand
+            </div>
+
+            <!-- Hold bar -->
+            <div class="hold-wrap">
+                <div class="hold-bar-outer">
+                    <div class="hold-bar-fill" id="holdFill"></div>
+                    <div class="hold-bar-label" id="holdLabel">Hold gesture to launch</div>
+                </div>
+                <div class="demo-hint" id="demoHint">Press 1–5 or click the finger chips above</div>
+            </div>
+
+        </div>
+        <div class="screen-toolbar">
+            <div class="chip active" data-preset="single">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 20V4"/></svg>
+                One Finger
+            </div>
+            <div class="chip" data-preset="peace">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10 20V7M14 20V7"/></svg>
+                Peace Sign
+            </div>
+            <div class="chip" data-preset="open">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 20V8M10 20V5M14 20V5M18 20V8"/></svg>
+                Open Hand
+            </div>
+            <div class="chip" data-preset="fist">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="10" width="12" height="10" rx="3"/><path d="M9 10V7a2 2 0 0 1 4 0v3" stroke-linecap="round"/></svg>
+                Fist
+            </div>
+            <div class="chip" id="btnReset">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                Reset
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 5 FINGERS, 5 APPS -->
+<section class="fingers-section">
+    <p class="section-label">Gesture Map</p>
+    <h2 class="section-title">5 Fingers, 5 Apps</h2>
+    <p class="section-sub">Assign any installed application to each finger</p>
+    <div class="fingers-grid">
+
+        <!-- Thumb -->
+        <div class="finger-card" style="--fc:#8B5CF6">
+            <div class="finger-icon">
+                <svg viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Palm -->
+                    <rect x="18" y="32" width="30" height="34" rx="8" fill="#1e1830" stroke="rgba(139,92,246,0.4)" stroke-width="1.5"/>
+                    <!-- Thumb extended left+up -->
+                    <rect x="4" y="14" width="18" height="28" rx="8" fill="#1e1830" stroke="#8B5CF6" stroke-width="2" transform="rotate(-30 13 28)"/>
+                    <!-- Other fingers folded (small bumps) -->
+                    <rect x="20" y="26" width="10" height="10" rx="4" fill="#1e1830" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
+                    <rect x="32" y="26" width="10" height="10" rx="4" fill="#1e1830" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
+                    <!-- Glow tip -->
+                    <circle cx="8" cy="13" r="5" fill="rgba(139,92,246,0.35)"/>
+                    <circle cx="8" cy="13" r="3" fill="#8B5CF6"/>
+                </svg>
+            </div>
+            <h3>Thumb</h3>
+            <p>Horizontal spread or upward — your quickest reach</p>
+        </div>
+
+        <!-- Index -->
+        <div class="finger-card" style="--fc:#3B82F6">
+            <div class="finger-icon">
+                <svg viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Palm -->
+                    <rect x="14" y="36" width="32" height="30" rx="8" fill="#101830" stroke="rgba(59,130,246,0.4)" stroke-width="1.5"/>
+                    <!-- Index extended up -->
+                    <rect x="22" y="6" width="16" height="38" rx="7" fill="#101830" stroke="#3B82F6" stroke-width="2"/>
+                    <!-- Others folded -->
+                    <rect x="38" y="30" width="10" height="12" rx="4" fill="#101830" stroke="rgba(59,130,246,0.2)" stroke-width="1"/>
+                    <rect x="12" y="32" width="10" height="10" rx="4" fill="#101830" stroke="rgba(59,130,246,0.2)" stroke-width="1"/>
+                    <!-- Glow tip -->
+                    <circle cx="30" cy="6" r="6" fill="rgba(59,130,246,0.35)"/>
+                    <circle cx="30" cy="6" r="3.5" fill="#3B82F6"/>
+                </svg>
+            </div>
+            <h3>Index</h3>
+            <p>Point and launch — the most natural gesture</p>
+        </div>
+
+        <!-- Middle -->
+        <div class="finger-card" style="--fc:#10B981">
+            <div class="finger-icon">
+                <svg viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Palm -->
+                    <rect x="12" y="38" width="36" height="28" rx="8" fill="#0c1e18" stroke="rgba(16,185,129,0.4)" stroke-width="1.5"/>
+                    <!-- Index half-raised -->
+                    <rect x="16" y="22" width="14" height="24" rx="6" fill="#0c1e18" stroke="rgba(16,185,129,0.25)" stroke-width="1.5"/>
+                    <!-- Middle extended tallest -->
+                    <rect x="23" y="4" width="16" height="42" rx="7" fill="#0c1e18" stroke="#10B981" stroke-width="2"/>
+                    <!-- Ring half -->
+                    <rect x="33" y="24" width="13" height="22" rx="6" fill="#0c1e18" stroke="rgba(16,185,129,0.25)" stroke-width="1.5"/>
+                    <!-- Tip glow -->
+                    <circle cx="31" cy="4" r="6" fill="rgba(16,185,129,0.35)"/>
+                    <circle cx="31" cy="4" r="3.5" fill="#10B981"/>
+                </svg>
+            </div>
+            <h3>Middle</h3>
+            <p>Quick-access to your most used tool</p>
+        </div>
+
+        <!-- Ring -->
+        <div class="finger-card" style="--fc:#F59E0B">
+            <div class="finger-icon">
+                <svg viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Palm -->
+                    <rect x="12" y="36" width="36" height="30" rx="8" fill="#1a1408" stroke="rgba(245,158,11,0.4)" stroke-width="1.5"/>
+                    <!-- Index folded -->
+                    <rect x="15" y="30" width="12" height="12" rx="5" fill="#1a1408" stroke="rgba(245,158,11,0.18)" stroke-width="1"/>
+                    <!-- Middle half -->
+                    <rect x="22" y="22" width="13" height="22" rx="6" fill="#1a1408" stroke="rgba(245,158,11,0.22)" stroke-width="1.5"/>
+                    <!-- Ring extended -->
+                    <rect x="30" y="6" width="14" height="38" rx="6" fill="#1a1408" stroke="#F59E0B" stroke-width="2"/>
+                    <!-- Pinky folded -->
+                    <rect x="37" y="30" width="10" height="12" rx="4" fill="#1a1408" stroke="rgba(245,158,11,0.18)" stroke-width="1"/>
+                    <!-- Ring decoration -->
+                    <rect x="29" y="28" width="16" height="5" rx="2.5" fill="rgba(245,158,11,0.4)" stroke="#F59E0B" stroke-width="1"/>
+                    <!-- Tip glow -->
+                    <circle cx="37" cy="6" r="5.5" fill="rgba(245,158,11,0.35)"/>
+                    <circle cx="37" cy="6" r="3" fill="#F59E0B"/>
+                </svg>
+            </div>
+            <h3>Ring</h3>
+            <p>Subtle gesture for background utilities</p>
+        </div>
+
+        <!-- Pinky -->
+        <div class="finger-card" style="--fc:#EC4899">
+            <div class="finger-icon">
+                <svg viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Palm -->
+                    <rect x="8" y="34" width="36" height="32" rx="8" fill="#1a0818" stroke="rgba(236,72,153,0.4)" stroke-width="1.5"/>
+                    <!-- Thumb ext (shaka) -->
+                    <rect x="2" y="28" width="12" height="20" rx="6" fill="#1a0818" stroke="#EC4899" stroke-width="2" transform="rotate(-20 8 38)"/>
+                    <!-- Fingers 2-4 folded -->
+                    <rect x="14" y="28" width="10" height="12" rx="4" fill="#1a0818" stroke="rgba(236,72,153,0.18)" stroke-width="1"/>
+                    <rect x="23" y="28" width="10" height="12" rx="4" fill="#1a0818" stroke="rgba(236,72,153,0.18)" stroke-width="1"/>
+                    <rect x="30" y="28" width="10" height="12" rx="4" fill="#1a0818" stroke="rgba(236,72,153,0.18)" stroke-width="1"/>
+                    <!-- Pinky extended -->
+                    <rect x="36" y="8" width="12" height="32" rx="5" fill="#1a0818" stroke="#EC4899" stroke-width="2"/>
+                    <!-- Tip glow -->
+                    <circle cx="42" cy="8" r="5" fill="rgba(236,72,153,0.35)"/>
+                    <circle cx="42" cy="8" r="3" fill="#EC4899"/>
+                </svg>
+            </div>
+            <h3>Pinky</h3>
+            <p>Shaka sign — your favorite quick-launch</p>
+        </div>
+
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section">
+    <p class="section-label">Setup</p>
+    <h2 class="section-title">How It Works</h2>
+    <p class="section-sub">Three steps to gesture-controlled app launching</p>
+    <div class="how-grid">
+        <div class="how-card">
+            <div class="how-num">01</div>
+            <h3>Grant Camera Access</h3>
+            <p>Rise&amp;Open uses your built-in FaceTime camera with Apple's Vision framework to detect hand poses. Everything runs locally — no data leaves your Mac.</p>
+        </div>
+        <div class="how-card">
+            <div class="how-num">02</div>
+            <h3>Map Your Fingers</h3>
+            <p>Open settings and assign any installed app to each of the 5 fingers. Safari on thumb, Messages on index — fully customisable, changes take effect immediately.</p>
+        </div>
+        <div class="how-card">
+            <div class="how-num">03</div>
+            <h3>Raise &amp; Hold</h3>
+            <p>Show exactly one finger to your camera and hold it steady. A progress bar fills for about 1 second, then the mapped app launches instantly.</p>
+        </div>
+    </div>
+</section>
+
+<!-- INSTALL -->
+<section class="install-section">
+    <p class="section-label">Get Started</p>
+    <h2 class="section-title">Installation</h2>
+    <p class="section-sub">Running in under a minute</p>
+    <div class="install-card">
+        <h3 style="color:#a78bfa;">Quick Install</h3>
+        <div class="code-block">
+            <span class="cm"># 1. Open the DMG and drag to Applications</span><br>
+            <span class="cp">$ </span><span class="cc">open RiseOpen.dmg</span><br><br>
+            <span class="cm"># 2. Remove quarantine flag (unsigned build)</span><br>
+            <span class="cp">$ </span><span class="ch">xattr -cr /Applications/RiseOpen.app</span><br><br>
+            <span class="cm"># 3. Re-sign locally</span><br>
+            <span class="cp">$ </span><span class="ch">codesign --force --deep --sign - /Applications/RiseOpen.app</span><br><br>
+            <span class="cm"># 4. Launch — grant Camera permission when prompted</span><br>
+            <span class="cp">$ </span><span class="cc">open /Applications/RiseOpen.app</span>
+        </div>
+        <p style="font-size:12px;color:var(--dim);">Requires macOS 14 Sonoma or later &middot; Apple Silicon and Intel &middot; FaceTime / built-in camera required</p>
+    </div>
+</section>
+
+<!-- DOWNLOAD CTA -->
+<section class="dl-section">
+    <h2 class="section-title">Ready to Gesture?</h2>
+    <p class="section-sub">Download Rise&amp;Open — launch apps without touching your keyboard</p>
+    <a href="/downloads/RiseOpen-1.0.0.dmg" download class="btn btn-primary" style="font-size:16px;padding:16px 38px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 3v13M7 11l5 5 5-5M3 20h18"/></svg>
+        Download DMG — Free
+    </a>
+    <p class="dl-note">Built with SwiftUI &middot; Apple Vision Framework &middot; macOS 14+</p>
+</section>
+
+<footer>
+    <a href="/crazy-apps.html">Crazy apps</a> &nbsp;&middot;&nbsp;
+    <a href="/">Nigents</a> &nbsp;&middot;&nbsp;
+    Rise&amp;Open &copy; 2025
+</footer>
+
+<script>
+(function () {
+    /* ── nav toggle ── */
+    var toggle   = document.getElementById('nav-toggle');
+    var navLinks = document.getElementById('nav-links');
+    if (toggle) {
+        toggle.addEventListener('click', function () {
+            var open = document.body.classList.toggle('nav-open');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        document.addEventListener('click', function (e) {
+            if (!toggle.contains(e.target) && !navLinks.contains(e.target)) {
+                document.body.classList.remove('nav-open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
+    /* ── Gesture simulation ── */
+    var fingers = [
+        { name: 'Thumb',  app: 'Safari',   color: '#8B5CF6', raised: false },
+        { name: 'Index',  app: 'Messages', color: '#3B82F6', raised: false },
+        { name: 'Middle', app: 'Mail',     color: '#10B981', raised: false },
+        { name: 'Ring',   app: 'Music',    color: '#F59E0B', raised: false },
+        { name: 'Pinky',  app: 'Notes',    color: '#EC4899', raised: false }
+    ];
+
+    var holdPct      = 0;
+    var holdTimer    = null;
+    var activeIdx    = -1;
+    var launched     = false;
+
+    var camCanvas  = document.getElementById('camCanvas');
+    var ctx        = camCanvas.getContext('2d');
+    var chips      = document.querySelectorAll('.f-chip');
+    var holdFill   = document.getElementById('holdFill');
+    var holdLabel  = document.getElementById('holdLabel');
+    var demoStatus = document.getElementById('demoStatus');
+    var demoHint   = document.getElementById('demoHint');
+
+    /* ── Canvas camera feed ── */
+    function drawCam() {
+        var W = camCanvas.width, H = camCanvas.height;
+        ctx.fillStyle = '#07070f';
+        ctx.fillRect(0, 0, W, H);
+
+        /* grid lines */
+        ctx.strokeStyle = 'rgba(139,92,246,0.08)';
+        ctx.lineWidth = 0.5;
+        for (var x = 0; x < W; x += 22) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+        }
+        for (var y = 0; y < H; y += 22) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        }
+
+        /* scanning line */
+        var scanY = (Date.now() / 18) % H;
+        ctx.strokeStyle = 'rgba(139,92,246,0.18)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, scanY); ctx.lineTo(W, scanY); ctx.stroke();
+
+        /* detection circles */
+        var cx = W * 0.55, cy = H * 0.52;
+        ctx.strokeStyle = 'rgba(139,92,246,0.12)';
+        ctx.lineWidth = 1;
+        [50, 75, 100].forEach(function (r) {
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+        });
+
+        /* draw hand if any finger raised */
+        if (fingers.some(function (f) { return f.raised; })) {
+            drawHand(cx, cy);
+        }
+
+        /* top-left label */
+        ctx.fillStyle = 'rgba(139,92,246,0.55)';
+        ctx.font = '9px -apple-system,sans-serif';
+        ctx.fillText('VISION FRAMEWORK · LIVE', 10, 16);
+
+        /* confidence meter */
+        if (activeIdx >= 0) {
+            var conf = Math.min(holdPct + 5, 100);
+            ctx.fillStyle = 'rgba(0,0,0,0.45)';
+            ctx.fillRect(10, H - 24, 120, 12);
+            ctx.fillStyle = fingers[activeIdx].color;
+            ctx.fillRect(10, H - 24, conf * 1.2, 12);
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = '8px -apple-system,sans-serif';
+            ctx.fillText('conf: ' + Math.round(conf) + '%', 14, H - 15);
+        }
+
+        requestAnimationFrame(drawCam);
+    }
+
+    function drawHand(cx, cy) {
+        /* palm */
+        ctx.strokeStyle = 'rgba(167,139,250,0.6)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(cx, cy + 30, 28, 22, 0, 0, Math.PI * 2); ctx.stroke();
+
+        /* finger offsets from palm */
+        var fps = [
+            { dx: -36, baseY: cy + 14, raised: fingers[0].raised, color: fingers[0].color, length: 32 },
+            { dx: -16, baseY: cy +  6, raised: fingers[1].raised, color: fingers[1].color, length: 50 },
+            { dx:   1, baseY: cy +  4, raised: fingers[2].raised, color: fingers[2].color, length: 54 },
+            { dx:  18, baseY: cy +  6, raised: fingers[3].raised, color: fingers[3].color, length: 48 },
+            { dx:  33, baseY: cy + 12, raised: fingers[4].raised, color: fingers[4].color, length: 36 }
+        ];
+
+        fps.forEach(function (fp, i) {
+            var tipY = fp.raised ? fp.baseY - fp.length : fp.baseY - fp.length * 0.22;
+            ctx.strokeStyle = fp.color;
+            ctx.lineWidth = fp.raised ? 4 : 2.5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(cx + fp.dx, fp.baseY);
+            ctx.quadraticCurveTo(cx + fp.dx, (fp.baseY + tipY) / 2 - 8, cx + fp.dx, tipY);
+            ctx.stroke();
+
+            if (fp.raised) {
+                /* key point dot */
+                ctx.fillStyle = fp.color;
+                ctx.beginPath(); ctx.arc(cx + fp.dx, tipY, 5, 0, Math.PI * 2); ctx.fill();
+                /* glow */
+                ctx.fillStyle = fp.color + '40';
+                ctx.beginPath(); ctx.arc(cx + fp.dx, tipY, 12, 0, Math.PI * 2); ctx.fill();
+                /* joint dots */
+                [0.35, 0.65].forEach(function (t) {
+                    var jy = fp.baseY + (tipY - fp.baseY) * t;
+                    ctx.fillStyle = fp.color + '80';
+                    ctx.beginPath(); ctx.arc(cx + fp.dx, jy, 3, 0, Math.PI * 2); ctx.fill();
+                });
+                /* detection line to center */
+                ctx.strokeStyle = fp.color + '30';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 6]);
+                ctx.beginPath(); ctx.moveTo(cx + fp.dx, tipY); ctx.lineTo(cx, cy); ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        });
+    }
+
+    /* ── UI update ── */
+    function setStatus(text, color) {
+        demoStatus.textContent = text;
+        demoStatus.style.background = color + '18';
+        demoStatus.style.color = color;
+        demoStatus.style.border = '1px solid ' + color + '35';
+    }
+
+    function updateChips() {
+        chips.forEach(function (chip, i) {
+            chip.classList.toggle('active', fingers[i].raised);
+        });
+    }
+
+    /* ── Hold progress ── */
+    function startHold(idx) {
+        clearInterval(holdTimer);
+        holdPct = 0;
+        launched = false;
+        holdFill.style.background = 'linear-gradient(90deg,' + fingers[idx].color + ',' + fingers[idx].color + '99)';
+        holdTimer = setInterval(function () {
+            holdPct += 2.5;
+            holdFill.style.width = Math.min(holdPct, 100) + '%';
+            holdLabel.textContent = fingers[idx].name + ' \u2192 ' + fingers[idx].app + ' (' + Math.min(Math.round(holdPct), 100) + '%)';
+            if (holdPct >= 100) {
+                clearInterval(holdTimer);
+                holdTimer = null;
+                launched = true;
+                holdLabel.textContent = fingers[idx].app + ' launched!';
+                setStatus('Launched ' + fingers[idx].app + ' via ' + fingers[idx].name, fingers[idx].color);
+                demoHint.textContent = fingers[idx].app + ' is now open on your Mac';
+                setTimeout(function () {
+                    holdFill.style.width = '0%';
+                    holdPct = 0;
+                    holdLabel.textContent = 'Hold gesture to launch';
+                    demoHint.textContent = 'Press 1–5 or click the finger chips above';
+                    setStatus('Ready — show your hand', '#34d399');
+                }, 2200);
+            }
+        }, 28);
+    }
+
+    function stopHold() {
+        clearInterval(holdTimer);
+        holdTimer = null;
+        holdPct = 0;
+        holdFill.style.width = '0%';
+        holdLabel.textContent = 'Hold gesture to launch';
+    }
+
+    /* ── Check which fingers are raised ── */
+    function evaluate() {
+        updateChips();
+        var raised = fingers.filter(function (f) { return f.raised; });
+        if (raised.length === 1) {
+            var idx = fingers.findIndex(function (f) { return f.raised; });
+            activeIdx = idx;
+            setStatus('Detected: ' + fingers[idx].name + ' \u2192 ' + fingers[idx].app, fingers[idx].color);
+            demoHint.textContent = fingers[idx].name + ' detected — holding...';
+            startHold(idx);
+        } else if (raised.length > 1) {
+            activeIdx = -1;
+            stopHold();
+            setStatus(raised.length + ' fingers raised — show exactly one', '#F59E0B');
+            demoHint.textContent = 'Lower all but one finger to launch';
+        } else {
+            activeIdx = -1;
+            stopHold();
+            setStatus('No hand detected', '#EF4444');
+            demoHint.textContent = 'Press 1–5 or click the finger chips above';
+        }
+    }
+
+    /* ── Chip clicks ── */
+    chips.forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            var i = parseInt(chip.dataset.idx);
+            fingers[i].raised = !fingers[i].raised;
+            evaluate();
+        });
+    });
+
+    /* ── Preset toolbar ── */
+    document.querySelectorAll('.chip[data-preset]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.chip[data-preset]').forEach(function (b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            fingers.forEach(function (f) { f.raised = false; });
+            var p = btn.dataset.preset;
+            if (p === 'single')  { fingers[1].raised = true; }
+            else if (p === 'peace') { fingers[1].raised = true; fingers[2].raised = true; }
+            else if (p === 'open')  { fingers.forEach(function (f) { f.raised = true; }); }
+            evaluate();
+        });
+    });
+
+    /* ── Reset ── */
+    document.getElementById('btnReset').addEventListener('click', function () {
+        fingers.forEach(function (f) { f.raised = false; });
+        activeIdx = -1;
+        stopHold();
+        updateChips();
+        setStatus('Ready — show your hand', '#34d399');
+        demoHint.textContent = 'Press 1–5 or click the finger chips above';
+        document.querySelectorAll('.chip[data-preset]').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelector('.chip[data-preset="single"]').classList.add('active');
+    });
+
+    /* ── Keyboard ── */
+    document.addEventListener('keydown', function (e) {
+        var n = parseInt(e.key);
+        if (n >= 1 && n <= 5) {
+            fingers.forEach(function (f) { f.raised = false; });
+            fingers[n - 1].raised = true;
+            evaluate();
+        }
+        if (e.key === 'Escape') { document.getElementById('btnReset').click(); }
+    });
+
+    /* ── Start camera loop ── */
+    drawCam();
+
+}());
+</script>
+</body>
+</html>

@@ -1,0 +1,1224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280,initial-scale=1" />
+<title>QuickIn — Stay somewhere warm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&family=Amiri:wght@400;700&family=IBM+Plex+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --burgundy:#5B0F16;
+  --burgundy-2:#7a1a23;
+  --burgundy-soft:#f2dcdf;
+  --cream:#F6F1E6;
+  --cream-2:#EFE6D8;
+  --card:#FFFFFF;
+  --text:#2B2B2B;
+  --muted:#7A746A;
+  --border:#E2D8C8;
+  --divider:#D6CCBC;
+  --shadow: 0 10px 30px rgba(0,0,0,0.06);
+  --shadow-lg: 0 18px 44px rgba(0,0,0,0.10);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%;height:100%;background:var(--cream);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+html[dir="rtl"] body{font-family:'IBM Plex Arabic','DM Sans',system-ui,sans-serif}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:transparent;color:inherit}
+.playfair{font-family:'Playfair Display',serif}
+html[dir="rtl"] .playfair{font-family:'Amiri',serif}
+.muted{color:var(--muted)}
+
+/* ===== App container ===== */
+#app{width:100vw;min-height:100vh;display:flex;flex-direction:column}
+
+/* ===== Top nav (glass) ===== */
+.nav{
+  position:sticky;top:0;z-index:50;
+  height:72px;display:flex;align-items:center;
+  padding:0 32px;gap:24px;
+  background:rgba(255,255,255,0.6);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(255,255,255,0.35);
+}
+.brand{display:flex;align-items:center;gap:10px;cursor:pointer}
+.brand img{width:34px;height:34px;border-radius:8px;display:block}
+.brand .wm{font-family:'Playfair Display',serif;font-size:22px;color:var(--burgundy);letter-spacing:.2px;font-weight:600}
+html[dir="rtl"] .brand .wm{font-family:'Amiri',serif}
+.nav-links{display:flex;gap:6px;margin-inline:auto}
+.nav-links a{
+  padding:10px 14px;border-radius:14px;color:var(--text);font-weight:500;font-size:13.5px;
+  transition:background .2s,color .2s;cursor:pointer;
+}
+.nav-links a:hover,.nav-links a.active{background:rgba(91,15,22,0.08);color:var(--burgundy)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.lang{
+  border:1px solid var(--border);background:rgba(255,255,255,0.5);
+  padding:8px 12px;border-radius:14px;font-weight:600;font-size:13px;color:var(--text);
+}
+.lang:hover{border-color:var(--burgundy);color:var(--burgundy)}
+.bell{
+  width:38px;height:38px;border-radius:50%;
+  background:rgba(255,255,255,0.5);border:1px solid var(--border);
+  display:grid;place-items:center;color:var(--text);
+}
+.bell:hover{color:var(--burgundy);border-color:var(--burgundy)}
+.btn-primary{
+  background:var(--burgundy);color:var(--cream);
+  border-radius:20px;padding:11px 20px;font-weight:600;font-size:13.5px;
+  box-shadow:0 6px 16px rgba(91,15,22,0.18);transition:transform .15s,background .2s;
+}
+.btn-primary:hover{background:var(--burgundy-2);transform:translateY(-1px)}
+.btn-outline{
+  border:1px solid var(--burgundy);color:var(--burgundy);
+  border-radius:20px;padding:10px 18px;font-weight:600;font-size:13.5px;background:transparent;
+}
+.btn-outline:hover{background:var(--burgundy);color:var(--cream)}
+
+/* ===== Views ===== */
+.view{display:none;animation:fadein .35s ease}
+.view.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ===== Home: Hero ===== */
+.hero{
+  position:relative;padding:54px 64px 36px;
+  background:
+    radial-gradient(900px 280px at 80% 0%,rgba(91,15,22,0.07),transparent 60%),
+    radial-gradient(800px 320px at 0% 100%,rgba(207,140,90,0.18),transparent 70%),
+    var(--cream);
+  overflow:hidden;
+}
+.hero h1{
+  font-family:'Playfair Display',serif;font-weight:600;font-size:62px;line-height:1.05;
+  margin:0 0 16px;color:#2a0a0e;letter-spacing:-.5px;max-width:780px;
+}
+html[dir="rtl"] .hero h1{font-family:'Amiri',serif}
+.hero p.sub{font-size:17px;color:var(--muted);margin:0 0 28px;max-width:560px}
+
+/* glass search */
+.search{
+  display:grid;grid-template-columns:1.3fr 1fr 1fr .9fr auto;gap:0;
+  align-items:stretch;
+  background:rgba(255,255,255,0.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.45);
+  border-radius:26px;padding:8px;max-width:980px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.07);
+}
+.search .field{padding:10px 18px;border-right:1px solid rgba(214,204,188,0.6);display:flex;flex-direction:column;gap:2px}
+html[dir="rtl"] .search .field{border-right:0;border-left:1px solid rgba(214,204,188,0.6)}
+.search .field:nth-last-child(2){border-right:0}
+html[dir="rtl"] .search .field:nth-last-child(2){border-left:0}
+.search .field label{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+.search .field input{
+  background:transparent;border:0;outline:0;font-family:inherit;font-size:14px;color:var(--text);
+  padding:2px 0;
+}
+.search .field input::placeholder{color:#b6ab98}
+.search-btn{
+  margin:0 4px;align-self:center;
+  width:54px;height:54px;border-radius:50%;
+  background:var(--burgundy);color:var(--cream);
+  display:grid;place-items:center;box-shadow:0 8px 20px rgba(91,15,22,0.25);
+}
+.search-btn:hover{background:var(--burgundy-2)}
+
+/* ===== Best offers row ===== */
+.section{padding:38px 64px}
+.section h2{font-family:'Playfair Display',serif;font-weight:600;font-size:30px;margin:0 0 4px;color:#2a0a0e}
+html[dir="rtl"] .section h2{font-family:'Amiri',serif}
+.section .lead{color:var(--muted);margin:0 0 22px;font-size:14.5px}
+.offers-row{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.offer{
+  border-radius:22px;overflow:hidden;background:var(--card);
+  box-shadow:var(--shadow);cursor:pointer;transition:transform .18s,box-shadow .18s;
+  border:1px solid var(--border);
+}
+.offer:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.offer .ph{height:96px;position:relative}
+.offer .meta{padding:10px 12px}
+.offer .meta .t{font-weight:600;font-size:13px}
+.offer .meta .p{color:var(--burgundy);font-weight:700;font-size:12.5px;margin-top:2px}
+.badge-offer{
+  position:absolute;top:8px;left:8px;background:var(--burgundy);color:var(--cream);
+  font-size:10px;font-weight:700;padding:4px 8px;border-radius:10px;letter-spacing:.5px;
+}
+
+/* ===== Cards / listings grid ===== */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.card{
+  background:var(--card);border-radius:28px;overflow:hidden;
+  border:1px solid var(--border);box-shadow:var(--shadow);
+  transition:transform .2s,box-shadow .2s,outline .15s;cursor:pointer;outline:2px solid transparent;outline-offset:-2px;
+}
+.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.card.highlight{outline:2px solid var(--burgundy)}
+.card .ph{height:200px;position:relative;border-radius:20px;margin:10px;overflow:hidden}
+.card .body{padding:6px 18px 18px}
+.card .row1{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.card .title{font-weight:600;font-size:15.5px;color:var(--text);margin:0 0 2px;font-family:'Playfair Display',serif}
+html[dir="rtl"] .card .title{font-family:'Amiri',serif}
+.card .loc{font-size:12.5px;color:var(--muted)}
+.card .rating{font-size:13px;color:var(--text);display:flex;align-items:center;gap:4px;white-space:nowrap}
+.card .price{margin-top:10px;font-size:14px}
+.card .price b{font-weight:700}
+.card .price span{color:var(--muted)}
+.heart{
+  position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,0.85);backdrop-filter:blur(6px);
+  display:grid;place-items:center;cursor:pointer;transition:transform .15s;
+}
+.heart svg{width:18px;height:18px;fill:none;stroke:#2B2B2B;stroke-width:2}
+.heart.on svg{fill:var(--burgundy);stroke:var(--burgundy)}
+.heart:hover{transform:scale(1.08)}
+.managed-pill{
+  position:absolute;left:12px;top:12px;background:rgba(255,255,255,0.92);
+  color:var(--burgundy);font-size:11px;font-weight:700;padding:5px 9px;border-radius:10px;
+  letter-spacing:.3px;
+}
+
+/* ===== Photo gradients (boutique sepia) ===== */
+.ph-coast{background:linear-gradient(135deg,#f7c9a8 0%,#e89668 38%,#a85a3b 100%)}
+.ph-desert{background:linear-gradient(140deg,#f0d39b 0%,#d99a5b 55%,#7a3a1c 100%)}
+.ph-mountain{background:linear-gradient(160deg,#e6c8ae 0%,#9a6b51 50%,#3a2218 100%)}
+.ph-sea{background:linear-gradient(150deg,#cfe7e4 0%,#7fb6b3 45%,#3c6e72 100%)}
+.ph-sunset{background:linear-gradient(135deg,#fbd7a5 0%,#e98b66 45%,#7a2a2a 100%)}
+.ph-palm{background:linear-gradient(150deg,#ffe1b5 0%,#e8a06a 40%,#5b2b1a 100%)}
+.ph-nile{background:linear-gradient(140deg,#dde6c8 0%,#8aa37a 50%,#3a5238 100%)}
+.ph-marsa{background:linear-gradient(135deg,#b9d8d6 0%,#5a9c9a 45%,#2a4f55 100%)}
+.ph-marina{background:linear-gradient(140deg,#ead2a8 0%,#c5895b 50%,#6a2f1e 100%)}
+.ph-sahel{background:linear-gradient(150deg,#f3dab1 0%,#d6a071 45%,#6e3724 100%)}
+.ph-gouna{background:linear-gradient(135deg,#cbe7e0 0%,#8cbab1 45%,#3c6868 100%)}
+.ph-cairo{background:linear-gradient(140deg,#ead29b 0%,#b4794a 50%,#4a2614 100%)}
+
+/* SVG overlay shapes */
+.ph svg.deco{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:.85}
+.ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(0,0,0,0.18));pointer-events:none}
+/* Real photos inside .ph — fill the rounded container */
+.ph img.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.offer .ph img.photo{border-radius:0}
+
+/* ===== Footer ===== */
+footer{
+  margin-top:30px;padding:36px 64px 28px;background:var(--cream-2);border-top:1px solid var(--border);
+}
+.foot-grid{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:32px}
+.foot-grid h4{font-size:13px;font-weight:700;margin:0 0 12px;color:var(--text);letter-spacing:.4px}
+.foot-grid a{display:block;color:var(--muted);font-size:13px;padding:5px 0}
+.foot-grid a:hover{color:var(--burgundy)}
+.foot-bottom{margin-top:24px;display:flex;justify-content:space-between;color:var(--muted);font-size:12.5px;border-top:1px solid var(--border);padding-top:14px}
+
+/* ===== Explore ===== */
+.explore-wrap{display:grid;grid-template-columns:1fr 520px;height:calc(100vh - 72px);overflow:hidden}
+.listings-col{overflow-y:auto;padding:24px 28px;background:var(--cream)}
+.map-col{position:relative;background:var(--cream-2);overflow:hidden}
+.filters{
+  position:sticky;top:0;z-index:5;
+  display:flex;gap:8px;padding:10px;margin-bottom:16px;
+  background:rgba(255,255,255,0.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.45);border-radius:20px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.05);
+}
+.filter-pill{
+  padding:9px 16px;border-radius:14px;background:rgba(255,255,255,0.75);
+  border:1px solid var(--border);font-size:13px;font-weight:500;cursor:pointer;
+}
+.filter-pill:hover,.filter-pill.active{background:var(--burgundy);color:var(--cream);border-color:var(--burgundy)}
+.explore-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.explore-grid .card .ph{height:170px}
+
+/* sepia map */
+.map{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(600px 400px at 60% 30%,rgba(91,15,22,0.06),transparent 70%),
+    linear-gradient(135deg,#efe1c7 0%,#e2cfac 50%,#cfb487 100%);
+}
+.map .grid{
+  position:absolute;inset:0;opacity:.35;
+  background-image:
+    linear-gradient(rgba(91,15,22,0.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(91,15,22,0.06) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+.map .road{position:absolute;background:rgba(91,15,22,0.18);border-radius:20px}
+.map .water{position:absolute;background:linear-gradient(135deg,#9ec2c0,#6da3a1);opacity:.5;border-radius:80px}
+.pin{
+  position:absolute;transform:translate(-50%,-100%);cursor:pointer;
+  transition:transform .15s;
+}
+.pin .dot{
+  width:36px;height:36px;border-radius:50% 50% 50% 0;background:var(--burgundy);
+  transform:rotate(-45deg);box-shadow:0 6px 14px rgba(91,15,22,0.35);
+  display:grid;place-items:center;
+}
+.pin .dot::after{content:"";width:12px;height:12px;border-radius:50%;background:var(--cream)}
+.pin:hover{transform:translate(-50%,-104%) scale(1.08)}
+.pin.active .dot{background:#2a0a0e;outline:3px solid rgba(255,255,255,0.7)}
+.pin .price-bubble{
+  position:absolute;bottom:42px;left:50%;transform:translateX(-50%);
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:5px 10px;font-size:11.5px;font-weight:700;color:var(--burgundy);white-space:nowrap;
+  box-shadow:0 4px 10px rgba(0,0,0,.08);
+}
+
+/* ===== Listing detail ===== */
+.detail{padding:28px 64px 60px;max-width:1280px;margin:0 auto}
+.back{color:var(--burgundy);font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;cursor:pointer}
+.detail h1{font-family:'Playfair Display',serif;font-weight:600;font-size:36px;margin:0 0 6px;color:#2a0a0e}
+html[dir="rtl"] .detail h1{font-family:'Amiri',serif}
+.detail .submeta{display:flex;gap:14px;color:var(--muted);font-size:13.5px;margin-bottom:18px;align-items:center}
+.detail .submeta b{color:var(--text)}
+.gallery{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:160px 160px;gap:10px;border-radius:20px;overflow:hidden;height:340px}
+.gallery .g{position:relative;overflow:hidden}
+.gallery .g.big{grid-row:1 / span 2}
+.gallery .g{border-radius:14px}
+.detail-body{display:grid;grid-template-columns:1fr 380px;gap:42px;margin-top:32px}
+.detail-body h3{font-family:'Playfair Display',serif;font-weight:600;font-size:22px;margin:8px 0 12px;color:#2a0a0e}
+html[dir="rtl"] .detail-body h3{font-family:'Amiri',serif}
+.host{display:flex;gap:14px;align-items:center;padding:18px 0;border-bottom:1px solid var(--divider);border-top:1px solid var(--divider);margin-bottom:18px}
+.host .avatar{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#e89668,#7a2a2a);display:grid;place-items:center;color:var(--cream);font-weight:700}
+.host .info b{display:block}
+.host .info span{color:var(--muted);font-size:13px}
+.amenities{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:12px 0 26px}
+.amen{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:16px;background:var(--card)}
+.amen svg{width:22px;height:22px;color:var(--burgundy);flex-shrink:0}
+.amen span{font-size:13px}
+.reviews{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:12px}
+.review{padding:16px;background:var(--card);border:1px solid var(--border);border-radius:20px}
+.review .who{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.review .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#d6a071,#7a3a1c);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px}
+.review .who b{font-size:13px}
+.review .who span{display:block;color:var(--muted);font-size:11.5px}
+.review p{font-size:13px;color:var(--text);margin:6px 0 0;line-height:1.5}
+
+/* booking widget (glass sticky) */
+.book-widget{
+  position:sticky;top:90px;
+  background:rgba(255,255,255,0.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.45);
+  border-radius:24px;padding:22px;box-shadow:0 14px 36px rgba(0,0,0,0.07);
+}
+.bw-price{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.bw-price b{font-size:22px;font-family:'Playfair Display',serif;color:#2a0a0e}
+.bw-price span{color:var(--muted);font-size:13px}
+.bw-dates{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px;background:#fff}
+.bw-dates > div{padding:12px 14px;border-right:1px solid var(--border)}
+.bw-dates > div:last-child{border-right:0}
+.bw-dates label{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block}
+.bw-dates input{border:0;background:transparent;font-family:inherit;font-size:13.5px;width:100%;outline:0;padding:2px 0;color:var(--text)}
+.bw-guests{padding:12px 14px;border:1px solid var(--border);border-radius:14px;background:#fff;margin-bottom:14px}
+.bw-guests label{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block}
+.bw-guests select{border:0;background:transparent;font-family:inherit;font-size:13.5px;width:100%;outline:0;padding:2px 0}
+.bw-row{display:flex;justify-content:space-between;font-size:13.5px;color:var(--text);padding:6px 0}
+.bw-row.total{font-weight:700;padding-top:12px;border-top:1px solid var(--divider);margin-top:8px;font-size:15px}
+.btn-reserve{width:100%;margin-top:14px;padding:14px;border-radius:18px;font-size:15px}
+.mini-map{height:200px;border-radius:18px;position:relative;overflow:hidden;margin-top:18px}
+
+/* ===== Modal ===== */
+.backdrop{
+  position:fixed;inset:0;background:rgba(20,10,8,0.45);
+  display:none;z-index:200;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.backdrop.show{display:flex;animation:fadein .2s ease}
+.modal{
+  width:760px;max-width:96vw;max-height:90vh;overflow:auto;
+  background:rgba(255,255,255,0.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,0.5);border-radius:28px;
+  box-shadow:0 24px 60px rgba(0,0,0,0.25);
+  padding:28px;
+}
+.modal h2{font-family:'Playfair Display',serif;font-weight:600;font-size:26px;margin:0 0 4px;color:#2a0a0e}
+html[dir="rtl"] .modal h2{font-family:'Amiri',serif}
+.modal .x{position:absolute;top:18px;right:18px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.7);display:grid;place-items:center;cursor:pointer;font-size:18px}
+.modal-wrap{position:relative}
+.modal .lead{color:var(--muted);margin-bottom:16px}
+.modal-body{display:grid;grid-template-columns:1.1fr 1fr;gap:24px}
+
+/* calendar */
+.cal{background:#fff;border:1px solid var(--border);border-radius:18px;padding:16px}
+.cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.cal-head b{font-weight:600;font-size:14px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-grid .dow{font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:6px 0}
+.cal-grid .d{
+  height:34px;display:grid;place-items:center;font-size:12.5px;border-radius:10px;cursor:pointer;
+}
+.cal-grid .d:hover{background:var(--cream-2)}
+.cal-grid .d.in-range{background:var(--burgundy-soft);color:var(--burgundy);font-weight:600}
+.cal-grid .d.start,.cal-grid .d.end{background:var(--burgundy);color:var(--cream);font-weight:700}
+.cal-grid .d.dim{color:#c5b9a4;cursor:default}
+
+.pay-methods{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.pay{
+  padding:10px 12px;border:1px solid var(--border);border-radius:14px;background:#fff;font-size:12px;font-weight:700;
+  display:flex;align-items:center;gap:6px;cursor:pointer;
+}
+.pay.sel{border-color:var(--burgundy);background:var(--burgundy-soft);color:var(--burgundy)}
+.pay .mark{font-family:Georgia,serif;color:var(--burgundy)}
+
+.summary{background:#fff;border:1px solid var(--border);border-radius:18px;padding:18px}
+.summary .row{display:flex;justify-content:space-between;padding:7px 0;font-size:13.5px;color:var(--text)}
+.summary .row.tot{border-top:1px solid var(--divider);font-weight:700;font-size:15px;padding-top:12px;margin-top:6px}
+
+.confirmed{text-align:center;padding:12px}
+.confirmed .tick{
+  width:72px;height:72px;border-radius:50%;background:var(--burgundy);color:var(--cream);
+  display:grid;place-items:center;margin:0 auto 14px;
+}
+.confirmed h2{margin-bottom:6px}
+.confirmed .code{
+  display:inline-block;background:#fff;border:1px dashed var(--burgundy);
+  color:var(--burgundy);font-family:'Playfair Display',serif;font-weight:700;
+  padding:8px 18px;border-radius:14px;margin:10px 0 6px;font-size:18px;letter-spacing:1px;
+}
+.spinner{
+  width:42px;height:42px;border:4px solid var(--burgundy-soft);
+  border-top-color:var(--burgundy);border-radius:50%;
+  margin:30px auto;animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== Host Dashboard ===== */
+.dash{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 72px)}
+.sidebar{background:var(--cream-2);border-right:1px solid var(--border);padding:24px 14px}
+.sidebar .who{padding:10px 12px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.sidebar .who .avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#d6a071,#7a3a1c);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+.sidebar .who b{font-size:13.5px}
+.sidebar .who span{display:block;color:var(--muted);font-size:11.5px}
+.sidebar a{
+  display:flex;gap:10px;align-items:center;padding:11px 12px;border-radius:14px;
+  font-weight:500;font-size:13.5px;color:var(--text);cursor:pointer;
+}
+.sidebar a:hover{background:rgba(91,15,22,0.06)}
+.sidebar a.on{background:var(--burgundy);color:var(--cream)}
+.sidebar a svg{width:16px;height:16px}
+.dash-main{padding:28px 36px;background:var(--cream)}
+.dash-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.dash-head h1{font-family:'Playfair Display',serif;font-weight:600;font-size:28px;margin:0;color:#2a0a0e}
+html[dir="rtl"] .dash-head h1{font-family:'Amiri',serif}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:18px 20px;box-shadow:var(--shadow)}
+.stat .lab{color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.stat .val{font-family:'Playfair Display',serif;font-size:28px;font-weight:600;color:var(--burgundy);margin-top:4px}
+html[dir="rtl"] .stat .val{font-family:'Amiri',serif}
+.stat .delta{font-size:11.5px;color:#5d8a52;margin-top:4px;font-weight:600}
+.stat .delta.down{color:#a25c2c}
+
+.panel{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:22px;box-shadow:var(--shadow);margin-bottom:20px}
+.panel h3{margin:0 0 4px;font-family:'Playfair Display',serif;font-weight:600;font-size:18px;color:#2a0a0e}
+html[dir="rtl"] .panel h3{font-family:'Amiri',serif}
+.panel .lead{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+
+/* chart */
+.chart{height:200px;width:100%;display:block}
+
+/* table */
+table{width:100%;border-collapse:collapse}
+table th,table td{text-align:left;padding:12px 8px;font-size:13px}
+html[dir="rtl"] table th,html[dir="rtl"] table td{text-align:right}
+table th{color:var(--muted);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--divider)}
+table tr td{border-bottom:1px solid var(--cream-2)}
+.pill{display:inline-block;padding:4px 10px;border-radius:10px;font-size:11px;font-weight:700}
+.pill.ok{background:#e7f0e3;color:#3b6b35}
+.pill.pend{background:#f7e7d1;color:#8c5a1f}
+.pill.cancel{background:#f0d8d8;color:#8a2a2a}
+
+/* ===== AI chat bubble ===== */
+.chat-fab{
+  position:fixed;bottom:22px;right:22px;z-index:120;
+  width:60px;height:60px;border-radius:50%;background:var(--burgundy);color:var(--cream);
+  display:grid;place-items:center;box-shadow:0 12px 28px rgba(91,15,22,0.35);
+  cursor:pointer;transition:transform .15s;
+}
+.chat-fab:hover{transform:scale(1.06)}
+html[dir="rtl"] .chat-fab{right:auto;left:22px}
+.chat-panel{
+  position:fixed;bottom:96px;right:22px;z-index:121;
+  width:340px;height:440px;
+  background:rgba(255,255,255,0.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,0.5);border-radius:24px;
+  box-shadow:0 24px 60px rgba(0,0,0,0.22);
+  display:none;flex-direction:column;overflow:hidden;
+}
+html[dir="rtl"] .chat-panel{right:auto;left:22px}
+.chat-panel.show{display:flex;animation:fadein .2s ease}
+.chat-head{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(214,204,188,0.5)}
+.chat-head .dot-status{width:9px;height:9px;border-radius:50%;background:#5d8a52;box-shadow:0 0 0 3px rgba(93,138,82,0.2)}
+.chat-head b{font-size:14px}
+.chat-head span{font-size:11px;color:var(--muted);display:block}
+.chat-body{flex:1;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.bubble{max-width:78%;padding:10px 13px;border-radius:16px;font-size:13px;line-height:1.45}
+.bubble.bot{background:#fff;border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
+.bubble.me{background:var(--burgundy);color:var(--cream);align-self:flex-end;border-bottom-right-radius:4px}
+.bubble.typing{background:#fff;border:1px solid var(--border);align-self:flex-start;display:inline-flex;gap:4px;padding:14px 14px}
+.bubble.typing i{width:6px;height:6px;border-radius:50%;background:var(--burgundy);opacity:.5;animation:blink 1.2s infinite}
+.bubble.typing i:nth-child(2){animation-delay:.15s}
+.bubble.typing i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+.chat-input{display:flex;gap:6px;padding:10px;border-top:1px solid rgba(214,204,188,0.5);background:rgba(255,255,255,0.5)}
+.chat-input input{flex:1;border:1px solid var(--border);border-radius:14px;padding:10px 12px;font-family:inherit;font-size:13px;outline:0;background:#fff}
+.chat-input input:focus{border-color:var(--burgundy)}
+.chat-input button{width:38px;height:38px;border-radius:50%;background:var(--burgundy);color:var(--cream);display:grid;place-items:center}
+
+/* utility */
+.row-flex{display:flex;align-items:center;gap:10px}
+.star{color:#c1893a}
+
+@media (max-width:1280px){
+  .hero{padding:42px 32px 28px}
+  .hero h1{font-size:48px}
+  .section{padding:32px}
+  footer{padding:30px 32px}
+  .detail{padding:24px 32px 48px}
+  .offers-row{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ============= NAV ============= -->
+<nav class="nav">
+  <div class="brand" onclick="goTo('home')">
+    <img src="./assets/logo-icon.png" alt="QuickIn" />
+    <span class="wm" data-i18n="brand">QuickIn</span>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link active" data-target="home" data-i18n="nav_discover" onclick="goTo('home',this)">Discover</a>
+    <a class="nav-link" data-target="explore" data-i18n="nav_offers" onclick="goTo('explore',this)">Best Offers</a>
+    <a class="nav-link" data-target="explore" data-i18n="nav_managed" onclick="goTo('explore',this)">Managed Locations</a>
+    <a class="nav-link" data-target="host" data-i18n="nav_hosts" onclick="goTo('host',this)">For Hosts</a>
+  </div>
+  <div class="nav-right">
+    <button class="lang" onclick="toggleLang()" id="langBtn">EN | ع</button>
+    <button class="bell" aria-label="Notifications">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+    </button>
+    <button class="btn-primary" data-i18n="nav_signin">Sign in</button>
+  </div>
+</nav>
+
+<!-- ============= HOME ============= -->
+<section class="view active" id="view-home">
+  <div class="hero">
+    <h1 data-i18n="hero_title">Stay somewhere warm.</h1>
+    <p class="sub" data-i18n="hero_sub">Discover boutique homes and managed villages along Egypt's coasts, deserts, and Nile shores.</p>
+    <div class="search" id="search">
+      <div class="field">
+        <label data-i18n="search_where">Where</label>
+        <input type="text" placeholder="North Coast, El Gouna…" data-i18n-ph="ph_where" />
+      </div>
+      <div class="field">
+        <label data-i18n="search_in">Check in</label>
+        <input type="text" placeholder="Jun 18, 2026" data-i18n-ph="ph_in" />
+      </div>
+      <div class="field">
+        <label data-i18n="search_out">Check out</label>
+        <input type="text" placeholder="Jun 24, 2026" data-i18n-ph="ph_out" />
+      </div>
+      <div class="field">
+        <label data-i18n="search_guests">Guests</label>
+        <input type="text" placeholder="2 adults" data-i18n-ph="ph_guests" />
+      </div>
+      <button class="search-btn" onclick="goTo('explore')" aria-label="Search">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Best offers row -->
+  <section class="section">
+    <h2 data-i18n="offers_title">Best offers this week</h2>
+    <p class="lead" data-i18n="offers_lead">Hand-picked stays approved by our editors and hosts.</p>
+    <div class="offers-row" id="offersRow"></div>
+  </section>
+
+  <!-- Featured listings -->
+  <section class="section">
+    <h2 data-i18n="featured_title">Featured boutique stays</h2>
+    <p class="lead" data-i18n="featured_lead">A calm, warm collection — chosen for character.</p>
+    <div class="cards" id="featuredGrid"></div>
+  </section>
+
+  <footer>
+    <div class="foot-grid">
+      <div>
+        <div class="brand" style="margin-bottom:10px">
+          <img src="./assets/logo-icon.png" alt="" /><span class="wm">QuickIn</span>
+        </div>
+        <p class="muted" style="margin:6px 0 0;font-size:13px;max-width:280px" data-i18n="foot_lead">A warm, boutique booking experience for the discerning traveler.</p>
+      </div>
+      <div>
+        <h4 data-i18n="foot_explore">Explore</h4>
+        <a>Best offers</a><a>Managed villages</a><a>North Coast</a><a>El Gouna</a>
+      </div>
+      <div>
+        <h4 data-i18n="foot_hosting">Hosting</h4>
+        <a>Become a host</a><a>Host resources</a><a>Responsible hosting</a><a>Host dashboard</a>
+      </div>
+      <div>
+        <h4 data-i18n="foot_support">Support</h4>
+        <a>Help center</a><a>Cancellation options</a><a>Trust & safety</a><a>Contact</a>
+      </div>
+      <div>
+        <h4 data-i18n="foot_company">Company</h4>
+        <a>About</a><a>Careers</a><a>Press</a><a>Terms · Privacy</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 QuickIn — Cairo, Egypt</span>
+      <span>EN · العربية</span>
+    </div>
+  </footer>
+</section>
+
+<!-- ============= EXPLORE ============= -->
+<section class="view" id="view-explore">
+  <div class="explore-wrap">
+    <div class="listings-col">
+      <div class="filters">
+        <button class="filter-pill active" data-i18n="filt_all">All stays</button>
+        <button class="filter-pill" data-i18n="filt_price">Price</button>
+        <button class="filter-pill" data-i18n="filt_type">Type</button>
+        <button class="filter-pill" data-i18n="filt_guests">Guests</button>
+        <button class="filter-pill" data-i18n="filt_more">More</button>
+        <button class="filter-pill" style="margin-inline-start:auto" data-i18n="filt_offers">Best offers</button>
+      </div>
+      <div style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:baseline">
+        <h2 style="font-family:'Playfair Display',serif;font-weight:600;font-size:22px;margin:0;color:#2a0a0e" class="playfair" data-i18n="explore_h">Stays along the North Coast</h2>
+        <span class="muted" style="font-size:13px"><b id="explore-count">6</b> <span data-i18n="explore_count">stays found</span></span>
+      </div>
+      <div class="explore-grid" id="exploreGrid"></div>
+    </div>
+    <div class="map-col">
+      <div class="map">
+        <div class="grid"></div>
+        <div class="water" style="left:-40px;top:24%;width:300px;height:140px"></div>
+        <div class="water" style="right:-30px;bottom:18%;width:240px;height:120px"></div>
+        <div class="road" style="left:8%;top:38%;width:84%;height:6px;transform:rotate(-3deg)"></div>
+        <div class="road" style="left:18%;top:62%;width:64%;height:5px;transform:rotate(4deg)"></div>
+        <div class="road" style="left:42%;top:8%;width:5px;height:84%"></div>
+        <div id="pins"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= LISTING DETAIL ============= -->
+<section class="view" id="view-listing">
+  <div class="detail">
+    <span class="back" onclick="goTo('explore')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+      <span data-i18n="back_explore">Back to stays</span>
+    </span>
+    <h1 data-i18n="listing_title">Sahel Beach House</h1>
+    <div class="submeta">
+      <span><span class="star">★</span> <b>4.92</b> · <u>128 reviews</u></span>
+      <span>·</span>
+      <span data-i18n="listing_loc">Sidi Abdel Rahman · Sahel, Egypt</span>
+      <span>·</span>
+      <span style="color:var(--burgundy);font-weight:700" data-i18n="managed_chip">Managed Village</span>
+    </div>
+
+    <div class="gallery" id="gallery"></div>
+
+    <div class="detail-body">
+      <div>
+        <div class="host">
+          <div class="avatar">YH</div>
+          <div class="info">
+            <b data-i18n="host_by">Hosted by Yara · 4 yrs hosting</b>
+            <span data-i18n="host_super">Superhost · Identity verified · KYC complete</span>
+          </div>
+        </div>
+        <h3 data-i18n="about_h">About this stay</h3>
+        <p style="line-height:1.65;color:var(--text)" data-i18n="about_body">A breezy three-bedroom beach house steps from the Sidi Abdel Rahman shoreline. Private pool, sun-soaked terrace, and a calm interior dressed in warm linens and natural wood. Walk to the beach club, restaurants, and pools.</p>
+        <h3 data-i18n="amenities_h">What this place offers</h3>
+        <div class="amenities" id="amenities"></div>
+        <h3 data-i18n="reviews_h">Reviews</h3>
+        <div class="reviews" id="reviews"></div>
+        <h3 style="margin-top:24px" data-i18n="location_h">Where you'll be</h3>
+        <div class="mini-map">
+          <div class="map"><div class="grid"></div>
+            <div class="water" style="left:-40px;top:30%;width:260px;height:80px"></div>
+            <div class="road" style="left:8%;top:55%;width:84%;height:5px;transform:rotate(-3deg)"></div>
+            <div class="pin active" style="left:52%;top:48%"><div class="dot"></div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="book-widget">
+          <div class="bw-price">
+            <span><b>EGP 5,200</b> <span class="muted">/ <span data-i18n="per_night">night</span></span></span>
+            <span><span class="star">★</span> 4.92</span>
+          </div>
+          <div class="bw-dates">
+            <div><label data-i18n="check_in">Check in</label><input value="Jun 18, 2026"/></div>
+            <div><label data-i18n="check_out">Check out</label><input value="Jun 24, 2026"/></div>
+          </div>
+          <div class="bw-guests">
+            <label data-i18n="guests_l">Guests</label>
+            <select><option>2 adults</option><option>3 adults</option><option>4 adults · 1 child</option></select>
+          </div>
+          <div class="bw-row"><span>EGP 5,200 × 6 <span data-i18n="nights">nights</span></span><b>EGP 31,200</b></div>
+          <div class="bw-row"><span data-i18n="service_fee">Service fee</span><b>EGP 1,200</b></div>
+          <div class="bw-row"><span data-i18n="cleaning_fee">Cleaning fee</span><b>EGP 600</b></div>
+          <div class="bw-row total"><span data-i18n="total_lbl">Total</span><b>EGP 33,000</b></div>
+          <button class="btn-primary btn-reserve" onclick="openBooking()" data-i18n="reserve_btn">Reserve</button>
+          <p class="muted" style="text-align:center;font-size:12px;margin:10px 0 0" data-i18n="no_charge">You won't be charged yet</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= HOST DASHBOARD ============= -->
+<section class="view" id="view-host">
+  <div class="dash">
+    <aside class="sidebar">
+      <div class="who">
+        <div class="avatar">YH</div>
+        <div><b>Yara Hassan</b><span data-i18n="host_role">Host · Verified</span></div>
+      </div>
+      <a class="on">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
+        <span data-i18n="dash_overview">Overview</span>
+      </a>
+      <a>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V9.5Z"/></svg>
+        <span data-i18n="dash_listings">Listings</span>
+      </a>
+      <a>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+        <span data-i18n="dash_reservations">Reservations</span>
+      </a>
+      <a>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l5-5 4 4 7-9"/><path d="M3 21h18"/></svg>
+        <span data-i18n="dash_earnings">Earnings</span>
+      </a>
+      <a>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 2.6 5.6 6 .9-4.3 4.3 1 6.2L12 17l-5.3 3 1-6.2L3.4 9.5l6-.9L12 3Z"/></svg>
+        <span data-i18n="dash_reviews">Reviews</span>
+      </a>
+      <a>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.2-1.6l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2.8-1.6L13 2.5h-2l-.7 2.4A7 7 0 0 0 7.5 6.5l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .5.1 1 .2 1.6l-2 1.5 2 3.4 2.3-1c.8.7 1.8 1.2 2.8 1.6l.7 2.4h2l.7-2.4c1-.4 2-.9 2.8-1.6l2.3 1 2-3.4-2-1.5c.1-.5.2-1.1.2-1.6Z"/></svg>
+        <span data-i18n="dash_settings">Settings</span>
+      </a>
+    </aside>
+    <main class="dash-main">
+      <div class="dash-head">
+        <div>
+          <h1 data-i18n="dash_h">Welcome back, Yara</h1>
+          <p class="muted" style="margin:4px 0 0" data-i18n="dash_sub">Here's how your stays are performing this month.</p>
+        </div>
+        <button class="btn-primary" data-i18n="dash_add">+ Add new listing</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="lab" data-i18n="stat_listings">Active listings</div><div class="val">3</div><div class="delta">+1 this quarter</div></div>
+        <div class="stat"><div class="lab" data-i18n="stat_bookings">Bookings this month</div><div class="val">12</div><div class="delta">+18% vs last</div></div>
+        <div class="stat"><div class="lab" data-i18n="stat_earnings">Earnings</div><div class="val">EGP 84,200</div><div class="delta">+22% vs last</div></div>
+        <div class="stat"><div class="lab" data-i18n="stat_rating">Avg rating</div><div class="val">4.92</div><div class="delta">128 reviews</div></div>
+      </div>
+
+      <div class="panel">
+        <h3 data-i18n="chart_h">Earnings — last 12 weeks</h3>
+        <p class="lead" data-i18n="chart_lead">Weekly net payouts in EGP</p>
+        <svg class="chart" viewBox="0 0 720 200" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#5B0F16" stop-opacity=".25"/>
+              <stop offset="100%" stop-color="#5B0F16" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g stroke="#D6CCBC" stroke-width="1">
+            <line x1="0" y1="40" x2="720" y2="40"/>
+            <line x1="0" y1="90" x2="720" y2="90"/>
+            <line x1="0" y1="140" x2="720" y2="140"/>
+            <line x1="0" y1="190" x2="720" y2="190"/>
+          </g>
+          <path d="M0,150 L60,138 L120,120 L180,128 L240,108 L300,86 L360,98 L420,72 L480,80 L540,54 L600,62 L660,40 L720,46 L720,200 L0,200 Z" fill="url(#g1)"/>
+          <path d="M0,150 L60,138 L120,120 L180,128 L240,108 L300,86 L360,98 L420,72 L480,80 L540,54 L600,62 L660,40 L720,46" fill="none" stroke="#5B0F16" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <g fill="#5B0F16">
+            <circle cx="180" cy="128" r="3.5"/>
+            <circle cx="360" cy="98" r="3.5"/>
+            <circle cx="540" cy="54" r="3.5"/>
+            <circle cx="660" cy="40" r="3.5"/>
+          </g>
+          <g fill="#7A746A" font-size="10" font-family="DM Sans">
+            <text x="0" y="198">W1</text><text x="120" y="198">W3</text><text x="240" y="198">W5</text><text x="360" y="198">W7</text><text x="480" y="198">W9</text><text x="600" y="198">W11</text><text x="700" y="198">W12</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px">
+          <div>
+            <h3 data-i18n="res_h">Recent reservations</h3>
+            <p class="lead" style="margin:0" data-i18n="res_lead">Your last five confirmed stays</p>
+          </div>
+          <a style="color:var(--burgundy);font-weight:700;font-size:13px;cursor:pointer" data-i18n="res_view">View all →</a>
+        </div>
+        <table>
+          <thead>
+            <tr><th data-i18n="th_guest">Guest</th><th data-i18n="th_listing">Listing</th><th data-i18n="th_dates">Dates</th><th data-i18n="th_status">Status</th><th data-i18n="th_code">Code</th><th data-i18n="th_amt">Amount</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Mahmoud Adel</td><td><div class="row-flex"><img src="./assets/photos/v1.jpg" alt="Sahel Beach House" loading="lazy" decoding="async" style="width:38px;height:38px;border-radius:10px;object-fit:cover;display:block"/><span>Sahel Beach House</span></div></td><td>Jun 18 – Jun 24</td><td><span class="pill ok" data-i18n="st_conf">Confirmed</span></td><td><b style="color:var(--burgundy)">QKN-A4F2</b></td><td>EGP 33,000</td></tr>
+            <tr><td>Layla Magdy</td><td><div class="row-flex"><img src="./assets/photos/v2.jpg" alt="Marakia Boutique Villa" loading="lazy" decoding="async" style="width:38px;height:38px;border-radius:10px;object-fit:cover;display:block"/><span>Marakia Boutique Villa</span></div></td><td>Jun 12 – Jun 16</td><td><span class="pill ok" data-i18n="st_conf">Confirmed</span></td><td><b style="color:var(--burgundy)">QKN-8C19</b></td><td>EGP 24,800</td></tr>
+            <tr><td>Karim Tarek</td><td><div class="row-flex"><img src="./assets/photos/v3.jpg" alt="Hacienda Cliff Retreat" loading="lazy" decoding="async" style="width:38px;height:38px;border-radius:10px;object-fit:cover;display:block"/><span>Hacienda Cliff Retreat</span></div></td><td>Jun 5 – Jun 9</td><td><span class="pill ok" data-i18n="st_conf">Completed</span></td><td><b style="color:var(--burgundy)">QKN-3E0B</b></td><td>EGP 19,400</td></tr>
+            <tr><td>Nour Saad</td><td><div class="row-flex"><img src="./assets/photos/v5.jpg" alt="Almaza Beach Retreat" loading="lazy" decoding="async" style="width:38px;height:38px;border-radius:10px;object-fit:cover;display:block"/><span>Almaza Beach Retreat</span></div></td><td>May 28 – Jun 2</td><td><span class="pill pend" data-i18n="st_chk">Check-in soon</span></td><td><b style="color:var(--burgundy)">QKN-6D45</b></td><td>EGP 27,600</td></tr>
+            <tr><td>Omar Fawzy</td><td><div class="row-flex"><img src="./assets/photos/v6.jpg" alt="Telal Boutique Chalet" loading="lazy" decoding="async" style="width:38px;height:38px;border-radius:10px;object-fit:cover;display:block"/><span>Telal Boutique Chalet</span></div></td><td>May 24 – May 26</td><td><span class="pill ok" data-i18n="st_conf">Completed</span></td><td><b style="color:var(--burgundy)">QKN-1A88</b></td><td>EGP 7,400</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ============= BOOKING MODAL ============= -->
+<div class="backdrop" id="backdrop" onclick="closeBackdrop(event)">
+  <div class="modal" id="modal" onclick="event.stopPropagation()">
+    <div class="modal-wrap">
+      <button class="x" onclick="closeBooking()">×</button>
+
+      <div id="modal-step1">
+        <h2 data-i18n="book_h">Confirm your reservation</h2>
+        <div class="lead" style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+          <img src="./assets/photos/v1.jpg" alt="Sahel Beach House" loading="lazy" decoding="async"
+               style="width:56px;height:56px;border-radius:14px;object-fit:cover;display:block;flex-shrink:0" />
+          <span data-i18n="book_sub">Sahel Beach House · Jun 18 – Jun 24, 2026</span>
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="cal">
+              <div class="cal-head">
+                <button style="cursor:pointer;color:var(--burgundy);font-weight:700">‹</button>
+                <b data-i18n="cal_month">June 2026</b>
+                <button style="cursor:pointer;color:var(--burgundy);font-weight:700">›</button>
+              </div>
+              <div class="cal-grid" id="cal"></div>
+            </div>
+          </div>
+          <div>
+            <div class="summary">
+              <div class="row"><span>EGP 5,200 × 6 <span data-i18n="nights">nights</span></span><b>EGP 31,200</b></div>
+              <div class="row"><span data-i18n="service_fee">Service fee</span><b>EGP 1,200</b></div>
+              <div class="row"><span data-i18n="cleaning_fee">Cleaning fee</span><b>EGP 600</b></div>
+              <div class="row tot"><span data-i18n="total_lbl">Total (EGP)</span><b>33,000</b></div>
+            </div>
+            <h3 style="font-family:'Playfair Display',serif;font-weight:600;font-size:16px;margin:18px 0 4px;color:#2a0a0e" data-i18n="pay_h">Payment method</h3>
+            <div class="pay-methods">
+              <button class="pay sel"><span class="mark" style="font-weight:900;letter-spacing:-1px">VISA</span></button>
+              <button class="pay">Mastercard</button>
+              <button class="pay"><span></span> Apple Pay</button>
+              <button class="pay">G Pay</button>
+              <button class="pay">InstaPay</button>
+              <button class="pay" data-i18n="pay_vf">Vodafone Cash</button>
+            </div>
+            <button class="btn-primary btn-reserve" onclick="confirmBooking()" data-i18n="confirm_btn">Confirm Booking · EGP 33,000</button>
+            <p class="muted" style="text-align:center;font-size:11.5px;margin:10px 0 0" data-i18n="secure">Secure payment · Cancel free until Jun 11</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="modal-step2" style="display:none">
+        <div class="spinner"></div>
+        <p class="muted" style="text-align:center" data-i18n="processing">Processing your reservation…</p>
+      </div>
+
+      <div id="modal-step3" style="display:none">
+        <div class="confirmed">
+          <div class="tick">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg>
+          </div>
+          <h2 data-i18n="conf_h">Reservation confirmed</h2>
+          <p class="muted" data-i18n="conf_sub">A copy is on its way to your inbox.</p>
+          <div style="display:flex;gap:12px;align-items:center;justify-content:center;margin:14px 0 6px">
+            <img src="./assets/photos/v1.jpg" alt="Sahel Beach House" loading="lazy" decoding="async"
+                 style="width:64px;height:64px;border-radius:14px;object-fit:cover;display:block" />
+            <div style="text-align:left">
+              <b style="font-family:'Playfair Display',serif;color:#2a0a0e;font-size:15px" data-i18n="conf_listing">Sahel Beach House</b>
+              <div class="muted" style="font-size:12px" data-i18n="conf_when">Jun 18 – Jun 24, 2026 · 2 guests</div>
+            </div>
+          </div>
+          <div class="code" id="resCode">QKN-A4F2</div>
+          <div style="margin-top:18px">
+            <button class="btn-outline" onclick="closeBooking()" data-i18n="conf_close">Close</button>
+            <button class="btn-primary" onclick="closeBooking()" data-i18n="conf_trips">View in Trips</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============= AI CHAT BUBBLE ============= -->
+<button class="chat-fab" onclick="toggleChat()" aria-label="AI assistant">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12c0 4.42-4 8-9 8-1.4 0-2.7-.27-3.9-.76L3 21l1.8-4.05C3.66 15.6 3 13.86 3 12c0-4.42 4-8 9-8s9 3.58 9 8Z"/></svg>
+</button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head">
+    <span class="dot-status"></span>
+    <div><b data-i18n="ai_name">QuickIn Assistant</b><span data-i18n="ai_status">Online · usually replies instantly</span></div>
+  </div>
+  <div class="chat-body" id="chatBody">
+    <div class="bubble bot" data-i18n="ai_g1">Hi! I'm QuickIn — your AI travel companion.</div>
+    <div class="bubble bot" data-i18n="ai_g2">Looking for a calm beach escape this weekend? I know a few along the Sahel and Hacienda Bay.</div>
+  </div>
+  <div class="chat-input">
+    <input id="chatInput" placeholder="Ask anything about your trip…" data-i18n-ph="ai_ph" onkeydown="if(event.key==='Enter')sendChat()"/>
+    <button onclick="sendChat()" aria-label="Send">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m4 12 16-8-6 18-3-7-7-3Z"/></svg>
+    </button>
+  </div>
+</div>
+
+</div>
+
+<script>
+/* ===================== Data ===================== */
+const OFFERS = [
+  {t:"Sahel Beach House",      p:"EGP 4,800", cls:"ph-coast",  img:"./assets/photos/v1.jpg", alt:"Poolside beach villa at Sidi Abdel Rahman, Sahel"},
+  {t:"Marakia Boutique Villa", p:"EGP 5,400", cls:"ph-sea",    img:"./assets/photos/v2.jpg", alt:"Modern white villa at Marakia, North Coast"},
+  {t:"Hacienda Cliff Retreat", p:"EGP 6,200", cls:"ph-sunset", img:"./assets/photos/v3.jpg", alt:"Greek-style cliff house at Hacienda Bay, Sahel"},
+  {t:"Sokhna Pool Chalet",     p:"EGP 4,200", cls:"ph-marina", img:"./assets/photos/v4.jpg", alt:"Pool villa at Ain Sokhna"},
+  {t:"Almaza Beach Retreat",   p:"EGP 7,800", cls:"ph-marsa",  img:"./assets/photos/v5.jpg", alt:"Luxury beach house at Almaza Bay, Sahel"},
+  {t:"Telal Boutique Chalet",  p:"EGP 5,100", cls:"ph-sahel",  img:"./assets/photos/v6.jpg", alt:"Mediterranean architecture at Telal, Sahel"},
+];
+
+const LISTINGS = [
+  {id:1, title:"Sahel Beach House",       loc:"Sidi Abdel Rahman · Sahel",  rating:4.92, price:"5,200", cls:"ph-coast",   img:"./assets/photos/v1.jpg", alt:"Poolside beach villa at Sidi Abdel Rahman, Sahel",        x:24, y:32, managed:true},
+  {id:2, title:"Marakia Boutique Villa",  loc:"Marakia · North Coast",      rating:4.88, price:"6,400", cls:"ph-sea",     img:"./assets/photos/v2.jpg", alt:"Modern white villa at Marakia, North Coast",              x:62, y:28, managed:true},
+  {id:3, title:"Hacienda Cliff Retreat",  loc:"Hacienda Bay · Sahel",       rating:4.95, price:"7,800", cls:"ph-sunset",  img:"./assets/photos/v3.jpg", alt:"Greek-style cliff house at Hacienda Bay, Sahel",          x:38, y:54},
+  {id:4, title:"Sokhna Pool Chalet",      loc:"Ain Sokhna",                 rating:4.81, price:"4,100", cls:"ph-marina",  img:"./assets/photos/v4.jpg", alt:"Pool villa at Ain Sokhna",                                x:78, y:60},
+  {id:5, title:"Almaza Beach Retreat",    loc:"Almaza Bay · Sahel",         rating:4.74, price:"6,100", cls:"ph-marsa",   img:"./assets/photos/v5.jpg", alt:"Luxury beach house at Almaza Bay, Sahel",                 x:50, y:18},
+  {id:6, title:"Telal Boutique Chalet",   loc:"Telal · Sahel",              rating:4.83, price:"5,400", cls:"ph-sahel",   img:"./assets/photos/v6.jpg", alt:"Mediterranean architecture at Telal, Sahel",              x:18, y:72},
+];
+
+const DECO = {
+  wave:`<svg class="deco" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice"><path d="M0 80 Q 50 60 100 80 T 200 80 L 200 120 L 0 120 Z" fill="rgba(255,255,255,0.22)"/><path d="M0 95 Q 50 78 100 95 T 200 95 L 200 120 L 0 120 Z" fill="rgba(255,255,255,0.18)"/><circle cx="160" cy="22" r="14" fill="rgba(255,236,200,0.65)"/></svg>`,
+  palm:`<svg class="deco" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice"><circle cx="170" cy="20" r="13" fill="rgba(255,236,200,0.6)"/><path d="M40 110 L 50 60" stroke="rgba(60,30,15,0.7)" stroke-width="3" fill="none"/><path d="M50 60 Q 30 50 18 58 M50 60 Q 70 48 86 56 M50 60 Q 40 42 36 28 M50 60 Q 60 42 70 30" stroke="rgba(60,30,15,0.6)" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M0 100 L 200 110 L 200 120 L 0 120 Z" fill="rgba(255,255,255,0.18)"/></svg>`,
+  sail:`<svg class="deco" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice"><path d="M0 86 Q 60 72 120 86 T 200 86 L 200 120 L 0 120 Z" fill="rgba(255,255,255,0.22)"/><path d="M130 86 L 130 50 L 158 86 Z" fill="rgba(255,255,255,0.85)"/><path d="M130 86 L 130 56 L 110 86 Z" fill="rgba(255,255,255,0.7)"/><line x1="130" y1="50" x2="130" y2="92" stroke="rgba(60,30,15,0.7)" stroke-width="1.5"/></svg>`,
+  city:`<svg class="deco" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice"><circle cx="40" cy="22" r="12" fill="rgba(255,236,200,0.55)"/><g fill="rgba(60,30,15,0.55)"><rect x="10" y="70" width="22" height="40"/><rect x="38" y="55" width="28" height="55"/><rect x="72" y="64" width="22" height="46"/><rect x="100" y="48" width="34" height="62"/><rect x="140" y="60" width="22" height="50"/><rect x="168" y="68" width="22" height="42"/></g><g fill="rgba(255,236,200,0.6)"><rect x="44" y="62" width="3" height="4"/><rect x="54" y="62" width="3" height="4"/><rect x="106" y="56" width="3" height="4"/><rect x="116" y="68" width="3" height="4"/><rect x="146" y="68" width="3" height="4"/></g></svg>`,
+};
+
+/* ===================== Renderers ===================== */
+function makePh(cls, deco){
+  return `<div class="ph ${cls}">${DECO[deco]||DECO.wave}</div>`;
+}
+
+function renderOffers(){
+  document.getElementById('offersRow').innerHTML = OFFERS.map((o,i)=>`
+    <div class="offer" onclick="goTo('explore')">
+      <div class="ph ${o.cls}" style="height:96px;position:relative">
+        <img class="photo" src="${o.img}" alt="${o.alt}" loading="lazy" decoding="async" />
+        <span class="badge-offer">${T('badge_offer')}</span>
+      </div>
+      <div class="meta"><div class="t">${o.t}</div><div class="p">${o.p}<span class="muted" style="font-weight:500"> / ${T('per_night')}</span></div></div>
+    </div>
+  `).join('');
+}
+
+function cardHTML(l, gridClass=""){
+  return `
+    <div class="card" data-id="${l.id}" onclick="openListing(${l.id})">
+      <div class="ph ${l.cls}" style="position:relative">
+        <img class="photo" src="${l.img}" alt="${l.alt}" loading="lazy" decoding="async" />
+        ${l.managed?`<span class="managed-pill">${T('managed_chip')}</span>`:""}
+        <span class="heart" onclick="event.stopPropagation();this.classList.toggle('on')">
+          <svg viewBox="0 0 24 24"><path d="M20.84 4.6a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.07a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.79 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/></svg>
+        </span>
+      </div>
+      <div class="body">
+        <div class="row1">
+          <div><div class="title">${l.title}</div><div class="loc">${l.loc}</div></div>
+          <div class="rating"><span class="star">★</span> ${l.rating}</div>
+        </div>
+        <div class="price"><b>EGP ${l.price}</b> <span>/ ${T('per_night')}</span></div>
+      </div>
+    </div>`;
+}
+
+function renderFeatured(){
+  document.getElementById('featuredGrid').innerHTML = LISTINGS.map(l=>cardHTML(l)).join('');
+}
+function renderExplore(){
+  document.getElementById('exploreGrid').innerHTML = LISTINGS.map(l=>cardHTML(l)).join('');
+  document.getElementById('pins').innerHTML = LISTINGS.map(l=>`
+    <div class="pin" data-id="${l.id}" style="left:${l.x}%;top:${l.y}%"
+      onmouseenter="highlightCard(${l.id},true)" onmouseleave="highlightCard(${l.id},false)"
+      onclick="openListing(${l.id})" title="${l.title} — EGP ${l.price}">
+      <div class="dot"></div>
+      <div class="price-bubble">${l.title} · EGP ${l.price}</div>
+    </div>
+  `).join('');
+}
+
+function renderGallery(){
+  // Sahel Beach House — hero v1 + 4 thumbnails (v2, v3, v4, v5)
+  const shots = [
+    {img:'./assets/photos/v1.jpg', alt:'Sahel Beach House — poolside view',    cls:'ph-coast'},
+    {img:'./assets/photos/v2.jpg', alt:'Sahel Beach House — exterior',         cls:'ph-sea'},
+    {img:'./assets/photos/v3.jpg', alt:'Sahel Beach House — cliff terrace',    cls:'ph-sunset'},
+    {img:'./assets/photos/v4.jpg', alt:'Sahel Beach House — pool deck',        cls:'ph-palm'},
+    {img:'./assets/photos/v5.jpg', alt:'Sahel Beach House — beach access',     cls:'ph-desert'},
+  ];
+  document.getElementById('gallery').innerHTML = shots.map((s,i)=>`
+    <div class="g ${i===0?'big':''}">
+      <div class="ph ${s.cls}" style="position:absolute;inset:0;border-radius:14px;height:100%">
+        <img class="photo" src="${s.img}" alt="${s.alt}" loading="lazy" decoding="async" />
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderAmenities(){
+  const items=[
+    ['Wi-Fi','M5 12.55a11 11 0 0 1 14 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01'],
+    ['Pool','M2 18a4 4 0 0 1 4 0c2 1 4 1 6 0a4 4 0 0 1 4 0c2 1 4 1 6 0M2 12a4 4 0 0 1 4 0c2 1 4 1 6 0a4 4 0 0 1 4 0c2 1 4 1 6 0M6 6V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2'],
+    ['Sea view','M2 12s4-4 10-4 10 4 10 4M2 17s4-4 10-4 10 4 10 4M5 7a3 3 0 1 0 6 0 3 3 0 0 0-6 0'],
+    ['Kitchen','M6 2v6M10 2v6M14 2v6M6 8h12v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8ZM10 16v6'],
+    ['AC','M12 3v18M3 12h18M5 5l14 14M19 5 5 19'],
+    ['Beach access','M22 12c0-5.5-4.5-10-10-10S2 6.5 2 12c0 2 .6 3.8 1.5 5.3M3.5 17.3 22 12'],
+    ['Parking','M9 4h5a4 4 0 0 1 0 8H9V4Zm0 0v16'],
+    ['Pets ok','M5 13c-2 0-3 1-3 3s1 3 3 3 3-1 3-3-1-3-3-3Zm14 0c-2 0-3 1-3 3s1 3 3 3 3-1 3-3-1-3-3-3ZM9 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm6 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM12 21c-3 0-5-2-5-4s2-4 5-4 5 2 5 4-2 4-5 4Z'],
+  ];
+  document.getElementById('amenities').innerHTML = items.map(([t,d])=>`
+    <div class="amen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>
+      <span>${t}</span>
+    </div>`).join('');
+}
+
+function renderReviews(){
+  const data = [
+    ['Mahmoud A.','Cairo · Apr 2026','Yara was a wonderful host. The view from the terrace at sunrise is unforgettable. Quiet, calm, and just steps from the beach.'],
+    ['Layla M.','Alexandria · Mar 2026','Beautifully styled and immaculately clean. The kitchen is fully stocked and the bed is heavenly. Will book again next summer.'],
+    ['Karim T.','Cairo · Feb 2026','Felt like staying at a boutique hotel. Super easy check-in, KYC took two minutes, and the QuickIn assistant gave us great food tips.'],
+  ];
+  document.getElementById('reviews').innerHTML = data.map(([n,m,t])=>`
+    <div class="review">
+      <div class="who">
+        <div class="avatar">${n.split(' ').map(s=>s[0]).join('')}</div>
+        <div><b>${n}</b><span>${m}</span></div>
+      </div>
+      <div><span class="star">★★★★★</span></div>
+      <p>${t}</p>
+    </div>`).join('');
+}
+
+/* ===================== Navigation ===================== */
+function goTo(id, el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(a=>a.classList.remove('active'));
+  if(el && el.classList) el.classList.add('active');
+  else{
+    const m={home:0,explore:1,listing:0,host:3};
+    const ls=document.querySelectorAll('.nav-link');
+    if(ls[m[id]]) ls[m[id]].classList.add('active');
+  }
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+function openListing(id){
+  goTo('listing');
+  // could vary by id, kept generic for demo
+}
+
+/* ===================== Explore: pin <-> card highlight ===================== */
+function highlightCard(id, on){
+  document.querySelectorAll('#exploreGrid .card').forEach(c=>{
+    if(+c.dataset.id===id) c.classList.toggle('highlight', on);
+  });
+  document.querySelectorAll('#pins .pin').forEach(p=>{
+    if(+p.dataset.id===id) p.classList.toggle('active', on);
+  });
+}
+
+/* ===================== Booking modal ===================== */
+function openBooking(){
+  document.getElementById('modal-step1').style.display='';
+  document.getElementById('modal-step2').style.display='none';
+  document.getElementById('modal-step3').style.display='none';
+  document.getElementById('backdrop').classList.add('show');
+  renderCalendar();
+}
+function closeBooking(){ document.getElementById('backdrop').classList.remove('show'); }
+function closeBackdrop(e){ if(e.target.id==='backdrop') closeBooking(); }
+function confirmBooking(){
+  document.getElementById('modal-step1').style.display='none';
+  document.getElementById('modal-step2').style.display='';
+  setTimeout(()=>{
+    document.getElementById('modal-step2').style.display='none';
+    document.getElementById('modal-step3').style.display='';
+    const code='QKN-'+Math.random().toString(36).slice(2,6).toUpperCase();
+    document.getElementById('resCode').textContent=code;
+  },800);
+}
+
+/* ===================== Calendar ===================== */
+function renderCalendar(){
+  // June 2026: Jun 1, 2026 = Monday
+  const cal=document.getElementById('cal');
+  const dows=['Mo','Tu','We','Th','Fr','Sa','Su'];
+  let html = dows.map(d=>`<div class="dow">${d}</div>`).join('');
+  // Pad to Monday-start. June 1 2026 is Monday (offset 0)
+  const startOffset = 0;
+  const daysInMonth = 30;
+  for(let i=0;i<startOffset;i++) html += `<div class="d dim"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    let cls='d';
+    if(d===18) cls+=' start';
+    else if(d===24) cls+=' end';
+    else if(d>18 && d<24) cls+=' in-range';
+    html += `<div class="${cls}">${d}</div>`;
+  }
+  cal.innerHTML = html;
+}
+
+/* ===================== Chat ===================== */
+function toggleChat(){
+  document.getElementById('chatPanel').classList.toggle('show');
+}
+function sendChat(){
+  const inp=document.getElementById('chatInput');
+  const txt=inp.value.trim(); if(!txt) return;
+  const body=document.getElementById('chatBody');
+  const me=document.createElement('div'); me.className='bubble me'; me.textContent=txt; body.appendChild(me);
+  inp.value='';
+  const typing=document.createElement('div'); typing.className='bubble typing';
+  typing.innerHTML='<i></i><i></i><i></i>'; body.appendChild(typing); body.scrollTop=body.scrollHeight;
+  setTimeout(()=>{
+    typing.remove();
+    const reply=document.createElement('div'); reply.className='bubble bot';
+    reply.textContent = LANG==='ar'
+      ? 'بكل سرور! أوصي بـ"خلوة هاسيندا فوق الجرف" لإقامة هادئة هذا الأسبوع — إطلالة على البحر وحمام سباحة خاص و4.95 نجوم. هل أحجز لك التواريخ؟'
+      : "Lovely! I'd recommend the Hacienda Cliff Retreat for a calm weekend — sea view, private pool, and 4.95 stars. Want me to hold the dates?";
+    body.appendChild(reply); body.scrollTop=body.scrollHeight;
+  },900);
+}
+
+/* ===================== Language toggle ===================== */
+const I18N = {
+  en:{
+    brand:"QuickIn",
+    nav_discover:"Discover", nav_offers:"Best Offers", nav_managed:"Managed Locations", nav_hosts:"For Hosts", nav_signin:"Sign in",
+    hero_title:"Stay somewhere warm.", hero_sub:"Discover boutique homes and managed villages along Egypt's coasts, deserts, and Nile shores.",
+    search_where:"Where", search_in:"Check in", search_out:"Check out", search_guests:"Guests",
+    ph_where:"North Coast, El Gouna…", ph_in:"Jun 18, 2026", ph_out:"Jun 24, 2026", ph_guests:"2 adults",
+    offers_title:"Best offers this week", offers_lead:"Hand-picked stays approved by our editors and hosts.",
+    featured_title:"Featured boutique stays", featured_lead:"A calm, warm collection — chosen for character.",
+    foot_lead:"A warm, boutique booking experience for the discerning traveler.",
+    foot_explore:"Explore", foot_hosting:"Hosting", foot_support:"Support", foot_company:"Company",
+    filt_all:"All stays", filt_price:"Price", filt_type:"Type", filt_guests:"Guests", filt_more:"More", filt_offers:"Best offers",
+    explore_h:"Stays along the North Coast", explore_count:"stays found",
+    back_explore:"Back to stays",
+    listing_title:"Sahel Beach House", listing_loc:"Sidi Abdel Rahman · Sahel, Egypt", managed_chip:"Managed Village",
+    badge_offer:"BEST OFFER",
+    host_by:"Hosted by Yara · 4 yrs hosting", host_super:"Superhost · Identity verified · KYC complete",
+    about_h:"About this stay", about_body:"A breezy three-bedroom beach house steps from the Sidi Abdel Rahman shoreline. Private pool, sun-soaked terrace, and a calm interior dressed in warm linens and natural wood. Walk to the beach club, restaurants, and pools.",
+    amenities_h:"What this place offers", reviews_h:"Reviews", location_h:"Where you'll be",
+    per_night:"night", check_in:"Check in", check_out:"Check out", guests_l:"Guests",
+    nights:"nights", service_fee:"Service fee", cleaning_fee:"Cleaning fee", total_lbl:"Total",
+    reserve_btn:"Reserve", no_charge:"You won't be charged yet",
+    book_h:"Confirm your reservation", book_sub:"Sahel Beach House · Jun 18 – Jun 24, 2026",
+    cal_month:"June 2026", pay_h:"Payment method", pay_vf:"Vodafone Cash",
+    confirm_btn:"Confirm Booking · EGP 33,000", secure:"Secure payment · Cancel free until Jun 11",
+    processing:"Processing your reservation…",
+    conf_h:"Reservation confirmed", conf_sub:"A copy is on its way to your inbox.",
+    conf_listing:"Sahel Beach House", conf_when:"Jun 18 – Jun 24, 2026 · 2 guests",
+    conf_close:"Close", conf_trips:"View in Trips",
+    host_role:"Host · Verified",
+    dash_overview:"Overview", dash_listings:"Listings", dash_reservations:"Reservations", dash_earnings:"Earnings", dash_reviews:"Reviews", dash_settings:"Settings",
+    dash_h:"Welcome back, Yara", dash_sub:"Here's how your stays are performing this month.", dash_add:"+ Add new listing",
+    stat_listings:"Active listings", stat_bookings:"Bookings this month", stat_earnings:"Earnings", stat_rating:"Avg rating",
+    chart_h:"Earnings — last 12 weeks", chart_lead:"Weekly net payouts in EGP",
+    res_h:"Recent reservations", res_lead:"Your last five confirmed stays", res_view:"View all →",
+    th_guest:"Guest", th_listing:"Listing", th_dates:"Dates", th_status:"Status", th_code:"Code", th_amt:"Amount",
+    st_conf:"Confirmed", st_chk:"Check-in soon",
+    ai_name:"QuickIn Assistant", ai_status:"Online · usually replies instantly",
+    ai_g1:"Hi! I'm QuickIn — your AI travel companion.",
+    ai_g2:"Looking for a calm beach escape this weekend? I know a few along the Sahel and Hacienda Bay.",
+    ai_ph:"Ask anything about your trip…",
+  },
+  ar:{
+    brand:"كويك‑إن",
+    nav_discover:"اكتشف", nav_offers:"أفضل العروض", nav_managed:"الوجهات المُدارة", nav_hosts:"للمضيفين", nav_signin:"تسجيل الدخول",
+    hero_title:"أقم في مكان دافئ.", hero_sub:"اكتشف منازل بوتيك وقرى مُدارة على شواطئ مصر وصحاريها وضفاف النيل.",
+    search_where:"إلى أين", search_in:"تاريخ الوصول", search_out:"تاريخ المغادرة", search_guests:"النزلاء",
+    ph_where:"الساحل الشمالي، الجونة…", ph_in:"18 يونيو 2026", ph_out:"24 يونيو 2026", ph_guests:"بالغان",
+    offers_title:"أفضل عروض هذا الأسبوع", offers_lead:"إقامات مختارة بعناية وموافَق عليها من محررينا والمضيفين.",
+    featured_title:"إقامات بوتيك مميزة", featured_lead:"مجموعة هادئة ودافئة — مختارة بطابعها الخاص.",
+    foot_lead:"تجربة حجز دافئة ومميزة للمسافر الذواق.",
+    foot_explore:"اكتشف", foot_hosting:"الاستضافة", foot_support:"الدعم", foot_company:"الشركة",
+    filt_all:"كل الإقامات", filt_price:"السعر", filt_type:"النوع", filt_guests:"النزلاء", filt_more:"المزيد", filt_offers:"أفضل العروض",
+    explore_h:"إقامات على الساحل الشمالي", explore_count:"إقامة متاحة",
+    back_explore:"عودة إلى الإقامات",
+    listing_title:"بيت شاطئ الساحل", listing_loc:"سيدي عبد الرحمن · الساحل، مصر", managed_chip:"قرية مُدارة",
+    badge_offer:"أفضل عرض",
+    host_by:"تستضيفك يارا · 4 سنوات استضافة", host_super:"مضيفة متميزة · هوية موثقة · KYC مكتمل",
+    about_h:"عن هذه الإقامة", about_body:"بيت شاطئي بثلاث غرف نوم على بعد خطوات من شاطئ سيدي عبد الرحمن. حمام سباحة خاص وتيراس مشمسة وداخلٌ هادئ بألوان دافئة وخامات طبيعية. على بعد خطوات من النادي والمطاعم وحمامات السباحة.",
+    amenities_h:"ما يوفره هذا المكان", reviews_h:"المراجعات", location_h:"موقعك",
+    per_night:"ليلة", check_in:"الوصول", check_out:"المغادرة", guests_l:"النزلاء",
+    nights:"ليالٍ", service_fee:"رسوم الخدمة", cleaning_fee:"رسوم النظافة", total_lbl:"الإجمالي",
+    reserve_btn:"احجز الآن", no_charge:"لن يتم تحصيل المبلغ بعد",
+    book_h:"تأكيد الحجز", book_sub:"بيت شاطئ الساحل · 18 – 24 يونيو 2026",
+    cal_month:"يونيو 2026", pay_h:"طريقة الدفع", pay_vf:"فودافون كاش",
+    confirm_btn:"تأكيد الحجز · 33,000 ج.م", secure:"دفع آمن · إلغاء مجاني حتى 11 يونيو",
+    processing:"جارٍ معالجة الحجز…",
+    conf_h:"تم تأكيد حجزك", conf_sub:"وصلت نسخة إلى بريدك الإلكتروني.",
+    conf_listing:"بيت شاطئ الساحل", conf_when:"18 – 24 يونيو 2026 · ضيفان",
+    conf_close:"إغلاق", conf_trips:"عرض في الرحلات",
+    host_role:"مضيفة · موثقة",
+    dash_overview:"نظرة عامة", dash_listings:"الإقامات", dash_reservations:"الحجوزات", dash_earnings:"الأرباح", dash_reviews:"المراجعات", dash_settings:"الإعدادات",
+    dash_h:"مرحباً بعودتك، يارا", dash_sub:"إليكِ أداء إقاماتك هذا الشهر.", dash_add:"+ إضافة إقامة جديدة",
+    stat_listings:"إقامات نشطة", stat_bookings:"حجوزات هذا الشهر", stat_earnings:"الأرباح", stat_rating:"متوسط التقييم",
+    chart_h:"الأرباح — آخر 12 أسبوعاً", chart_lead:"صافي المدفوعات الأسبوعية بالجنيه المصري",
+    res_h:"أحدث الحجوزات", res_lead:"آخر خمس إقامات مؤكدة لديكِ", res_view:"عرض الكل ←",
+    th_guest:"الضيف", th_listing:"الإقامة", th_dates:"التواريخ", th_status:"الحالة", th_code:"الكود", th_amt:"المبلغ",
+    st_conf:"مؤكد", st_chk:"وصول قريب",
+    ai_name:"مساعد كويك‑إن", ai_status:"متصل · يرد عادةً فوراً",
+    ai_g1:"أهلاً! أنا كويك‑إن — رفيقك الذكي في السفر.",
+    ai_g2:"تبحث عن مهرب هادئ على الشاطئ نهاية الأسبوع؟ أعرف بضعة على الساحل وخليج هاسيندا.",
+    ai_ph:"اسأل عن أي شيء يخص رحلتك…",
+  }
+};
+let LANG='en';
+function T(k){ return (I18N[LANG]||I18N.en)[k] || k; }
+function toggleLang(){
+  LANG = LANG==='en' ? 'ar' : 'en';
+  document.documentElement.lang = LANG;
+  document.documentElement.dir = LANG==='ar' ? 'rtl' : 'ltr';
+  document.getElementById('langBtn').textContent = LANG==='en' ? 'EN | ع' : 'ع | EN';
+  // text
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(I18N[LANG][k]!==undefined) el.textContent = I18N[LANG][k];
+  });
+  // placeholders
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+    const k=el.getAttribute('data-i18n-ph');
+    if(I18N[LANG][k]!==undefined) el.placeholder = I18N[LANG][k];
+  });
+  // re-render dynamic blocks (cards have inline strings)
+  renderOffers(); renderFeatured(); renderExplore();
+}
+
+/* ===================== Init ===================== */
+renderOffers();
+renderFeatured();
+renderExplore();
+renderGallery();
+renderAmenities();
+renderReviews();
+renderCalendar();
+</script>
+</body>
+</html>

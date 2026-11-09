@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="248 production-ready Claude Code skills & agent plugins — engineering, product, marketing, compliance, C-level advisory. Works with Claude Code, Codex, Gemini CLI, Cursor, and 7 more AI coding tools. Curated & credited to Alireza Rezvani." />
+    <title>Claude Code Skills Library — Nigents</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #09080c;
+            --bg-secondary: #141116;
+            --bg-card: #111111;
+            --border: #2a2a35;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+            --accent-orange: #ff570a;
+            --accent-volt: #2dd4bf;
+            --accent-indigo: #818cf8;
+            --accent-green: #19d59e;
+            --accent-pink: #ec4899;
+            --accent-yellow: #fbbf24;
+            --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+            --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(45, 212, 191, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(45, 212, 191, 0.035) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Nav ── */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, var(--bg-primary) 0%, transparent 100%);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .nav-logo {
+            width: 40px; height: 40px; background: var(--accent-orange); border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 20px; color: var(--bg-primary);
+        }
+        .nav-title { font-size: 22px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.5px; }
+        .nav-links { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; justify-content: flex-end; }
+        .nav-link { color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover { color: var(--text-primary); }
+        .nav-link.active { color: var(--accent-volt); }
+        .soon-pill {
+            display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase; color: var(--bg-primary);
+            background: var(--accent-orange); padding: 3px 9px; border-radius: 999px; vertical-align: middle;
+        }
+        .new-pill {
+            display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase; color: var(--bg-primary);
+            background: var(--accent-volt); padding: 3px 9px; border-radius: 999px; vertical-align: middle;
+        }
+        .nav-cta {
+            padding: 10px 20px; border: 1px solid var(--accent-orange); color: var(--accent-orange);
+            text-decoration: none; font-size: 14px; font-weight: 600; transition: all 0.2s;
+        }
+        .nav-cta:hover { background: var(--accent-orange); color: var(--bg-primary); }
+        .nav-toggle {
+            display: none; width: 44px; height: 44px;
+            align-items: center; justify-content: center; margin-left: auto;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text-primary); cursor: pointer;
+        }
+        .nav-toggle-icon-close { display: none; font-size: 28px; }
+        body.nav-open .nav-toggle-icon-open { display: none; }
+        body.nav-open .nav-toggle-icon-close { display: block; }
+        .nav-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 998; }
+        body.nav-open .nav-backdrop { display: block; }
+        body.nav-open { overflow: hidden; }
+
+        @media (max-width: 900px) {
+            .nav-toggle { display: flex; }
+            .nav-links {
+                display: none; position: fixed; top: 72px; left: 16px; right: 16px;
+                flex-direction: column; align-items: stretch;
+                background: var(--bg-secondary); border: 1px solid var(--border); padding: 12px; z-index: 999;
+            }
+            body.nav-open .nav-links { display: flex; }
+        }
+
+        main { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 120px 32px 80px; }
+
+        /* ── Hero ── */
+        .hero-badge {
+            display: inline-block; font-family: var(--font-mono);
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--accent-volt); border: 1px solid rgba(45, 212, 191, 0.4);
+            padding: 8px 14px; margin-bottom: 20px;
+            animation: badgePulse 3s ease-in-out infinite;
+        }
+        @keyframes badgePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.22); }
+            50% { box-shadow: 0 0 24px 2px rgba(45, 212, 191, 0.12); }
+        }
+        .hero-title {
+            font-size: clamp(2.4rem, 5.5vw, 3.8rem);
+            font-weight: 800; letter-spacing: -0.04em; line-height: 1.05; margin-bottom: 18px;
+        }
+        .hero-title .shimmer {
+            background: linear-gradient(90deg, var(--text-primary) 0%, var(--text-primary) 38%, var(--accent-volt) 50%, var(--text-primary) 62%, var(--text-primary) 100%);
+            background-size: 200% 100%;
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            animation: textShimmer 4s linear infinite;
+        }
+        @keyframes textShimmer { 0% { background-position: 100% 50%; } 100% { background-position: -100% 50%; } }
+        .hero-title em { font-style: normal; color: var(--accent-volt); }
+        .hero-lead { font-size: 1.1rem; color: var(--text-secondary); max-width: 60ch; margin-bottom: 30px; animation: fadeUp 0.8s ease both; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        .stat-row {
+            display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 36px;
+        }
+        .stat {
+            display: flex; flex-direction: column; gap: 2px;
+            padding: 14px 20px; background: var(--bg-secondary);
+            border: 1px solid var(--border); border-radius: 12px;
+            min-width: 110px;
+        }
+        .stat-num {
+            font-size: 28px; font-weight: 800; letter-spacing: -0.04em;
+            color: var(--accent-volt);
+        }
+        .stat-label {
+            font-size: 11px; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.1em;
+        }
+        .stat:nth-child(2) .stat-num { color: var(--accent-indigo); }
+        .stat:nth-child(3) .stat-num { color: var(--accent-pink); }
+        .stat:nth-child(4) .stat-num { color: var(--accent-yellow); }
+
+        .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 60px; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 14px 24px; font-size: 14px; font-weight: 600;
+            text-decoration: none; border-radius: 0; transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary {
+            background: var(--accent-volt); color: #041312;
+            border: 1px solid var(--accent-volt);
+            box-shadow: 0 8px 32px rgba(45, 212, 191, 0.28);
+        }
+        .btn-primary:hover { box-shadow: 0 12px 40px rgba(45, 212, 191, 0.4); }
+        .btn-ghost { background: transparent; color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-ghost:hover { border-color: var(--accent-volt); color: var(--accent-volt); }
+
+        /* ── Tools strip ── */
+        .tools-section {
+            margin-bottom: 72px;
+        }
+        .section-kicker {
+            display: inline-block; font-family: var(--font-mono);
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--accent-indigo); margin-bottom: 10px;
+        }
+        .section-title {
+            font-size: clamp(1.5rem, 3vw, 2.1rem);
+            font-weight: 800; letter-spacing: -0.02em; margin-bottom: 10px;
+        }
+        .section-desc {
+            color: var(--text-secondary); font-size: 15px; max-width: 62ch; margin-bottom: 28px;
+        }
+        .tools-grid {
+            display: flex; flex-wrap: wrap; gap: 10px;
+        }
+        .tool-chip {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            font-size: 13px; font-weight: 600;
+            transition: all 0.2s;
+            opacity: 0; animation: chipIn 0.5s forwards;
+        }
+        .tool-chip:nth-child(1) { animation-delay: 0.05s; }
+        .tool-chip:nth-child(2) { animation-delay: 0.1s; }
+        .tool-chip:nth-child(3) { animation-delay: 0.15s; }
+        .tool-chip:nth-child(4) { animation-delay: 0.2s; }
+        .tool-chip:nth-child(5) { animation-delay: 0.25s; }
+        .tool-chip:nth-child(6) { animation-delay: 0.3s; }
+        .tool-chip:nth-child(7) { animation-delay: 0.35s; }
+        .tool-chip:nth-child(8) { animation-delay: 0.4s; }
+        .tool-chip:nth-child(9) { animation-delay: 0.45s; }
+        .tool-chip:nth-child(10) { animation-delay: 0.5s; }
+        .tool-chip:nth-child(11) { animation-delay: 0.55s; }
+        @keyframes chipIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tool-chip:hover {
+            border-color: var(--accent-volt);
+            color: var(--accent-volt);
+            transform: translateY(-2px);
+        }
+        .tool-chip .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent-volt);
+            box-shadow: 0 0 8px var(--accent-volt);
+        }
+
+        /* ── Domains grid ── */
+        .domains-section { margin-bottom: 72px; }
+        .domains-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .domain-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .domain-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--accent-volt);
+            transform: scaleX(0); transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+        .domain-card:hover {
+            border-color: rgba(45, 212, 191, 0.45);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(45, 212, 191, 0.12);
+        }
+        .domain-card:hover::before { transform: scaleX(1); }
+        .domain-card .emoji {
+            font-size: 30px; display: block; margin-bottom: 14px; line-height: 1;
+        }
+        .domain-card h3 {
+            font-size: 17px; font-weight: 700; margin-bottom: 6px;
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        }
+        .domain-card .count {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 11px; font-weight: 700;
+            color: var(--accent-volt);
+            background: rgba(45, 212, 191, 0.1);
+            border: 1px solid rgba(45, 212, 191, 0.3);
+            padding: 3px 9px; border-radius: 999px;
+            letter-spacing: 0.05em;
+        }
+        .domain-card p {
+            font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;
+        }
+
+        /* Unique accent colors per domain card */
+        .domain-card.c1::before { background: var(--accent-volt); }
+        .domain-card.c1 .count { color: var(--accent-volt); background: rgba(45,212,191,0.1); border-color: rgba(45,212,191,0.3); }
+        .domain-card.c2::before { background: var(--accent-indigo); }
+        .domain-card.c2 .count { color: var(--accent-indigo); background: rgba(129,140,248,0.1); border-color: rgba(129,140,248,0.3); }
+        .domain-card.c3::before { background: var(--accent-pink); }
+        .domain-card.c3 .count { color: var(--accent-pink); background: rgba(236,72,153,0.1); border-color: rgba(236,72,153,0.3); }
+        .domain-card.c4::before { background: var(--accent-yellow); }
+        .domain-card.c4 .count { color: var(--accent-yellow); background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.3); }
+        .domain-card.c5::before { background: var(--accent-green); }
+        .domain-card.c5 .count { color: var(--accent-green); background: rgba(25,213,158,0.1); border-color: rgba(25,213,158,0.3); }
+        .domain-card.c6::before { background: var(--accent-orange); }
+        .domain-card.c6 .count { color: var(--accent-orange); background: rgba(255,87,10,0.1); border-color: rgba(255,87,10,0.3); }
+
+        /* ── Personas ── */
+        .personas-section { margin-bottom: 72px; }
+        .personas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+        }
+        .persona-card {
+            background: linear-gradient(145deg, rgba(45,212,191,0.05) 0%, var(--bg-secondary) 60%);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            transition: all 0.25s;
+        }
+        .persona-card:hover {
+            border-color: rgba(45, 212, 191, 0.45);
+            transform: translateY(-2px);
+        }
+        .persona-avatar {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-volt), var(--accent-indigo));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; margin-bottom: 14px;
+            box-shadow: 0 6px 20px rgba(45, 212, 191, 0.25);
+        }
+        .persona-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .persona-card .tagline {
+            font-family: var(--font-mono); font-size: 11px;
+            color: var(--accent-indigo); text-transform: uppercase;
+            letter-spacing: 0.08em; margin-bottom: 12px;
+        }
+        .persona-card p {
+            font-size: 13.5px; color: var(--text-secondary); line-height: 1.55;
+        }
+
+        /* ── How-to-use (tabbed install) ── */
+        .install-section { margin-bottom: 72px; }
+        .tabs-bar {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 6px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 8px 16px;
+            font-size: 13px; font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 8px;
+            font-family: inherit;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { color: var(--text-primary); }
+        .tab-btn.active {
+            background: var(--accent-volt);
+            color: #041312;
+        }
+        .tab-panel { display: none; animation: fadeUp 0.4s ease; }
+        .tab-panel.active { display: block; }
+
+        .code-block {
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 22px 24px;
+            font-family: var(--font-mono);
+            font-size: 13.5px;
+            line-height: 1.75;
+            color: var(--text-secondary);
+            overflow-x: auto;
+            position: relative;
+        }
+        .code-block .comment { color: var(--text-muted); }
+        .code-block .cmd      { color: var(--accent-volt); }
+        .code-block .arg      { color: var(--accent-indigo); }
+        .code-block .str      { color: var(--accent-yellow); }
+        .copy-btn {
+            position: absolute;
+            top: 12px; right: 12px;
+            padding: 5px 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 11px; font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            font-family: inherit;
+            transition: all 0.15s;
+            text-transform: uppercase; letter-spacing: 0.06em;
+        }
+        .copy-btn:hover { color: var(--accent-volt); border-color: var(--accent-volt); }
+        .copy-btn.copied { color: var(--accent-green); border-color: var(--accent-green); }
+
+        /* ── Steps ── */
+        .steps-section { margin-bottom: 72px; }
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+        .step-card {
+            position: relative;
+            padding: 24px 24px 24px 68px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+        .step-card .step-num {
+            position: absolute;
+            left: 20px; top: 22px;
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--accent-volt), var(--accent-indigo));
+            color: #041312;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 16px;
+            box-shadow: 0 6px 20px rgba(45, 212, 191, 0.2);
+        }
+        .step-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+        .step-card p {
+            font-size: 13px; color: var(--text-secondary); line-height: 1.55;
+        }
+        .step-card .mono {
+            font-family: var(--font-mono); font-size: 12px;
+            color: var(--accent-volt);
+            background: rgba(45,212,191,0.08);
+            padding: 2px 6px; border-radius: 4px;
+        }
+
+        /* ── Credit ── */
+        .credit-section {
+            padding: 40px;
+            background: linear-gradient(145deg, rgba(45,212,191,0.06) 0%, var(--bg-secondary) 60%);
+            border: 1px solid rgba(45,212,191,0.3);
+            border-radius: 16px;
+            margin-bottom: 60px;
+            display: flex; gap: 28px; align-items: center; flex-wrap: wrap;
+        }
+        .credit-avatar {
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, #24292e 0%, #0d1117 100%);
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .credit-avatar svg { width: 44px; height: 44px; fill: #fff; }
+        .credit-body { flex: 1; min-width: 250px; }
+        .credit-body h3 {
+            font-size: 18px; font-weight: 700;
+            margin-bottom: 4px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .credit-body .sub {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--accent-volt);
+            margin-bottom: 12px;
+        }
+        .credit-body p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        .credit-links {
+            display: flex; flex-wrap: wrap; gap: 10px;
+        }
+        .credit-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 12px; font-weight: 600;
+            transition: all 0.15s;
+        }
+        .credit-link:hover {
+            background: var(--accent-volt);
+            border-color: var(--accent-volt);
+            color: #041312;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        footer a { color: var(--accent-volt); text-decoration: none; }
+
+        @media (max-width: 640px) {
+            .nav { padding: 16px 20px; }
+            main { padding-top: 100px; }
+            .credit-section { padding: 24px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-title .shimmer { animation: none; color: var(--text-primary); -webkit-text-fill-color: var(--text-primary); }
+            .hero-badge, .tool-chip { animation: none; opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">
+            <div class="nav-logo">N</div>
+            <span class="nav-title">Nigents</span>
+        </a>
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+            <span class="nav-toggle-icon-open" aria-hidden="true">&#9776;</span>
+            <span class="nav-toggle-icon-close" aria-hidden="true">&times;</span>
+        </button>
+        <div class="nav-links" id="nav-links" role="navigation" aria-label="Main">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/how-it-works.html" class="nav-link">How it works</a>
+            <a href="/skills.html" class="nav-link active">AI Skills <span class="new-pill">New</span></a>
+            <a href="/materials.html" class="nav-link">Free Materials</a>
+            <a href="/crazy-apps.html" class="nav-link">Crazy apps</a>
+            <a href="/opencode-kits.html" class="nav-link">OpenCode kits <span class="soon-pill">Soon</span></a>
+            <a href="/apps/" class="nav-link">Apps</a>
+            <a href="/login.html" class="nav-cta">Login &rarr;</a>
+        </div>
+    </nav>
+    <div class="nav-backdrop" id="nav-backdrop" aria-hidden="true" hidden></div>
+
+    <main>
+        <header>
+            <p class="hero-badge">Curated &middot; Open Source &middot; MIT</p>
+            <h1 class="hero-title"><span class="shimmer">Claude Code Skills</span> &mdash; 248 reusable expertise <em>packages</em></h1>
+            <p class="hero-lead">
+                Modular instruction packs that teach any AI coding agent a new domain &mdash; engineering, marketing, compliance,
+                C-level advisory. One library, eleven tools (Claude Code, Codex, Gemini CLI, Cursor, and seven more).
+                Install one skill, get a specialist. Install a pod, get a team.
+            </p>
+
+            <div class="stat-row">
+                <div class="stat"><span class="stat-num" data-count="248">0</span><span class="stat-label">Skills</span></div>
+                <div class="stat"><span class="stat-num" data-count="23">0</span><span class="stat-label">Agents</span></div>
+                <div class="stat"><span class="stat-num" data-count="22">0</span><span class="stat-label">Commands</span></div>
+                <div class="stat"><span class="stat-num" data-count="11">0</span><span class="stat-label">AI Tools</span></div>
+            </div>
+
+            <div class="cta-row">
+                <a class="btn btn-primary" href="#install">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    How to install
+                </a>
+                <a class="btn btn-ghost" href="https://github.com/alirezarezvani/claude-skills" target="_blank" rel="noopener noreferrer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                    View on GitHub
+                </a>
+                <a class="btn btn-ghost" href="#domains">Browse all domains</a>
+            </div>
+        </header>
+
+        <!-- Credit up top so it's unmissable -->
+        <section class="credit-section" aria-label="Credit to original author">
+            <div class="credit-avatar">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+            </div>
+            <div class="credit-body">
+                <h3>Built &amp; maintained by Alireza Rezvani</h3>
+                <p class="sub">github.com/alirezarezvani/claude-skills &middot; MIT licensed &middot; 5,200+ stars</p>
+                <p>
+                    All credit for this library goes to
+                    <strong style="color:var(--accent-volt)">Alireza Rezvani</strong>.
+                    Nigents is showcasing his work as a learning hub &mdash; install directly from the original
+                    repository, and please star the project if it helps you ship.
+                </p>
+                <div class="credit-links">
+                    <a class="credit-link" href="https://github.com/alirezarezvani/claude-skills" target="_blank" rel="noopener noreferrer">
+                        &#11088; Star the repo
+                    </a>
+                    <a class="credit-link" href="https://github.com/alirezarezvani" target="_blank" rel="noopener noreferrer">
+                        &#128100; Follow @alirezarezvani
+                    </a>
+                    <a class="credit-link" href="https://github.com/alirezarezvani/claude-skills/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
+                        &#128196; MIT License
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Supported AI tools -->
+        <section class="tools-section" aria-labelledby="tools-title">
+            <p class="section-kicker">One library, eleven tools</p>
+            <h2 class="section-title" id="tools-title">Works with every major AI coding agent</h2>
+            <p class="section-desc">Skills ship as plain Markdown + Python stdlib. No framework lock-in, no pip installs, no vendor coupling. Convert to any tool with <span style="font-family:var(--font-mono);color:var(--accent-volt)">./scripts/convert.sh</span>.</p>
+            <div class="tools-grid">
+                <span class="tool-chip"><span class="dot"></span>Claude Code</span>
+                <span class="tool-chip"><span class="dot"></span>OpenAI Codex</span>
+                <span class="tool-chip"><span class="dot"></span>Gemini CLI</span>
+                <span class="tool-chip"><span class="dot"></span>OpenClaw</span>
+                <span class="tool-chip"><span class="dot"></span>Cursor</span>
+                <span class="tool-chip"><span class="dot"></span>Aider</span>
+                <span class="tool-chip"><span class="dot"></span>Windsurf</span>
+                <span class="tool-chip"><span class="dot"></span>Kilo Code</span>
+                <span class="tool-chip"><span class="dot"></span>OpenCode</span>
+                <span class="tool-chip"><span class="dot"></span>Augment</span>
+                <span class="tool-chip"><span class="dot"></span>Antigravity</span>
+            </div>
+        </section>
+
+        <!-- Domain cards -->
+        <section class="domains-section" id="domains" aria-labelledby="domains-title">
+            <p class="section-kicker">The library</p>
+            <h2 class="section-title" id="domains-title">248 skills across 11 domains</h2>
+            <p class="section-desc">Each domain is a pod of related skills. Install a single skill for a focused task, or a whole pod to get a coordinated team.</p>
+            <div class="domains-grid">
+                <div class="domain-card c1">
+                    <span class="emoji">&#128295;</span>
+                    <h3>Engineering &mdash; Core <span class="count">37</span></h3>
+                    <p>Architecture, frontend, backend, fullstack, QA, DevOps, SecOps, ML/AI, data, Playwright, self-improving agent, full security suite, a11y audit.</p>
+                </div>
+                <div class="domain-card c1">
+                    <span class="emoji">&#9889;</span>
+                    <h3>Engineering POWERFUL <span class="count">42</span></h3>
+                    <p>Agent designer, RAG architect, database designer, CI/CD builder, security auditor, MCP builder, AgentHub, Helm charts, Terraform, self-eval.</p>
+                </div>
+                <div class="domain-card c2">
+                    <span class="emoji">&#127919;</span>
+                    <h3>Product <span class="count">15</span></h3>
+                    <p>PM, agile PO, strategist, UX researcher, UI design, landing pages, SaaS scaffolder, analytics, experiment designer, discovery, code-to-PRD.</p>
+                </div>
+                <div class="domain-card c3">
+                    <span class="emoji">&#128226;</span>
+                    <h3>Marketing <span class="count">45</span></h3>
+                    <p>Seven pods &mdash; Content, SEO, CRO, Channels, Growth, Intelligence, Sales &mdash; plus a context foundation and orchestration router. 32 Python tools.</p>
+                </div>
+                <div class="domain-card c4">
+                    <span class="emoji">&#128221;</span>
+                    <h3>Project Management <span class="count">9</span></h3>
+                    <p>Senior PM, scrum master, Jira expert, Confluence expert, Atlassian admin, templates &amp; blueprints.</p>
+                </div>
+                <div class="domain-card c5">
+                    <span class="emoji">&#127973;</span>
+                    <h3>Regulatory &amp; QM <span class="count">14</span></h3>
+                    <p>ISO 13485, MDR 2017/745, FDA 510(k)/De Novo, ISO 27001 ISMS, GDPR/DSGVO, CAPA, risk management (ISO 14971).</p>
+                </div>
+                <div class="domain-card c6">
+                    <span class="emoji">&#128188;</span>
+                    <h3>C-Level Advisory <span class="count">34</span></h3>
+                    <p>Full C-suite (10 roles), orchestration, board meetings, culture, change management, strategic alignment.</p>
+                </div>
+                <div class="domain-card c2">
+                    <span class="emoji">&#128200;</span>
+                    <h3>Business &amp; Growth <span class="count">5</span></h3>
+                    <p>Customer success manager, sales engineer, revenue operations, contracts &amp; proposals writer.</p>
+                </div>
+                <div class="domain-card c4">
+                    <span class="emoji">&#128176;</span>
+                    <h3>Finance <span class="count">4</span></h3>
+                    <p>Financial analyst (DCF, budgeting, forecasting), SaaS metrics coach (ARR, MRR, churn, LTV, CAC).</p>
+                </div>
+                <div class="domain-card c5">
+                    <span class="emoji">&#127917;</span>
+                    <h3>Playwright Pro <span class="count">9+3</span></h3>
+                    <p>Test generation, flaky-test fix, Cypress/Selenium migration, TestRail, BrowserStack &mdash; 55 templates included.</p>
+                </div>
+                <div class="domain-card c1">
+                    <span class="emoji">&#129504;</span>
+                    <h3>Self-Improving Agent <span class="count">5+2</span></h3>
+                    <p>Auto-memory curation, pattern promotion, skill extraction, memory health scoring.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Personas -->
+        <section class="personas-section" id="personas" aria-labelledby="personas-title">
+            <p class="section-kicker">Three pre-built agent identities</p>
+            <h2 class="section-title" id="personas-title">Personas &mdash; specialists that think a certain way</h2>
+            <p class="section-desc">Personas go beyond "use these skills" &mdash; they define how an agent thinks, prioritises, and speaks. Copy one file, instantly get a specialist voice.</p>
+            <div class="personas-grid">
+                <div class="persona-card">
+                    <div class="persona-avatar">&#128187;</div>
+                    <h3>Startup CTO</h3>
+                    <p class="tagline">Engineering + Strategy</p>
+                    <p>Architecture decisions, tech stack selection, team building, technical due diligence. Speaks in trade-offs and runway.</p>
+                </div>
+                <div class="persona-card">
+                    <div class="persona-avatar">&#128640;</div>
+                    <h3>Growth Marketer</h3>
+                    <p class="tagline">Marketing + Growth</p>
+                    <p>Content-led growth, launch strategy, channel optimisation, bootstrapped marketing. Cares about CAC, LTV, and compounding.</p>
+                </div>
+                <div class="persona-card">
+                    <div class="persona-avatar">&#128104;&#8205;&#128187;</div>
+                    <h3>Solo Founder</h3>
+                    <p class="tagline">Cross-domain</p>
+                    <p>One-person startups, side projects, MVP building. The agent that wears all hats and tells you which to take off first.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- How to install (tabbed) -->
+        <section class="install-section" id="install" aria-labelledby="install-title">
+            <p class="section-kicker">Quick start</p>
+            <h2 class="section-title" id="install-title">How to install &mdash; pick your AI tool</h2>
+            <p class="section-desc">Every tool below uses the same underlying skill files. Install takes under a minute.</p>
+
+            <div class="tabs-bar" role="tablist" aria-label="Install method">
+                <button class="tab-btn active" role="tab" data-tab="claude" aria-selected="true">Claude Code</button>
+                <button class="tab-btn" role="tab" data-tab="codex" aria-selected="false">OpenAI Codex</button>
+                <button class="tab-btn" role="tab" data-tab="gemini" aria-selected="false">Gemini CLI</button>
+                <button class="tab-btn" role="tab" data-tab="manual" aria-selected="false">Any tool (manual)</button>
+            </div>
+
+            <div class="tab-panel active" data-tab="claude" role="tabpanel">
+                <div class="code-block">
+                    <button class="copy-btn" type="button" data-copy>Copy</button>
+<pre><span class="comment"># 1. Add the marketplace</span>
+<span class="cmd">/plugin</span> <span class="arg">marketplace add</span> <span class="str">alirezarezvani/claude-skills</span>
+
+<span class="comment"># 2. Install a domain pod</span>
+<span class="cmd">/plugin</span> <span class="arg">install</span> <span class="str">engineering-skills@claude-code-skills</span>
+<span class="cmd">/plugin</span> <span class="arg">install</span> <span class="str">marketing-skills@claude-code-skills</span>
+<span class="cmd">/plugin</span> <span class="arg">install</span> <span class="str">c-level-skills@claude-code-skills</span>
+
+<span class="comment"># 3. Or cherry-pick a single skill</span>
+<span class="cmd">/plugin</span> <span class="arg">install</span> <span class="str">skill-security-auditor@claude-code-skills</span>
+
+<span class="comment"># 4. Start using it &mdash; Claude Code activates skills automatically</span>
+<span class="comment">#    based on your request context.</span></pre>
+                </div>
+            </div>
+
+            <div class="tab-panel" data-tab="codex" role="tabpanel">
+                <div class="code-block">
+                    <button class="copy-btn" type="button" data-copy>Copy</button>
+<pre><span class="comment"># 1. Clone the repo</span>
+<span class="cmd">git</span> <span class="arg">clone</span> <span class="str">https://github.com/alirezarezvani/claude-skills.git</span>
+<span class="cmd">cd</span> claude-skills
+
+<span class="comment"># 2. Install for Codex</span>
+<span class="cmd">./scripts/codex-install.sh</span>
+
+<span class="comment"># 3. Activate a skill in Codex</span>
+&gt; <span class="cmd">activate_skill</span>(<span class="arg">name</span>=<span class="str">"senior-architect"</span>)</pre>
+                </div>
+            </div>
+
+            <div class="tab-panel" data-tab="gemini" role="tabpanel">
+                <div class="code-block">
+                    <button class="copy-btn" type="button" data-copy>Copy</button>
+<pre><span class="comment"># 1. Clone the repo</span>
+<span class="cmd">git</span> <span class="arg">clone</span> <span class="str">https://github.com/alirezarezvani/claude-skills.git</span>
+<span class="cmd">cd</span> claude-skills
+
+<span class="comment"># 2. Install for Gemini CLI</span>
+<span class="cmd">./scripts/gemini-install.sh</span>
+
+<span class="comment"># 3. Start using skills</span>
+&gt; <span class="cmd">activate_skill</span>(<span class="arg">name</span>=<span class="str">"startup-cto"</span>)</pre>
+                </div>
+            </div>
+
+            <div class="tab-panel" data-tab="manual" role="tabpanel">
+                <div class="code-block">
+                    <button class="copy-btn" type="button" data-copy>Copy</button>
+<pre><span class="comment"># 1. Clone the repo</span>
+<span class="cmd">git</span> <span class="arg">clone</span> <span class="str">https://github.com/alirezarezvani/claude-skills.git</span>
+<span class="cmd">cd</span> claude-skills
+
+<span class="comment"># 2. Convert for your tool (11 supported)</span>
+<span class="cmd">./scripts/convert.sh</span> <span class="arg">--tool</span> <span class="str">cursor</span>
+<span class="comment"># options: claude | codex | gemini | cursor | aider | windsurf</span>
+<span class="comment">#          kilo-code | opencode | augment | antigravity | openclaw</span>
+
+<span class="comment"># 3. Copy the generated files into your tool's skills folder</span>
+<span class="cmd">cp</span> -r dist/cursor/* ~/.cursor/skills/</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4-step workflow -->
+        <section class="steps-section" aria-labelledby="steps-title">
+            <p class="section-kicker">Using a skill &mdash; day to day</p>
+            <h2 class="section-title" id="steps-title">Four steps from install to output</h2>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-num">1</div>
+                    <h3>Install the skill</h3>
+                    <p>Pick a domain pod or single skill, install via your tool's marketplace or the convert script.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">2</div>
+                    <h3>Describe the task</h3>
+                    <p>Tell your agent in plain language: <span class="mono">"Run an accessibility audit on the homepage"</span>.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">3</div>
+                    <h3>Skill auto-activates</h3>
+                    <p>The agent matches your request to the right skill's <span class="mono">SKILL.md</span> and follows its workflow.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">4</div>
+                    <h3>Ship the output</h3>
+                    <p>Each skill includes templates, checklists, and CLI tools &mdash; you get a deliverable, not just advice.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>
+                <strong>Claude Code Skills Library</strong> &middot; curated on Nigents, built by
+                <a href="https://github.com/alirezarezvani" target="_blank" rel="noopener noreferrer">@alirezarezvani</a> &middot;
+                <a href="https://github.com/alirezarezvani/claude-skills" target="_blank" rel="noopener noreferrer">GitHub</a> &middot;
+                <a href="/crazy-apps.html">Crazy apps</a> &middot;
+                <a href="/materials.html">Free materials</a> &middot;
+                <a href="/">Nigents</a>
+            </p>
+        </footer>
+    </main>
+
+    <script>
+        (function () {
+            // ── Nav toggle ──
+            var toggle = document.getElementById('nav-toggle');
+            var backdrop = document.getElementById('nav-backdrop');
+            if (toggle) {
+                function setOpen(open) {
+                    document.body.classList.toggle('nav-open', open);
+                    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    if (backdrop) backdrop.hidden = !open;
+                }
+                toggle.addEventListener('click', function () {
+                    setOpen(!document.body.classList.contains('nav-open'));
+                });
+                if (backdrop) backdrop.addEventListener('click', function () { setOpen(false); });
+                document.getElementById('nav-links').querySelectorAll('a').forEach(function (link) {
+                    link.addEventListener('click', function () { setOpen(false); });
+                });
+            }
+
+            // ── Tabs ──
+            var tabBtns = document.querySelectorAll('.tab-btn');
+            var panels  = document.querySelectorAll('.tab-panel');
+            tabBtns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var key = btn.dataset.tab;
+                    tabBtns.forEach(function (b) {
+                        var active = b.dataset.tab === key;
+                        b.classList.toggle('active', active);
+                        b.setAttribute('aria-selected', active ? 'true' : 'false');
+                    });
+                    panels.forEach(function (p) {
+                        p.classList.toggle('active', p.dataset.tab === key);
+                    });
+                });
+            });
+
+            // ── Copy buttons ──
+            document.querySelectorAll('[data-copy]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var code = btn.parentElement.querySelector('pre');
+                    if (!code) return;
+                    var text = code.innerText;
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(text).then(showCopied);
+                    } else {
+                        var ta = document.createElement('textarea');
+                        ta.value = text;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        try { document.execCommand('copy'); showCopied(); } catch (e) {}
+                        document.body.removeChild(ta);
+                    }
+                    function showCopied() {
+                        btn.textContent = 'Copied!';
+                        btn.classList.add('copied');
+                        setTimeout(function () {
+                            btn.textContent = 'Copy';
+                            btn.classList.remove('copied');
+                        }, 1600);
+                    }
+                });
+            });
+
+            // ── Number counter animation ──
+            var counters = document.querySelectorAll('[data-count]');
+            if (!counters.length) return;
+            var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reduced) {
+                counters.forEach(function (el) { el.textContent = el.dataset.count; });
+                return;
+            }
+            function animateCount(el) {
+                var target = parseInt(el.dataset.count, 10);
+                var duration = 1400;
+                var start = null;
+                function step(ts) {
+                    if (!start) start = ts;
+                    var p = Math.min((ts - start) / duration, 1);
+                    var eased = 1 - Math.pow(1 - p, 3);
+                    el.textContent = Math.round(target * eased);
+                    if (p < 1) requestAnimationFrame(step);
+                    else el.textContent = target;
+                }
+                requestAnimationFrame(step);
+            }
+            var io = ('IntersectionObserver' in window) ? new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (e.isIntersecting) {
+                        animateCount(e.target);
+                        io.unobserve(e.target);
+                    }
+                });
+            }, { threshold: 0.4 }) : null;
+            counters.forEach(function (el) {
+                if (io) io.observe(el); else animateCount(el);
+            });
+
+            // ── Reveal-on-scroll for domain cards ──
+            var cards = document.querySelectorAll('.domain-card, .persona-card, .step-card');
+            if ('IntersectionObserver' in window) {
+                cards.forEach(function (c) {
+                    c.style.opacity = 0;
+                    c.style.transform = 'translateY(16px)';
+                    c.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                });
+                var cio = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (e, i) {
+                        if (e.isIntersecting) {
+                            setTimeout(function () {
+                                e.target.style.opacity = 1;
+                                e.target.style.transform = 'translateY(0)';
+                            }, i * 40);
+                            cio.unobserve(e.target);
+                        }
+                    });
+                }, { threshold: 0.12 });
+                cards.forEach(function (c) { cio.observe(c); });
+            }
+        })();
+    </script>
+</body>
+</html>

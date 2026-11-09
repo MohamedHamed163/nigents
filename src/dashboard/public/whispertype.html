@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WhisperType — Speak your plan in English or Arabic. AI structures it into actionable steps. No typing required. From Nigents Crazy apps." />
+    <title>WhisperType — Crazy apps · Nigents</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #09080c;
+            --bg-secondary: #141116;
+            --bg-card: #111111;
+            --border: #2a2a35;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+            --accent: #a78bfa;
+            --accent-deep: #8b5cf6;
+            --accent-dark: #7c3aed;
+            --accent-high: #f97316;
+            --accent-med:  #fbbf24;
+            --accent-low:  #10b981;
+            --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+            --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(167, 139, 250, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(167, 139, 250, 0.035) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Nav ── */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, var(--bg-primary) 0%, transparent 100%);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .nav-logo {
+            width: 40px; height: 40px; background: var(--accent-deep); border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 20px; color: var(--bg-primary);
+        }
+        .nav-title { font-size: 22px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.5px; }
+        .nav-links { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; justify-content: flex-end; }
+        .nav-link { color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover { color: var(--text-primary); }
+        .soon-pill {
+            display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase; color: var(--bg-primary);
+            background: var(--accent-deep); padding: 3px 9px; border-radius: 999px; vertical-align: middle;
+        }
+        .nav-cta {
+            padding: 10px 20px; border: 1px solid var(--accent-deep); color: var(--accent);
+            text-decoration: none; font-size: 14px; font-weight: 600; transition: all 0.2s;
+        }
+        .nav-cta:hover { background: var(--accent-deep); color: var(--bg-primary); }
+        .nav-toggle {
+            display: none; width: 44px; height: 44px;
+            align-items: center; justify-content: center; margin-left: auto;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text-primary); cursor: pointer;
+        }
+        .nav-toggle-icon-close { display: none; font-size: 28px; }
+        body.nav-open .nav-toggle-icon-open { display: none; }
+        body.nav-open .nav-toggle-icon-close { display: block; }
+        .nav-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 998; }
+        body.nav-open .nav-backdrop { display: block; }
+        body.nav-open { overflow: hidden; }
+
+        @media (max-width: 900px) {
+            .nav-toggle { display: flex; }
+            .nav-links {
+                display: none; position: fixed; top: 72px; left: 16px; right: 16px;
+                flex-direction: column; align-items: stretch;
+                background: var(--bg-secondary); border: 1px solid var(--border); padding: 12px; z-index: 999;
+            }
+            body.nav-open .nav-links { display: flex; }
+        }
+
+        main { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 120px 32px 80px; }
+
+        /* ── Hero ── */
+        .hero-badge {
+            display: inline-block; font-family: var(--font-mono);
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--accent); border: 1px solid rgba(167, 139, 250, 0.4);
+            padding: 8px 14px; margin-bottom: 20px;
+            animation: badgePulse 3s ease-in-out infinite;
+        }
+        @keyframes badgePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.22); }
+            50% { box-shadow: 0 0 24px 2px rgba(167, 139, 250, 0.12); }
+        }
+        .hero-title {
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
+            font-weight: 800; letter-spacing: -0.04em; line-height: 1.08; margin-bottom: 16px;
+        }
+        .hero-title .shimmer {
+            background: linear-gradient(90deg, var(--text-primary) 0%, var(--text-primary) 38%, var(--accent) 50%, var(--text-primary) 62%, var(--text-primary) 100%);
+            background-size: 200% 100%;
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            animation: textShimmer 4s linear infinite;
+        }
+        @keyframes textShimmer { 0% { background-position: 100% 50%; } 100% { background-position: -100% 50%; } }
+        .hero-title em { font-style: normal; color: var(--accent); }
+        .hero-lead { font-size: 1.1rem; color: var(--text-secondary); max-width: 52ch; margin-bottom: 28px; animation: fadeUp 0.8s ease both; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        .lang-chips {
+            display: flex; gap: 8px; flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+        .lang-chip {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 8px 14px;
+            background: rgba(167, 139, 250, 0.08);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            border-radius: 999px;
+            font-size: 12px; font-weight: 600;
+            color: var(--accent);
+            font-family: var(--font-mono);
+        }
+        .lang-chip .flag { font-size: 14px; }
+
+        .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 48px; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 14px 24px; font-size: 14px; font-weight: 600;
+            text-decoration: none; border-radius: 0; transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-deep), var(--accent-dark));
+            color: #fff; border: 1px solid var(--accent-deep);
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.32);
+        }
+        .btn-primary:hover { box-shadow: 0 12px 40px rgba(139, 92, 246, 0.45); }
+        .btn-ghost { background: transparent; color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ── Stage: animated mic-to-plan ── */
+        .stage {
+            margin: 32px 0 56px; padding: 42px 28px 36px;
+            background: linear-gradient(165deg, rgba(30, 27, 75, 0.5) 0%, rgba(12, 12, 26, 0.95) 100%);
+            border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+            position: relative;
+        }
+
+        .scene {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 28px;
+            align-items: center;
+        }
+        @media (min-width: 820px) {
+            .scene { grid-template-columns: 260px 1fr; gap: 36px; }
+        }
+
+        /* Microphone orb */
+        .mic-stage {
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
+        }
+        .mic-orb {
+            width: 160px; height: 160px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 40%, var(--accent-deep) 0%, var(--accent-dark) 70%, #3b0764 100%);
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.35), inset 0 0 30px rgba(255,255,255,0.1);
+        }
+        .mic-orb::before, .mic-orb::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid rgba(167, 139, 250, 0.45);
+            animation: pulseRing 2.2s ease-out infinite;
+        }
+        .mic-orb::after { animation-delay: 1.1s; }
+        @keyframes pulseRing {
+            0%   { transform: scale(0.95); opacity: 0.8; }
+            80%  { transform: scale(1.25); opacity: 0; }
+            100% { opacity: 0; }
+        }
+        .mic-orb svg { width: 60px; height: 60px; color: #fff; position: relative; z-index: 1; }
+
+        /* Waveform */
+        .waveform {
+            display: flex; align-items: flex-end; gap: 4px;
+            height: 28px;
+        }
+        .waveform .bar {
+            width: 4px;
+            background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+            border-radius: 3px;
+            animation: wave 1.1s ease-in-out infinite;
+        }
+        .waveform .bar:nth-child(1) { height: 40%; animation-delay: 0s; }
+        .waveform .bar:nth-child(2) { height: 80%; animation-delay: 0.08s; }
+        .waveform .bar:nth-child(3) { height: 100%; animation-delay: 0.16s; }
+        .waveform .bar:nth-child(4) { height: 60%; animation-delay: 0.24s; }
+        .waveform .bar:nth-child(5) { height: 90%; animation-delay: 0.32s; }
+        .waveform .bar:nth-child(6) { height: 50%; animation-delay: 0.40s; }
+        .waveform .bar:nth-child(7) { height: 75%; animation-delay: 0.48s; }
+        .waveform .bar:nth-child(8) { height: 35%; animation-delay: 0.56s; }
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.3); }
+            50%      { transform: scaleY(1); }
+        }
+        .mic-label {
+            font-size: 11px; font-weight: 700; letter-spacing: 0.2em;
+            color: var(--accent);
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+        }
+
+        /* Transcript + steps panel */
+        .plan-panel {
+            background: rgba(12, 12, 26, 0.7);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 14px;
+            padding: 22px;
+            font-size: 13px;
+            min-height: 240px;
+        }
+        .plan-panel .transcript {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            padding: 12px 14px;
+            background: rgba(167, 139, 250, 0.05);
+            border-left: 2px solid var(--accent);
+            border-radius: 4px 8px 8px 4px;
+            margin-bottom: 16px;
+            min-height: 52px;
+            position: relative;
+        }
+        .plan-panel .transcript.typing::after {
+            content: '▋';
+            color: var(--accent);
+            margin-left: 2px;
+            animation: blink 1s steps(2) infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+        .plan-panel .transcript[dir="rtl"] { border-left: none; border-right: 2px solid var(--accent); border-radius: 8px 4px 4px 8px; text-align: right; }
+
+        .plan-panel .plan-label {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
+            color: var(--text-muted); text-transform: uppercase;
+            margin-bottom: 10px;
+            font-family: var(--font-mono);
+        }
+        .plan-step {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(167, 139, 250, 0.1);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            opacity: 0;
+            transform: translateX(-8px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .plan-step.show { opacity: 1; transform: translateX(0); }
+        .plan-step .num {
+            width: 24px; height: 24px;
+            flex-shrink: 0;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-deep), var(--accent-dark));
+            color: #fff;
+            font-size: 12px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .plan-step .title { flex: 1; font-weight: 600; color: #fff; font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .plan-step .meta {
+            font-family: var(--font-mono);
+            font-size: 10px; font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+            letter-spacing: 0.05em;
+        }
+        .plan-step .priority {
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+        }
+        .priority.high { background: rgba(249,115,22,0.15); color: var(--accent-high); }
+        .priority.med  { background: rgba(251,191,36,0.15); color: var(--accent-med); }
+        .priority.low  { background: rgba(16,185,129,0.15); color: var(--accent-low); }
+
+        .scene-label {
+            text-align: center; font-size: 12px; color: var(--text-muted);
+            margin-top: 20px; font-family: var(--font-mono);
+        }
+
+        /* ── Sections ── */
+        .section { margin-bottom: 56px; }
+        .section h2 { font-size: 1.35rem; font-weight: 700; margin-bottom: 10px; }
+        .section p.lead { color: var(--text-secondary); margin-bottom: 20px; max-width: 65ch; }
+
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+        .card {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 12px; padding: 22px; transition: all 0.25s;
+        }
+        .card:hover {
+            border-color: rgba(167, 139, 250, 0.45);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.12);
+        }
+        .card .card-emoji { font-size: 28px; display: block; margin-bottom: 12px; line-height: 1; }
+        .card h3 { font-size: 15px; margin-bottom: 8px; }
+        .card p { font-size: 14px; color: var(--text-secondary); line-height: 1.55; }
+
+        /* 4-step flow */
+        .steps-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+        }
+        .step-tile {
+            position: relative;
+            padding: 22px 22px 22px 66px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .step-tile .num {
+            position: absolute; left: 18px; top: 20px;
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--accent-deep), var(--accent-dark));
+            color: #fff;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 15px;
+            box-shadow: 0 6px 16px rgba(139, 92, 246, 0.25);
+        }
+        .step-tile h3 {
+            font-size: 14px; font-weight: 700; margin-bottom: 4px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .step-tile .ar { color: var(--accent); font-weight: 500; }
+        .step-tile p { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+
+        .download-panel {
+            background: rgba(167, 139, 250, 0.08);
+            border: 1px solid rgba(167, 139, 250, 0.38);
+            border-radius: 12px; padding: 24px;
+        }
+        .download-panel ul { margin: 12px 0 0 1.2rem; color: var(--text-secondary); font-size: 14px; }
+        .mono { font-family: var(--font-mono); font-size: 0.9em; color: var(--accent); }
+
+        .notice {
+            background: rgba(249, 115, 22, 0.08);
+            border: 1px solid rgba(249, 115, 22, 0.32);
+            border-radius: 10px;
+            padding: 14px 18px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        .notice strong { color: var(--accent-high); }
+
+        footer { border-top: 1px solid var(--border); padding-top: 24px; font-size: 13px; color: var(--text-muted); }
+        footer a { color: var(--accent); text-decoration: none; }
+
+        @media (max-width: 640px) {
+            .nav { padding: 16px 20px; }
+            main { padding-top: 100px; }
+            .mic-orb { width: 130px; height: 130px; }
+            .mic-orb svg { width: 48px; height: 48px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-title .shimmer { animation: none; color: var(--text-primary); -webkit-text-fill-color: var(--text-primary); }
+            .hero-badge, .mic-orb::before, .mic-orb::after, .waveform .bar { animation: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">
+            <div class="nav-logo">N</div>
+            <span class="nav-title">Nigents</span>
+        </a>
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+            <span class="nav-toggle-icon-open" aria-hidden="true">&#9776;</span>
+            <span class="nav-toggle-icon-close" aria-hidden="true">&times;</span>
+        </button>
+        <div class="nav-links" id="nav-links" role="navigation" aria-label="Main">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/how-it-works.html" class="nav-link">How it works</a>
+            <a href="/skills.html" class="nav-link">AI Skills</a>
+            <a href="/materials.html" class="nav-link">Free Materials</a>
+            <a href="/crazy-apps.html" class="nav-link">Crazy apps</a>
+            <a href="/opencode-kits.html" class="nav-link">OpenCode kits <span class="soon-pill">Soon</span></a>
+            <a href="/apps/" class="nav-link">Apps</a>
+            <a href="/login.html" class="nav-cta">Login &rarr;</a>
+        </div>
+    </nav>
+    <div class="nav-backdrop" id="nav-backdrop" aria-hidden="true" hidden></div>
+
+    <main>
+        <header>
+            <p class="hero-badge">macOS &middot; Voice-first planning</p>
+            <h1 class="hero-title"><span class="shimmer">WhisperType</span> &mdash; speak your plan, see the <em>steps</em></h1>
+            <p class="hero-lead">
+                Press the orb. Talk in English or Arabic. Whisper transcribes, GPT structures &mdash; you get a prioritised plan with time estimates, in the language you spoke.
+                Part of our <strong style="color:var(--accent)">Crazy apps</strong> line &mdash; voice-to-action, not another todo app.
+            </p>
+            <div class="lang-chips">
+                <span class="lang-chip"><span class="flag">&#127482;&#127480;</span>English</span>
+                <span class="lang-chip"><span class="flag">&#127466;&#127468;</span>&#1575;&#1604;&#1593;&#1585;&#1576;&#1610;&#1577;</span>
+                <span class="lang-chip"><span class="flag">&#128165;</span>Auto-detect</span>
+            </div>
+            <div class="cta-row">
+                <a class="btn btn-primary" href="/downloads/WhisperType-1.0.0.dmg" download>Download DMG</a>
+                <a class="btn btn-ghost" href="/crazy-apps.html">All crazy apps</a>
+                <a class="btn btn-ghost" href="#how">How it works</a>
+            </div>
+        </header>
+
+        <!-- Animated mic-to-plan stage -->
+        <div class="stage" aria-hidden="true">
+            <div class="scene">
+                <div class="mic-stage">
+                    <div class="mic-orb">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                            <line x1="12" y1="19" x2="12" y2="23"/>
+                            <line x1="8" y1="23" x2="16" y2="23"/>
+                        </svg>
+                    </div>
+                    <div class="waveform">
+                        <span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span>
+                        <span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span>
+                    </div>
+                    <div class="mic-label" id="micLabel">Listening&hellip;</div>
+                </div>
+
+                <div class="plan-panel">
+                    <div class="plan-label">You said</div>
+                    <div class="transcript" id="transcript"></div>
+                    <div class="plan-label">Structured plan</div>
+                    <div id="planList"></div>
+                </div>
+            </div>
+            <p class="scene-label">Speak any language &middot; the plan comes back in the same language &middot; all processing through your own OpenAI key</p>
+        </div>
+
+        <!-- 4-step flow -->
+        <section class="section" id="how">
+            <h2>How it works</h2>
+            <p class="lead">Four steps from voice to structured plan. Each step takes a second, the whole loop is under five.</p>
+            <div class="steps-flow">
+                <div class="step-tile">
+                    <div class="num">1</div>
+                    <h3>Speak <span class="ar">&middot; &#1578;&#1581;&#1583;&#1579;</span></h3>
+                    <p>Hit the orb and talk in English or Arabic. Whisper auto-detects your language.</p>
+                </div>
+                <div class="step-tile">
+                    <div class="num">2</div>
+                    <h3>Transcribe <span class="ar">&middot; &#1578;&#1601;&#1585;&#1610;&#1594;</span></h3>
+                    <p>OpenAI Whisper converts voice to accurate text in seconds, handling natural speech in both languages.</p>
+                </div>
+                <div class="step-tile">
+                    <div class="num">3</div>
+                    <h3>Structure <span class="ar">&middot; &#1578;&#1606;&#1592;&#1610;&#1605;</span></h3>
+                    <p>GPT-4o-mini breaks it into steps with titles, descriptions, minutes, and priority &mdash; in your language.</p>
+                </div>
+                <div class="step-tile">
+                    <div class="num">4</div>
+                    <h3>Act <span class="ar">&middot; &#1606;&#1601;&#1584;</span></h3>
+                    <p>See a prioritised, time-estimated plan. Every whisper is saved &mdash; browse history anytime.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section class="section">
+            <h2>What you get</h2>
+            <p class="lead">A focused voice-planning app, not a bloated productivity suite. The essentials, done well.</p>
+            <div class="grid-3">
+                <div class="card">
+                    <span class="card-emoji">&#127908;</span>
+                    <h3>Bilingual voice</h3>
+                    <p>Speak in English or Arabic &mdash; Whisper auto-detects. No settings to flip, no language button to tap. Just talk naturally.</p>
+                </div>
+                <div class="card">
+                    <span class="card-emoji">&#129302;</span>
+                    <h3>AI-powered</h3>
+                    <p>OpenAI Whisper for transcription, GPT-4o-mini for structuring. Your API key, your data, your control.</p>
+                </div>
+                <div class="card">
+                    <span class="card-emoji">&#128218;</span>
+                    <h3>Structured steps</h3>
+                    <p>Each task comes back with title, description, estimated minutes, and priority level. Not just a transcript &mdash; a plan.</p>
+                </div>
+                <div class="card">
+                    <span class="card-emoji">&#9200;</span>
+                    <h3>Time-aware</h3>
+                    <p>Every step has a minute estimate so you can see your day's shape before you start it.</p>
+                </div>
+                <div class="card">
+                    <span class="card-emoji">&#128680;</span>
+                    <h3>Priority tags</h3>
+                    <p>High / medium / low on every step, colour-coded so the eye goes to what matters first.</p>
+                </div>
+                <div class="card">
+                    <span class="card-emoji">&#128196;</span>
+                    <h3>History saved</h3>
+                    <p>Every whisper is archived &mdash; browse past plans in the sidebar with totals, step counts, and dates.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Install -->
+        <section class="section" id="download">
+            <h2>Install</h2>
+            <div class="notice">
+                <strong>Requires an OpenAI API key.</strong> Create one at <span class="mono">platform.openai.com/api-keys</span> &mdash;
+                WhisperType calls <span class="mono">whisper-1</span> for transcription and <span class="mono">gpt-4o-mini</span> for structuring.
+                Typical cost per whisper: under 1 US cent.
+            </div>
+            <div class="download-panel">
+                <p class="lead" style="margin-bottom:0">Open the disk image, drag <span class="mono">WhisperType.app</span> into Applications, then eject the volume.</p>
+                <ul>
+                    <li>If Gatekeeper blocks: <strong>System Settings &rarr; Privacy &amp; Security</strong> &rarr; Open anyway.</li>
+                    <li>If needed: <span class="mono">xattr -cr ~/Downloads/WhisperType-1.0.0.dmg</span> then open again.</li>
+                    <li>On first launch, paste your OpenAI API key &mdash; stored locally in the macOS Keychain.</li>
+                    <li>Grant microphone permission when prompted.</li>
+                </ul>
+                <div class="cta-row" style="margin-top:20px;margin-bottom:0">
+                    <a class="btn btn-primary" href="/downloads/WhisperType-1.0.0.dmg" download>Download WhisperType-1.0.0.dmg</a>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p><strong>WhisperType</strong> &middot; <a href="/crazy-apps.html">Crazy apps</a> &middot; <a href="/materials.html">Free materials</a> &middot; <a href="/">Nigents</a></p>
+        </footer>
+    </main>
+
+    <script>
+        (function () {
+            // Nav toggle
+            var toggle = document.getElementById('nav-toggle');
+            var backdrop = document.getElementById('nav-backdrop');
+            if (toggle) {
+                function setOpen(open) {
+                    document.body.classList.toggle('nav-open', open);
+                    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    if (backdrop) backdrop.hidden = !open;
+                }
+                toggle.addEventListener('click', function () {
+                    setOpen(!document.body.classList.contains('nav-open'));
+                });
+                if (backdrop) backdrop.addEventListener('click', function () { setOpen(false); });
+                document.getElementById('nav-links').querySelectorAll('a').forEach(function (link) {
+                    link.addEventListener('click', function () { setOpen(false); });
+                });
+            }
+
+            // Animated stage — alternating EN + AR demo
+            var samples = [
+                {
+                    lang: 'en',
+                    dir:  'ltr',
+                    transcript: "Tomorrow I need to finish the report, call the client, buy groceries, and go to the gym.",
+                    steps: [
+                        { n:1, title:"Finish the report",  meta:"90 min", p:"high" },
+                        { n:2, title:"Call the client",    meta:"30 min", p:"high" },
+                        { n:3, title:"Buy groceries",      meta:"45 min", p:"med" },
+                        { n:4, title:"Go to the gym",      meta:"60 min", p:"med" }
+                    ],
+                    label: "Listening… EN"
+                },
+                {
+                    lang: 'ar',
+                    dir:  'rtl',
+                    transcript: "\u0628\u0643\u0631\u0629 \u0644\u0627\u0632\u0645 \u0623\u062e\u0644\u0635 \u0627\u0644\u062a\u0642\u0631\u064a\u0631 \u0648\u0623\u062a\u0635\u0644 \u0628\u0627\u0644\u0639\u0645\u064a\u0644 \u0648\u0623\u0634\u062a\u0631\u064a \u0623\u0643\u0644 \u0648\u0623\u0631\u0648\u062d \u0627\u0644\u062c\u064a\u0645.",
+                    steps: [
+                        { n:1, title:"\u0625\u0646\u0647\u0627\u0621 \u0627\u0644\u062a\u0642\u0631\u064a\u0631",         meta:"90 \u062f",  p:"high" },
+                        { n:2, title:"\u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628\u0627\u0644\u0639\u0645\u064a\u0644", meta:"30 \u062f", p:"high" },
+                        { n:3, title:"\u0634\u0631\u0627\u0621 \u0627\u0644\u0637\u0639\u0627\u0645",               meta:"45 \u062f",  p:"med" },
+                        { n:4, title:"\u0627\u0644\u0630\u0647\u0627\u0628 \u0625\u0644\u0649 \u0627\u0644\u062c\u064a\u0645", meta:"60 \u062f", p:"med" }
+                    ],
+                    label: "Listening… AR"
+                }
+            ];
+
+            var transcriptEl = document.getElementById('transcript');
+            var planEl       = document.getElementById('planList');
+            var micLabelEl   = document.getElementById('micLabel');
+            if (!transcriptEl || !planEl) return;
+
+            function typeText(el, text, dir, speed, cb) {
+                el.setAttribute('dir', dir);
+                el.textContent = '';
+                el.classList.add('typing');
+                var i = 0;
+                var t = setInterval(function () {
+                    if (i >= text.length) {
+                        clearInterval(t);
+                        el.classList.remove('typing');
+                        cb && cb();
+                        return;
+                    }
+                    el.textContent += text[i++];
+                }, speed);
+            }
+
+            function renderSteps(steps, dir, cb) {
+                planEl.innerHTML = '';
+                steps.forEach(function (s) {
+                    var row = document.createElement('div');
+                    row.className = 'plan-step';
+                    row.setAttribute('dir', dir);
+                    row.innerHTML =
+                        '<div class="num">' + s.n + '</div>' +
+                        '<div class="title">' + s.title + '</div>' +
+                        '<span class="meta">' + s.meta + '</span>' +
+                        '<span class="priority ' + s.p + '">' + s.p + '</span>';
+                    planEl.appendChild(row);
+                });
+                var rows = planEl.querySelectorAll('.plan-step');
+                rows.forEach(function (r, i) {
+                    setTimeout(function () { r.classList.add('show'); }, 280 + i * 220);
+                });
+                setTimeout(cb, 280 + rows.length * 220 + 3500);
+            }
+
+            var idx = 0;
+            function cycle() {
+                var s = samples[idx % samples.length];
+                idx++;
+                if (micLabelEl) micLabelEl.textContent = s.label;
+                typeText(transcriptEl, s.transcript, s.dir, 32, function () {
+                    setTimeout(function () {
+                        renderSteps(s.steps, s.dir, cycle);
+                    }, 500);
+                });
+            }
+
+            if (!window.matchMedia || !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                cycle();
+            } else {
+                var s = samples[0];
+                transcriptEl.textContent = s.transcript;
+                transcriptEl.setAttribute('dir', s.dir);
+                renderSteps(s.steps, s.dir, function () {});
+                setTimeout(function () {
+                    var rows = planEl.querySelectorAll('.plan-step');
+                    rows.forEach(function (r) { r.classList.add('show'); });
+                }, 100);
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DontForget — Notch Reminders for Your Favorite Apps</title>
+    <meta name="description" content="Track up to 5 apps on macOS. When one sits idle past your threshold, a frosted-glass reminder drops from the notch with the app icon and one-tap open/snooze." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --border: #2a2a35;
+            --bg-secondary: #141116;
+            --df-blue: #3b82f6;
+            --df-purple: #8b5cf6;
+            --df-cyan: #22d3ee;
+            --df-green: #34d399;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-sans); background: #0a0a0f; color: #e0e0e0; overflow-x: hidden; }
+
+        /* ── Site nav (Nigents) ───────────────────────────── */
+        .site-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, #09080c 0%, transparent 100%);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .nav-logo { width: 40px; height: 40px; background: #ff570a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: #09080c; }
+        .nav-title { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+        .nav-links { display: flex; align-items: center; gap: 24px; }
+        .nav-link { color: #a0a0a0; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover { color: #fff; }
+        .nav-link.active { color: #ff570a; }
+        .nav-cta { padding: 10px 20px; border: 1px solid #ff570a; color: #ff570a; text-decoration: none; font-size: 14px; font-weight: 600; transition: all 0.2s; border-radius: 6px; }
+        .nav-cta:hover { background: #ff570a; color: #09080c; }
+        .nav-toggle { display: none; width: 44px; height: 44px; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 10px; color: #fff; cursor: pointer; }
+        .nav-toggle-icon-close { display: none; font-size: 28px; }
+        body.nav-open .nav-toggle-icon-open { display: none; }
+        body.nav-open .nav-toggle-icon-close { display: block; }
+        .nav-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 998; }
+        body.nav-open .nav-backdrop { display: block; }
+        body.nav-open { overflow: hidden; }
+        @media (max-width: 900px) {
+            .site-nav { padding: 16px 20px; }
+            .nav-toggle { display: flex; }
+            .nav-links { display: none; position: fixed; top: 72px; left: 16px; right: 16px; flex-direction: column; align-items: stretch; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 12px; z-index: 999; }
+            body.nav-open .nav-links { display: flex; }
+            .nav-link, .nav-cta { padding: 12px; text-align: center; }
+        }
+
+        /* ── Background grid + particles ──────────────────── */
+        .bg-grid {
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 50px 50px; pointer-events: none; z-index: 0;
+        }
+        .particles {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute; width: 4px; height: 4px; border-radius: 50%;
+            background: var(--df-blue); opacity: 0;
+            animation: floatUp 12s linear infinite;
+            box-shadow: 0 0 12px rgba(59,130,246,0.6);
+        }
+        @keyframes floatUp {
+            0%   { transform: translateY(100vh) scale(0.4); opacity: 0; }
+            10%  { opacity: 0.7; }
+            90%  { opacity: 0.7; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        /* ── Hero ────────────────────────────────────────── */
+        .hero {
+            min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 120px 40px 60px; text-align: center; position: relative; z-index: 1;
+            background: radial-gradient(ellipse at 50% 40%, rgba(59,130,246,0.08) 0%, transparent 60%);
+            overflow: hidden;
+        }
+        .hero-content { position: relative; z-index: 2; max-width: 720px; }
+
+        /* Drifting reminder cards behind hero */
+        .hero-ghosts { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+        .hero-ghost {
+            position: absolute;
+            padding: 10px 14px; border-radius: 14px;
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(255,255,255,0.08);
+            font-size: 11px; color: rgba(255,255,255,0.45);
+            display: flex; gap: 8px; align-items: center;
+            white-space: nowrap;
+            animation: ghostDrift 22s linear infinite;
+            opacity: 0;
+        }
+        .hero-ghost::before {
+            content:''; width: 16px; height: 16px; border-radius: 4px;
+            background: linear-gradient(135deg, var(--df-blue), var(--df-purple));
+            flex-shrink: 0;
+        }
+        .hero-ghost:nth-child(1) { top: 12%; left: -260px; animation-delay: 0s;  }
+        .hero-ghost:nth-child(2) { top: 32%; left: -260px; animation-delay: -6s; }
+        .hero-ghost:nth-child(3) { top: 58%; left: -260px; animation-delay: -11s;}
+        .hero-ghost:nth-child(4) { top: 78%; left: -260px; animation-delay: -16s;}
+        @keyframes ghostDrift {
+            0%   { transform: translateX(0);        opacity: 0; }
+            10%  { opacity: 0.8; }
+            90%  { opacity: 0.8; }
+            100% { transform: translateX(calc(100vw + 260px)); opacity: 0; }
+        }
+
+        .hero-icon-wrap {
+            width: 110px; height: 110px; margin: 0 auto 28px; position: relative;
+            animation: iconFloat 4s ease-in-out infinite;
+        }
+        @keyframes iconFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        .hero-icon-wrap::before {
+            content: ''; position: absolute; inset: -20px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(59,130,246,0.18), transparent 70%);
+            animation: ringPulse 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes ringPulse { 0%,100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.2); opacity: 1; } }
+        .hero-icon-inner {
+            width: 110px; height: 110px; border-radius: 26px;
+            background: linear-gradient(135deg, var(--df-blue), var(--df-purple));
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 20px 60px rgba(59,130,246,0.35);
+            position: relative; z-index: 1;
+        }
+        .hero-icon-inner svg { width: 52px; height: 52px; }
+        .hero-icon-inner::after {
+            /* Bell jiggle ring */
+            content:''; position: absolute; width: 22px; height: 22px; border-radius: 50%;
+            background: #ef4444; top: -6px; right: -6px;
+            box-shadow: 0 0 0 3px #0a0a0f, 0 4px 12px rgba(239,68,68,0.45);
+            animation: dotPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes dotPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+
+        .hero h1 {
+            font-size: clamp(40px, 7vw, 64px); font-weight: 900; letter-spacing: -2px;
+            background: linear-gradient(135deg, var(--df-blue), var(--df-purple), var(--df-cyan));
+            background-size: 200% 200%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: gradShift 3s ease-in-out infinite;
+            margin-bottom: 6px;
+        }
+        @keyframes gradShift { 0%,100% { background-position:0% 50%; } 50% { background-position:100% 50%; } }
+        .hero .tagline { font-size: clamp(16px, 2.4vw, 20px); color: #93c5fd; margin-bottom: 10px; font-weight: 500; }
+        .hero .subtitle { font-size: 15px; color: #556; max-width: 520px; margin: 0 auto 28px; line-height: 1.65; }
+
+        .badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+        .badge { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid; animation: bPop 0.5s ease-out both; }
+        .badge:nth-child(1) { animation-delay:0.1s; } .badge:nth-child(2) { animation-delay:0.2s; }
+        .badge:nth-child(3) { animation-delay:0.3s; } .badge:nth-child(4) { animation-delay:0.4s; }
+        @keyframes bPop { from { opacity:0; transform:scale(0.85) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .badge-blue   { background: rgba(59,130,246,0.1);  color: #93c5fd; border-color: rgba(59,130,246,0.3); }
+        .badge-purple { background: rgba(139,92,246,0.1);  color: #c4b5fd; border-color: rgba(139,92,246,0.3); }
+        .badge-green  { background: rgba(52,211,153,0.1);  color: #6ee7b7; border-color: rgba(52,211,153,0.3); }
+        .badge-cyan   { background: rgba(34,211,238,0.1);  color: #67e8f9; border-color: rgba(34,211,238,0.3); }
+
+        .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 15px 34px; border-radius: 13px;
+            font-weight: 700; font-size: 16px; cursor: pointer; text-decoration: none;
+            border: none; transition: all .3s; font-family: inherit;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--df-blue), var(--df-purple));
+            color: #fff; box-shadow: 0 8px 30px rgba(59,130,246,0.3);
+            position: relative; overflow: hidden;
+        }
+        .btn-primary::before {
+            content:''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transform: translateX(-100%);
+            transition: transform .6s;
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(59,130,246,0.5); }
+        .btn-primary:hover::before { transform: translateX(100%); }
+        .btn-ghost { background: rgba(255,255,255,0.06); color: #ccc; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-ghost:hover { background: rgba(255,255,255,0.1); transform: translateY(-3px); }
+
+        /* ── Section heads ───────────────────────────────── */
+        .section-title { text-align: center; font-size: clamp(24px, 4vw, 34px); font-weight: 800; color: #fff; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .section-sub { text-align: center; font-size: 15px; color: #8899bb; margin-bottom: 48px; }
+        .section-kicker {
+            display: inline-block; padding: 4px 12px; border-radius: 12px;
+            font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+            margin-bottom: 12px; border: 1px solid;
+            color: #93c5fd; border-color: rgba(59,130,246,0.25); background: rgba(59,130,246,0.08);
+        }
+        .section-head { text-align: center; margin-bottom: 48px; position: relative; z-index: 1; }
+
+        /* ── Demo (glass notification + tracked apps) ────── */
+        .demo-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .screen-wrap {
+            max-width: 760px; margin: 0 auto; border-radius: 18px; overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 60px rgba(59,130,246,0.06);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .screen-bar { background: #1c1c22; padding: 10px 16px; display: flex; align-items: center; gap: 8px; }
+        .sdot { width: 11px; height: 11px; border-radius: 50%; }
+        .sdot.r { background: #ff5f56; } .sdot.y { background: #ffbd2e; } .sdot.g { background: #27c93f; }
+        .screen-title { margin-left: 10px; font-size: 11px; color: #666; flex: 1; }
+        .screen-live {
+            padding: 3px 10px; border-radius: 10px; font-size: 10px; font-weight: 700;
+            background: rgba(52,211,153,0.15); color: #34d399;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .screen-live::before {
+            content:''; width: 6px; height: 6px; border-radius: 50%; background: #34d399;
+            animation: dotPulse 1.2s ease-in-out infinite;
+        }
+
+        .demo-canvas {
+            background: linear-gradient(135deg, #0d0d14, #0a0a12);
+            position: relative; padding: 0; min-height: 380px;
+        }
+        .notch-area {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 220px; height: 30px; background: #000; border-radius: 0 0 16px 16px;
+            z-index: 3;
+        }
+        .notch-area::after {
+            content:''; position: absolute; inset: 6px 20px 0 20px;
+            background: radial-gradient(ellipse at 50% 0, rgba(59,130,246,0.35), transparent 70%);
+        }
+
+        .glass-card {
+            position: absolute; top: 42px; left: 50%; transform: translateX(-50%);
+            width: 340px; padding: 12px 14px; border-radius: 20px;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(255,255,255,0.18);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 24px rgba(59,130,246,0.12);
+            display: flex; align-items: center; gap: 12px;
+            transition: opacity .4s ease, transform .4s cubic-bezier(.2,.8,.2,1);
+            animation: glassGlow 3s ease-in-out infinite;
+            z-index: 2;
+        }
+        @keyframes glassGlow {
+            0%,100% { box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 20px rgba(59,130,246,0.1); }
+            50%     { box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 34px rgba(139,92,246,0.25); }
+        }
+        .glass-shimmer { position: absolute; inset: 0; border-radius: 20px; overflow: hidden; pointer-events: none; }
+        .glass-shimmer::after {
+            content:''; position: absolute; top: 0; bottom: 0; width: 60%; left: -60%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3.4s ease-in-out infinite;
+        }
+        @keyframes shimmer { 0% { left: -60%; } 100% { left: 100%; } }
+        .glass-icon {
+            width: 38px; height: 38px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--df-blue), var(--df-purple));
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+        }
+        .glass-icon svg { width: 20px; height: 20px; }
+        .glass-text { flex: 1; min-width: 0; }
+        .glass-text .name { font-size: 13px; font-weight: 700; color: #fff; }
+        .glass-text .msg { font-size: 11px; color: rgba(255,255,255,0.65); }
+        .glass-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .glass-btn {
+            width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
+            background: rgba(255,255,255,0.1); border: 0.5px solid rgba(255,255,255,0.22);
+            display: flex; align-items: center; justify-content: center;
+            transition: background .2s;
+        }
+        .glass-btn:hover { background: rgba(255,255,255,0.2); }
+        .glass-btn svg { width: 13px; height: 13px; fill: none; stroke: rgba(255,255,255,0.85); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+        /* Tracked apps grid below notch */
+        .tracked-apps {
+            position: absolute; bottom: 20px; left: 20px; right: 20px;
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+        }
+        .tracked-app {
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px; padding: 10px 8px;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            transition: all .25s;
+            position: relative;
+            overflow: hidden;
+        }
+        .tracked-app.pinged {
+            background: rgba(59,130,246,0.1);
+            border-color: rgba(59,130,246,0.35);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(59,130,246,0.18);
+        }
+        .tracked-app-icon {
+            width: 28px; height: 28px; border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2));
+            color: #93c5fd;
+        }
+        .tracked-app-icon svg { width: 14px; height: 14px; }
+        .tracked-app-name { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.85); }
+        .tracked-app-bar { width: 100%; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; position: relative; }
+        .tracked-app-fill {
+            height: 100%; border-radius: 2px;
+            background: linear-gradient(90deg, var(--df-blue), var(--df-purple));
+            width: 0%; transition: width .2s linear;
+        }
+        .tracked-app.pinged .tracked-app-fill { background: linear-gradient(90deg, #ef4444, #f97316); }
+        @media (max-width: 640px) {
+            .tracked-apps { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+            .tracked-app { padding: 6px 2px; }
+            .tracked-app-icon { width: 22px; height: 22px; }
+            .tracked-app-name { font-size: 8px; }
+            .glass-card { width: calc(100% - 32px); padding: 10px 12px; }
+            .glass-text .name { font-size: 12px; }
+            .glass-text .msg { font-size: 10px; }
+        }
+
+        /* ── Features ───────────────────────────────────── */
+        .features-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; max-width: 960px; margin: 0 auto; }
+        .feature-card {
+            background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px; padding: 24px; transition: all 0.3s;
+            position: relative; overflow: hidden;
+        }
+        .feature-card::before {
+            content:''; position: absolute; top:0; left:0; right:0; height:2px;
+            background: linear-gradient(90deg, transparent, var(--df-blue), var(--df-purple), transparent);
+            opacity: 0; transition: opacity .3s;
+        }
+        .feature-card:hover { transform: translateY(-4px); border-color: rgba(59,130,246,0.28); }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-card .fc-ic {
+            width: 44px; height: 44px; border-radius: 11px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15));
+            border: 1px solid rgba(59,130,246,0.25);
+            color: #93c5fd;
+            margin-bottom: 14px;
+        }
+        .feature-card .fc-ic svg { width: 22px; height: 22px; }
+        .feature-card h3 { font-size: 15px; color: #fff; margin-bottom: 6px; font-weight: 700; }
+        .feature-card p { font-size: 13px; color: #8899bb; line-height: 1.55; }
+
+        /* ── How it works — timeline ────────────────────── */
+        .how-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .how-timeline {
+            max-width: 960px; margin: 0 auto; position: relative;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+        }
+        .how-timeline::before {
+            content:''; position: absolute; top: 24px; left: 12%; right: 12%;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(59,130,246,0.4), rgba(139,92,246,0.4), rgba(34,211,238,0.4));
+            z-index: 0;
+        }
+        .how-step {
+            position: relative; z-index: 1; text-align: center;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px; padding: 22px 18px 22px;
+            transition: transform .3s, border-color .3s;
+        }
+        .how-step:hover { transform: translateY(-3px); border-color: rgba(59,130,246,0.28); }
+        .how-step-dot {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--df-blue), var(--df-purple));
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 18px; font-weight: 900;
+            box-shadow: 0 6px 20px rgba(59,130,246,0.35);
+            margin: -48px auto 14px; position: relative;
+        }
+        .how-step-dot::before {
+            content:''; position: absolute; inset: -6px; border-radius: 50%;
+            border: 2px solid rgba(59,130,246,0.45);
+            animation: ringPulse 2.6s ease-in-out infinite;
+        }
+        .how-step h3 { font-size: 15px; color: #fff; margin-bottom: 6px; font-weight: 700; }
+        .how-step p { font-size: 13px; color: #8899bb; line-height: 1.55; }
+        @media (max-width: 720px) {
+            .how-timeline { grid-template-columns: 1fr; }
+            .how-timeline::before { display: none; }
+        }
+
+        /* ── Stats strip ────────────────────────────────── */
+        .stats-section {
+            padding: 48px 40px; position: relative; z-index: 1;
+            background: rgba(255,255,255,0.015);
+            border-top: 1px solid rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .stats-grid {
+            max-width: 960px; margin: 0 auto;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;
+            text-align: center;
+        }
+        .stat-val {
+            font-size: clamp(26px, 4vw, 36px); font-weight: 900;
+            background: linear-gradient(135deg, var(--df-blue), var(--df-purple));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .stat-lbl { font-size: 11px; color: #8899bb; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 700; }
+        @media (max-width: 640px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+        }
+
+        /* ── Install ────────────────────────────────────── */
+        .install-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .install-card {
+            max-width: 720px; margin: 0 auto;
+            background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px; padding: 28px;
+        }
+        .install-card h3 { font-size: 16px; margin-bottom: 14px; color: #fff; font-weight: 700; }
+        .code-block {
+            background: #080810; border-radius: 10px; padding: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; line-height: 2;
+            margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.04); overflow-x: auto;
+        }
+        .cm { color: #556; } .cp { color: #93c5fd; } .cc { color: #e0e0e0; } .ch { color: #fbbf24; }
+
+        /* ── Download ────────────────────────────────────── */
+        .download-section {
+            background: linear-gradient(180deg, #080810, #0a0a1a, #080810);
+            padding: 80px 40px; text-align: center; position: relative; z-index: 1;
+        }
+
+        footer {
+            padding: 24px; text-align: center; color: #445; font-size: 12px;
+            border-top: 1px solid rgba(255,255,255,0.03);
+        }
+        footer a { color: #93c5fd; text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+
+        @media (max-width: 640px) {
+            .hero { padding: 110px 20px 50px; }
+            .demo-section, .features-section, .how-section, .install-section, .download-section { padding: 60px 20px; }
+            .install-card { padding: 20px; }
+            .screen-wrap { max-width: 100%; }
+            .hero-ghost { display: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .hero-icon-wrap, .hero-icon-wrap::before, .hero-icon-inner::after,
+            .particle, .hero-ghost, .glass-card, .glass-shimmer::after,
+            .screen-live::before, .how-step-dot::before, .btn-primary::before {
+                animation: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Site nav -->
+<nav class="site-nav">
+    <a href="/" class="nav-brand">
+        <div class="nav-logo">N</div>
+        <span class="nav-title">Nigents</span>
+    </a>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">
+        <span class="nav-toggle-icon-open" aria-hidden="true">☰</span>
+        <span class="nav-toggle-icon-close" aria-hidden="true">×</span>
+    </button>
+    <div class="nav-links" id="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/how-it-works.html" class="nav-link">How it works</a>
+            <a href="/skills.html" class="nav-link">AI Skills</a>
+        <a href="/materials.html" class="nav-link">Free Materials</a>
+        <a href="/crazy-apps.html" class="nav-link active">Crazy apps</a>
+        <a href="/opencode-kits.html" class="nav-link">OpenCode kits</a>
+        <a href="/apps/" class="nav-link">Apps</a>
+        <a href="/login.html" class="nav-cta">Login →</a>
+    </div>
+</nav>
+<div class="nav-backdrop" id="nav-backdrop" aria-hidden="true" hidden></div>
+
+<div class="bg-grid"></div>
+<div class="particles" id="particles" aria-hidden="true"></div>
+
+<!-- Hero -->
+<div class="hero">
+    <div class="hero-ghosts" aria-hidden="true">
+        <div class="hero-ghost">Xcode is waiting for you</div>
+        <div class="hero-ghost">Figma misses you</div>
+        <div class="hero-ghost">Slack wants your attention</div>
+        <div class="hero-ghost">Notion has been idle</div>
+    </div>
+    <div class="hero-content">
+        <div class="hero-icon-wrap">
+            <div class="hero-icon-inner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+            </div>
+        </div>
+        <h1>DontForget</h1>
+        <p class="tagline">Notch Reminders for Your Favorite Apps</p>
+        <p class="subtitle">Track up to 5 apps. When one sits idle past your threshold, a frosted-glass reminder drops from the notch with the app icon, a timer, and one-tap open.</p>
+        <div class="badges">
+            <span class="badge badge-blue">5 App Slots</span>
+            <span class="badge badge-purple">Glass UI</span>
+            <span class="badge badge-green">Custom Timer</span>
+            <span class="badge badge-cyan">100% Native Swift</span>
+        </div>
+        <div class="cta-row">
+            <a href="/downloads/DontForget-1.0.0.dmg" download class="btn btn-primary">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download DontForget.dmg
+            </a>
+            <a href="#demo" class="btn btn-ghost">See Demo</a>
+        </div>
+    </div>
+</div>
+
+<!-- Live demo -->
+<div class="demo-section" id="demo">
+    <div class="section-head">
+        <span class="section-kicker">Live Demo</span>
+        <h2 class="section-title">Glass Notification</h2>
+        <p class="section-sub">A frosted glass card drops from the notch every time an app crosses your idle threshold.</p>
+    </div>
+    <div class="screen-wrap">
+        <div class="screen-bar">
+            <div class="sdot r"></div><div class="sdot y"></div><div class="sdot g"></div>
+            <div class="screen-title">DontForget — Glass Reminder Engine</div>
+            <span class="screen-live">MONITORING</span>
+        </div>
+        <div class="demo-canvas">
+            <div class="notch-area" aria-hidden="true"></div>
+            <div class="glass-card" id="glassCard">
+                <div class="glass-shimmer"></div>
+                <div class="glass-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                </div>
+                <div class="glass-text">
+                    <div class="name" id="demoAppName">Xcode</div>
+                    <div class="msg" id="demoMsg">is waiting for you!</div>
+                </div>
+                <div class="glass-actions">
+                    <button class="glass-btn" aria-label="Open app">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </button>
+                    <button class="glass-btn" aria-label="Snooze">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tracked-apps" aria-hidden="true">
+                <div class="tracked-app" data-app="0">
+                    <div class="tracked-app-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18 22 12 16 6"/><path d="M8 6 2 12 8 18"/></svg></div>
+                    <div class="tracked-app-name">Xcode</div>
+                    <div class="tracked-app-bar"><div class="tracked-app-fill"></div></div>
+                </div>
+                <div class="tracked-app" data-app="1">
+                    <div class="tracked-app-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><circle cx="5" cy="12" r="3"/><circle cx="19" cy="12" r="3"/></svg></div>
+                    <div class="tracked-app-name">Figma</div>
+                    <div class="tracked-app-bar"><div class="tracked-app-fill"></div></div>
+                </div>
+                <div class="tracked-app" data-app="2">
+                    <div class="tracked-app-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                    <div class="tracked-app-name">Slack</div>
+                    <div class="tracked-app-bar"><div class="tracked-app-fill"></div></div>
+                </div>
+                <div class="tracked-app" data-app="3">
+                    <div class="tracked-app-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg></div>
+                    <div class="tracked-app-name">Notion</div>
+                    <div class="tracked-app-bar"><div class="tracked-app-fill"></div></div>
+                </div>
+                <div class="tracked-app" data-app="4">
+                    <div class="tracked-app-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14c2 1 6 1 8-1"/><path d="M8 11c2 1 6 1 8-1"/><path d="M8 8c2 1 6 1 8-1"/></svg></div>
+                    <div class="tracked-app-name">Spotify</div>
+                    <div class="tracked-app-bar"><div class="tracked-app-fill"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats strip -->
+<div class="stats-section" aria-hidden="true">
+    <div class="stats-grid">
+        <div><div class="stat-val" data-count="5">5</div><div class="stat-lbl">App Slots</div></div>
+        <div><div class="stat-val" data-count="30">30s</div><div class="stat-lbl">Min Threshold</div></div>
+        <div><div class="stat-val" data-count="10">10m</div><div class="stat-lbl">Max Threshold</div></div>
+        <div><div class="stat-val" data-count="0">0 KB</div><div class="stat-lbl">CPU at Idle</div></div>
+    </div>
+</div>
+
+<!-- Features -->
+<div class="features-section">
+    <div class="section-head">
+        <span class="section-kicker">Features</span>
+        <h2 class="section-title">Simple. Focused. Beautiful.</h2>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card">
+            <span class="fc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>
+            <h3>Track 5 Apps</h3>
+            <p>Pick up to five apps from <code style="color:#93c5fd">/Applications</code>. Each gets its own independent idle timer.</p>
+        </div>
+        <div class="feature-card">
+            <span class="fc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+            <h3>Custom Threshold</h3>
+            <p>Set the idle window anywhere from 30 seconds up to 10 minutes. You decide when to be nudged.</p>
+        </div>
+        <div class="feature-card">
+            <span class="fc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></span>
+            <h3>Glass Notification</h3>
+            <p>A frosted card drops from the notch with shimmer, ripple, and a soft blue–purple glow.</p>
+        </div>
+        <div class="feature-card">
+            <span class="fc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
+            <h3>Instant Actions</h3>
+            <p>Tap to launch the app, or snooze to reset the timer. One click, done — never disrupts your flow.</p>
+        </div>
+        <div class="feature-card">
+            <span class="fc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+            <h3>Menu Bar Background</h3>
+            <p>Close the config window — the pill keeps monitoring from the menu bar. Zero dock clutter.</p>
+        </div>
+        <div class="feature-card">
+            <span class="fc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2C20 17.5 12 22 12 22z"/><circle cx="12" cy="10" r="3"/></svg></span>
+            <h3>Zero Permissions</h3>
+            <p>Uses <code style="color:#93c5fd">NSWorkspace</code> to detect app switches — no accessibility prompts, no sandboxes broken.</p>
+        </div>
+    </div>
+</div>
+
+<!-- How it works timeline -->
+<div class="how-section">
+    <div class="section-head">
+        <span class="section-kicker">How It Works</span>
+        <h2 class="section-title">Three Steps to Never Forget an App</h2>
+    </div>
+    <div class="how-timeline">
+        <div class="how-step">
+            <div class="how-step-dot">01</div>
+            <h3>Open &amp; Configure</h3>
+            <p>Launch DontForget. Add up to 5 apps using the file picker. Set your idle threshold with the slider.</p>
+        </div>
+        <div class="how-step">
+            <div class="how-step-dot">02</div>
+            <h3>Close the Window</h3>
+            <p>The menu-bar pill keeps monitoring in the background. Close the config window — it keeps running.</p>
+        </div>
+        <div class="how-step">
+            <div class="how-step-dot">03</div>
+            <h3>Get Reminded</h3>
+            <p>When a tracked app sits idle past the threshold, a glass card drops from the notch with the app icon and a reminder.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Install -->
+<div class="install-section">
+    <div class="section-head">
+        <span class="section-kicker">Install</span>
+        <h2 class="section-title">Get Started in Seconds</h2>
+    </div>
+    <div class="install-card">
+        <h3>Quick Install</h3>
+        <div class="code-block">
+            <span class="cm"># 1. Open the DMG and drag DontForget to Applications</span><br>
+            <span class="cp">$</span> <span class="cc">open DontForget.dmg</span><br><br>
+            <span class="cm"># 2. Remove the quarantine flag (unsigned build)</span><br>
+            <span class="cp">$</span> <span class="ch">xattr -cr</span> <span class="cc">/Applications/DontForget.app</span><br><br>
+            <span class="cm"># 3. Ad-hoc re-sign so macOS opens it</span><br>
+            <span class="cp">$</span> <span class="ch">codesign --force --deep --sign -</span> <span class="cc">/Applications/DontForget.app</span><br><br>
+            <span class="cm"># 4. Launch</span><br>
+            <span class="cp">$</span> <span class="cc">open /Applications/DontForget.app</span>
+        </div>
+        <p style="font-size:12px;color:#8899bb;">Uses NSWorkspace to detect app switches. No accessibility permissions needed.</p>
+    </div>
+</div>
+
+<!-- Download -->
+<div class="download-section">
+    <h2 class="section-title" style="margin-bottom:12px;">Never Forget Again</h2>
+    <p class="section-sub">Download DontForget and stay on top of your workflow.</p>
+    <a href="/downloads/DontForget-1.0.0.dmg" download class="btn btn-primary" style="font-size:16px;padding:16px 40px">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download DontForget.dmg
+    </a>
+</div>
+
+<footer>
+    <a href="/crazy-apps.html">← All Crazy Apps</a> &nbsp;·&nbsp;
+    Nigents — DontForget — Built with SwiftUI + NSWorkspace
+</footer>
+
+<script>
+// ── Cycle the glass notification and sync the tracked-apps bar ──
+const apps = [
+    { name: 'Xcode',   msg: 'is waiting for you!' },
+    { name: 'Figma',   msg: 'misses you.' },
+    { name: 'Slack',   msg: 'wants your attention.' },
+    { name: 'Notion',  msg: 'has been idle. Open it?' },
+    { name: 'Spotify', msg: 'is getting lonely…' }
+];
+let idx = 0;
+const card = document.getElementById('glassCard');
+const nameEl = document.getElementById('demoAppName');
+const msgEl = document.getElementById('demoMsg');
+const rows = document.querySelectorAll('.tracked-app');
+
+function renderFrame(progress) {
+    // Fill the active row's bar, reset others
+    rows.forEach((row, i) => {
+        const fill = row.querySelector('.tracked-app-fill');
+        if (i === idx) {
+            row.classList.add('pinged');
+            fill.style.width = (progress * 100) + '%';
+        } else {
+            row.classList.remove('pinged');
+            fill.style.width = '0%';
+        }
+    });
+}
+
+let progress = 0;
+const STEP_MS = 80;
+const CYCLE_MS = 4000;
+let elapsed = 0;
+const tick = setInterval(() => {
+    elapsed += STEP_MS;
+    progress = Math.min(1, elapsed / CYCLE_MS);
+    renderFrame(progress);
+    if (elapsed >= CYCLE_MS) {
+        elapsed = 0;
+        // Flip to next app
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(-50%) translateY(-14px)';
+        setTimeout(() => {
+            idx = (idx + 1) % apps.length;
+            nameEl.textContent = apps[idx].name;
+            msgEl.textContent = apps[idx].msg;
+            card.style.opacity = '1';
+            card.style.transform = 'translateX(-50%) translateY(0)';
+            progress = 0;
+            renderFrame(0);
+        }, 340);
+    }
+}, STEP_MS);
+
+// ── Spawn floating particles ──
+(function () {
+    const host = document.getElementById('particles');
+    if (!host) return;
+    const count = Math.min(24, Math.max(10, Math.floor(window.innerWidth / 80)));
+    for (let i = 0; i < count; i++) {
+        const p = document.createElement('span');
+        p.className = 'particle';
+        const size = Math.random() * 4 + 2;
+        p.style.width = size + 'px';
+        p.style.height = size + 'px';
+        p.style.left = (Math.random() * 100) + 'vw';
+        p.style.animationDelay = (-Math.random() * 12) + 's';
+        p.style.animationDuration = (10 + Math.random() * 10) + 's';
+        // Alternate colour
+        if (i % 3 === 0) p.style.background = '#8b5cf6';
+        else if (i % 3 === 1) p.style.background = '#22d3ee';
+        host.appendChild(p);
+    }
+})();
+
+// ── Nav toggle ──
+(function () {
+    var toggle = document.getElementById('nav-toggle');
+    var backdrop = document.getElementById('nav-backdrop');
+    if (!toggle) return;
+    function setOpen(open) {
+        document.body.classList.toggle('nav-open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (backdrop) backdrop.hidden = !open;
+    }
+    toggle.addEventListener('click', function () { setOpen(!document.body.classList.contains('nav-open')); });
+    if (backdrop) backdrop.addEventListener('click', function () { setOpen(false); });
+    document.getElementById('nav-links').querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () { setOpen(false); });
+    });
+})();
+</script>
+
+</body>
+</html>

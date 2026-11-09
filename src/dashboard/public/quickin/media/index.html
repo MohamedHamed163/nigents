@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QuickIn — Social Media & Media Production · Scope of Work</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --burgundy:#5B0F16;
+    --burgundy-deep:#3F0810;
+    --burgundy-tint:#F8E6E2;
+    --burgundy-tint-2:#FAEEEB;
+    --cream:#FBF7F2;
+    --paper:#FFFFFF;
+    --ink:#202020;
+    --ink-soft:#404040;
+    --muted:#6B6B6B;
+    --line:#E2D8C8;
+    --line-soft:#EDE5D9;
+    --rule:#5B0F16;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+  .page{
+    max-width:820px;
+    margin:0 auto;
+    background:var(--paper);
+    padding:56px 64px 64px;
+    min-height:100vh;
+    box-shadow:0 6px 40px rgba(43,28,18,0.06);
+  }
+
+  /* ---------- HEADER ---------- */
+  .doc-head h1{
+    font-family:'Fraunces',serif;
+    font-weight:800;
+    font-size:54px;
+    line-height:1;
+    letter-spacing:-1.5px;
+    color:var(--burgundy);
+    margin-bottom:6px;
+  }
+  .doc-head h2.sub{
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:18px;
+    color:var(--ink);
+    margin-bottom:2px;
+  }
+  .doc-head .plan{
+    font-family:'Inter',sans-serif;
+    font-style:italic;
+    font-size:15px;
+    color:var(--muted);
+    margin-bottom:22px;
+  }
+  .doc-rule{
+    height:3px;
+    background:var(--rule);
+    margin:18px 0 24px;
+  }
+
+  /* ---------- GOAL BLOCK ---------- */
+  .goal{
+    font-size:15.5px;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+    line-height:1.65;
+  }
+  .goal b{color:var(--ink);font-weight:700;}
+  .goal em{font-style:italic;color:var(--ink);}
+  .platforms-line{
+    font-size:15.5px;
+    color:var(--ink-soft);
+    margin-bottom:0;
+  }
+  .platforms-line b{color:var(--ink);font-weight:700;}
+
+  /* ---------- SECTIONS ---------- */
+  section{margin-top:46px;}
+  h3.sec-h{
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:22px;
+    letter-spacing:-0.3px;
+    color:var(--burgundy);
+    margin-bottom:10px;
+  }
+  .sec-rule{
+    height:2px;
+    background:var(--rule);
+    width:100%;
+    opacity:0.95;
+    margin-bottom:20px;
+  }
+  .lead{
+    font-size:15px;
+    color:var(--ink-soft);
+    margin-bottom:14px;
+    line-height:1.6;
+  }
+  .lead b{color:var(--ink);}
+
+  /* ---------- TABLES ---------- */
+  table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    margin:6px 0 4px;
+    border-radius:6px;
+    overflow:hidden;
+    border:1px solid var(--burgundy-tint);
+  }
+  table thead th{
+    background:var(--burgundy);
+    color:#fff;
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    text-align:left;
+    padding:11px 16px;
+    border-right:1px solid rgba(255,255,255,0.08);
+  }
+  table thead th:last-child{border-right:none;}
+  table tbody td{
+    padding:14px 16px;
+    vertical-align:top;
+    border-bottom:1px solid var(--burgundy-tint);
+    border-right:1px solid var(--burgundy-tint);
+    font-size:14px;
+    color:var(--ink-soft);
+    line-height:1.55;
+  }
+  table tbody td:last-child{border-right:none;}
+  table tbody tr:last-child td{border-bottom:none;}
+  table tbody tr:nth-child(odd) td{background:var(--burgundy-tint-2);}
+  table tbody tr:nth-child(even) td{background:var(--paper);}
+  table tbody td:first-child{
+    font-weight:700;
+    color:var(--ink);
+    white-space:nowrap;
+  }
+
+  /* ---------- BULLET LISTS ---------- */
+  .bul{
+    margin:6px 0 4px;
+    padding-left:0;
+    list-style:none;
+  }
+  .bul li{
+    position:relative;
+    padding:6px 0 6px 22px;
+    font-size:14.5px;
+    color:var(--ink-soft);
+    line-height:1.55;
+  }
+  .bul li::before{
+    content:"•";
+    position:absolute;
+    left:6px;
+    top:6px;
+    color:var(--burgundy);
+    font-weight:700;
+    font-size:16px;
+  }
+  .bul li b{color:var(--ink);font-weight:700;}
+
+  /* sub-heading inside section (Before the trip / During / After) */
+  .subh{
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:15.5px;
+    color:var(--ink);
+    margin:18px 0 4px;
+  }
+
+  /* ---------- INVESTMENT BLOCK ---------- */
+  .invest{
+    background:linear-gradient(160deg, var(--burgundy) 0%, var(--burgundy-deep) 100%);
+    color:#F8F1EA;
+    border-radius:14px;
+    padding:36px 38px;
+    margin-top:18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .invest::before{
+    content:"";
+    position:absolute;
+    top:-80px;right:-80px;
+    width:240px;height:240px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,184,140,0.25) 0%, transparent 70%);
+  }
+  .invest .ilabel{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:2.4px;
+    text-transform:uppercase;
+    color:#F4C9A3;
+    font-weight:700;
+    margin-bottom:8px;
+    position:relative;
+    z-index:2;
+  }
+  .invest h4{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:26px;
+    margin-bottom:6px;
+    color:#fff;
+    position:relative;z-index:2;
+    letter-spacing:-0.5px;
+  }
+  .invest .ilede{
+    font-size:14.5px;
+    color:#E8D4CC;
+    line-height:1.6;
+    max-width:54ch;
+    margin-bottom:22px;
+    position:relative;z-index:2;
+  }
+  .price-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:16px 0;
+    border-bottom:1px solid rgba(255,255,255,0.14);
+    position:relative;z-index:2;
+    gap:14px;
+  }
+  .price-row .pr-name{
+    font-weight:600;
+    font-size:15.5px;
+    color:#fff;
+  }
+  .price-row .pr-name small{
+    display:block;
+    font-weight:400;
+    font-size:13px;
+    color:#D2B8AE;
+    margin-top:2px;
+  }
+  .price-row .pr-val{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:22px;
+    white-space:nowrap;
+    color:#fff;
+  }
+  .price-row.total{
+    border-bottom:none;
+    border-top:2px solid #F4C9A3;
+    padding-top:22px;
+    margin-top:8px;
+  }
+  .price-row.total .pr-name{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:18px;
+    color:#F4C9A3;
+    text-transform:uppercase;
+    letter-spacing:1.2px;
+  }
+  .price-row.total .pr-val{
+    font-family:'Fraunces',serif;
+    font-weight:800;
+    font-size:36px;
+    color:#fff;
+    line-height:1;
+  }
+  .price-row.total .pr-val small{
+    font-size:14px;
+    color:#D2B8AE;
+    font-weight:500;
+    letter-spacing:0;
+  }
+  .invest .note{
+    margin-top:22px;
+    font-size:13px;
+    color:#D2B8AE;
+    line-height:1.55;
+    position:relative;z-index:2;
+  }
+  .invest .note b{color:#fff;font-weight:700;}
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    margin-top:54px;
+    padding-top:22px;
+    border-top:1px solid var(--line);
+    font-family:'Inter',sans-serif;
+    font-style:italic;
+    font-size:13px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  footer .mark{
+    font-family:'Fraunces',serif;
+    font-style:normal;
+    font-weight:700;
+    font-size:14px;
+    color:var(--burgundy);
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:760px){
+    .page{padding:40px 24px 48px;}
+    .doc-head h1{font-size:42px;}
+    .invest{padding:28px 24px;}
+    table thead th, table tbody td{padding:10px 12px;font-size:13px;}
+    .price-row{flex-direction:column;align-items:flex-start;gap:4px;}
+    .price-row.total .pr-val{font-size:30px;}
+    /* On small screens, stack tables: hide header, show role/platform as bold prefix.
+       But for simplicity here, we just let them scroll horizontally if needed. */
+    table{display:block;overflow-x:auto;}
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print{
+    body{background:#fff;}
+    .page{box-shadow:none;padding:24px 32px;max-width:none;}
+    section, table, .invest{break-inside:avoid;}
+    .invest{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    table thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ============ DOC HEADER ============ -->
+  <div class="doc-head">
+    <h1>QuickIn</h1>
+    <h2 class="sub">Social Media &amp; Media Production — Scope of Work</h2>
+    <div class="plan">3-Month Plan: July · August · September</div>
+  </div>
+  <div class="doc-rule"></div>
+
+  <!-- ============ GOAL ============ -->
+  <p class="goal"><b>Goal:</b> Build awareness and bookings around one message — <em>book vacation homes safely, without the chaos of Facebook groups and brokers.</em></p>
+  <p class="platforms-line"><b>Platforms:</b> Instagram, Facebook, and TikTok.</p>
+
+  <!-- ============ 1. THE TEAM ============ -->
+  <section>
+    <h3 class="sec-h">1. The Team &amp; Who Does What</h3>
+    <div class="sec-rule"></div>
+    <table>
+      <thead>
+        <tr><th style="width:34%;">Role</th><th>What they do</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Media Buyer</td><td>Strategy, Meta ad structure, funnels, targeting, budget, launch testing, and performance reports.</td></tr>
+        <tr><td>Content Creator</td><td>Monthly content calendar, 8 posts, 5 stories, 2–4 video scripts, captions (AR/EN) and hashtags.</td></tr>
+        <tr><td>Videographer</td><td>Shoots units and day-in-the-life footage on the North Coast trips; captures b-roll; directs the model.</td></tr>
+        <tr><td>Video Editor</td><td>Cuts reels and teasers from the footage; adds subtitles; exports in 9:16 for each platform.</td></tr>
+        <tr><td>Graphic Designer</td><td>Designs post creatives, carousels, and story templates; keeps the brand look consistent.</td></tr>
+        <tr><td>Model(s)</td><td>Appears in lifestyle photos and reels during shoots to make content feel real and human.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============ 2. THE 3 PLATFORMS ============ -->
+  <section>
+    <h3 class="sec-h">2. The 3 Platforms</h3>
+    <div class="sec-rule"></div>
+    <table>
+      <thead>
+        <tr><th style="width:18%;">Platform</th><th style="width:22%;">Its job</th><th>What we post</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Instagram</td><td>Main stage</td><td>Carousels &amp; static posts, Reels, daily Stories. Polished and aesthetic — destinations + app demo.</td></tr>
+        <tr><td>Facebook</td><td>Reach + hosts</td><td>Mirror the IG posts &amp; Reels. Plus 'Become a host' posts and sharing in local/travel groups.</td></tr>
+        <tr><td>TikTok</td><td>Discovery</td><td>Native short video: POV booking, problem/solution, behind-the-scenes from shoots, model reels. Raw and trend-led.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============ 3. WHAT WE DELIVER EVERY MONTH ============ -->
+  <section>
+    <h3 class="sec-h">3. What We Deliver Every Month</h3>
+    <div class="sec-rule"></div>
+    <p class="lead">The same output repeats each month (July, August, September):</p>
+    <ul class="bul">
+      <li><b>Calendar:</b> 1 full content calendar, mapped across Instagram, Facebook, and TikTok.</li>
+      <li><b>Posts:</b> 8 social media posts (carousel or static).</li>
+      <li><b>Stories:</b> 5 story concepts (standalone or supporting the posts).</li>
+      <li><b>Scripts:</b> 2–4 video scripts (teasers, reels, promos) — then produced into finished videos.</li>
+      <li><b>Production:</b> 2 North Coast shoots per month — units + day-in-the-life + model reels.</li>
+      <li><b>Edited assets:</b> Edited reels, photo sets, and post graphics from each shoot.</li>
+      <li><b>Publishing:</b> Posting across all 3 platforms every week.</li>
+      <li><b>Review:</b> End-of-month performance review with the media buyer.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 4. MEDIA PRODUCTION PLAN ============ -->
+  <section>
+    <h3 class="sec-h">4. Media Production Plan (North Coast)</h3>
+    <div class="sec-rule"></div>
+    <p class="lead">The production team travels to the North Coast twice each month. Each trip feeds about two weeks of content.</p>
+
+    <div class="subh">Before the trip</div>
+    <ul class="bul">
+      <li>Shot list per unit and a storyboard for each reel.</li>
+      <li>Coordinate the model, access to units, and gear.</li>
+    </ul>
+
+    <div class="subh">During the trip</div>
+    <ul class="bul">
+      <li>Shoot each unit — photos + video (rooms, pool, view, details).</li>
+      <li>Capture day-in-the-life lifestyle footage (morning coffee, beach, sunset).</li>
+      <li>Film model reels and any trend-based clips.</li>
+    </ul>
+
+    <div class="subh">After the trip</div>
+    <ul class="bul">
+      <li>Back up all footage into the shared content bank.</li>
+      <li>Editor cuts reels/teasers; designer builds post and story creatives.</li>
+      <li>Content creator writes captions (AR/EN) and schedules across IG, FB, TikTok.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 5. CONTENT MIX & ANGLES ============ -->
+  <section>
+    <h3 class="sec-h">5. Content Mix &amp; Angles</h3>
+    <div class="sec-rule"></div>
+    <p class="lead">Every month's calendar follows the same mix (from the strategy):</p>
+    <ul class="bul">
+      <li><b>40% Pain points</b> — the broker/Facebook problems QuickIn solves.</li>
+      <li><b>40% Destinations</b> — Sahel, El Gouna, Ain Sokhna, Hurghada.</li>
+      <li><b>20% App demo</b> — how easy and safe booking is.</li>
+    </ul>
+    <p class="lead" style="margin-top:14px;"><b>Lead angles to rotate:</b> Safety, Trust, Convenience, Availability, and Local Experience.</p>
+
+    <div class="subh">Go-to video ideas</div>
+    <ul class="bul">
+      <li>Problem / Solution (broker pain → QuickIn).</li>
+      <li>POV booking journey.</li>
+      <li>Questions people always ask.</li>
+      <li>Behind-the-scenes from the shoots + model lifestyle reels.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 6. THE 3-MONTH ROADMAP ============ -->
+  <section>
+    <h3 class="sec-h">6. The 3-Month Roadmap</h3>
+    <div class="sec-rule"></div>
+    <table>
+      <thead>
+        <tr><th style="width:18%;">Month</th><th style="width:30%;">Focus (funnel stage)</th><th>Content emphasis</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>July</td><td>Launch &amp; Awareness (Pain → Trust)</td><td>Introduce the brand and the 'book safely' message. Broker pain points + destinations. Build the content bank.</td></tr>
+        <tr><td>August</td><td>Peak Season &amp; Consideration (App demo → Listings → Reviews)</td><td>Show the app, real listings, and first reviews. Push bookings during the Sahel peak.</td></tr>
+        <tr><td>September</td><td>Conversion &amp; Late Season (Retargeting → Urgency → Booking)</td><td>Urgency and best offers for the last summer weekends. Recap content + start recruiting hosts for next season.</td></tr>
+      </tbody>
+    </table>
+    <p class="lead" style="margin-top:14px;font-style:italic;">Same team and same monthly output all three months — only the message focus shifts as we move down the funnel.</p>
+  </section>
+
+  <!-- ============ 7. MONTHLY RHYTHM ============ -->
+  <section>
+    <h3 class="sec-h">7. Simple Monthly Rhythm (4 weeks)</h3>
+    <div class="sec-rule"></div>
+    <ul class="bul">
+      <li><b>Week 1:</b> Plan the month's calendar + Shoot Trip 1.</li>
+      <li><b>Week 2:</b> Edit and publish batch 1 across IG, FB, TikTok.</li>
+      <li><b>Week 3:</b> Shoot Trip 2 + keep publishing.</li>
+      <li><b>Week 4:</b> Edit and publish batch 2 + review results with the media buyer.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 8. INVESTMENT ============ -->
+  <section>
+    <h3 class="sec-h">8. Investment</h3>
+    <div class="sec-rule"></div>
+    <p class="lead">Three core monthly roles drive the engine. The fee below is per month and repeats identically across July, August, and September.</p>
+
+    <div class="invest">
+      <div class="ilabel">Monthly · Per Role</div>
+      <h4>Monthly fee breakdown</h4>
+      <p class="ilede">Three line items, billed monthly in advance. Same team, same output, every month.</p>
+
+      <div class="price-row">
+        <div class="pr-name">Content Creator <small>Calendar, 8 posts, 5 stories, 2–4 video scripts, captions (AR/EN)</small></div>
+        <div class="pr-val">EGP 7,000</div>
+      </div>
+      <div class="price-row">
+        <div class="pr-name">Media Buyer <small>Strategy, Meta ad structure, funnels, targeting, performance reports</small></div>
+        <div class="pr-val">EGP 12,000</div>
+      </div>
+      <div class="price-row">
+        <div class="pr-name">Graphic Designer <small>Post creatives, carousels, story templates, brand consistency</small></div>
+        <div class="pr-val">EGP 8,000</div>
+      </div>
+
+      <div class="price-row total">
+        <div class="pr-name">Total · monthly</div>
+        <div class="pr-val">EGP 27,000<small> / month</small></div>
+      </div>
+
+      <p class="note"><b>Not included:</b> Meta ad spend (paid directly or reimbursed at cost), transportation to the North Coast shoots, and any model/talent fees if a model is wanted for a shoot.</p>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer>
+    <div>QuickIn — Find it. Book it. Live it.</div>
+    <div class="mark">Platforms: Instagram · Facebook · TikTok</div>
+  </footer>
+
+</div>
+
+</body>
+</html>

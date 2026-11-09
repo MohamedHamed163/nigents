@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GhostTouch — Keep Your Mac Awake</title>
+    <meta name="description" content="GhostTouch keeps your Mac awake silently. Simulates tiny invisible mouse movements and key presses to prevent sleep, screensaver, and idle timeouts." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            --border: #2a2a35;
+            --bg-secondary: #141116;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, sans-serif; background: #0a0a0f; color: #e0e0e0; overflow-x: hidden; }
+
+        /* ── Site nav ─────────────────────────────────────── */
+        .site-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, #09080c 0%, transparent 100%);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .nav-logo { width: 40px; height: 40px; background: #ff570a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: #09080c; }
+        .nav-title { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+        .nav-links { display: flex; align-items: center; gap: 24px; }
+        .nav-link { color: #a0a0a0; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover { color: #fff; }
+        .nav-link.active { color: #ff570a; }
+        .nav-cta { padding: 10px 20px; border: 1px solid #ff570a; color: #ff570a; text-decoration: none; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+        .nav-cta:hover { background: #ff570a; color: #09080c; }
+        .nav-toggle { display: none; width: 44px; height: 44px; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 10px; color: #fff; cursor: pointer; }
+        .nav-toggle-icon-close { display: none; font-size: 28px; }
+        body.nav-open .nav-toggle-icon-open { display: none; }
+        body.nav-open .nav-toggle-icon-close { display: block; }
+        .nav-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 998; }
+        body.nav-open .nav-backdrop { display: block; }
+        body.nav-open { overflow: hidden; }
+        @media (max-width: 900px) {
+            .nav-toggle { display: flex; }
+            .nav-links { display: none; position: fixed; top: 72px; left: 16px; right: 16px; flex-direction: column; align-items: stretch; background: var(--bg-secondary); border: 1px solid var(--border); padding: 12px; z-index: 999; }
+            body.nav-open .nav-links { display: flex; }
+        }
+
+        /* ── Page styles ─────────────────────────────────── */
+        .bg-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 50px 50px; pointer-events: none; z-index: 0;
+        }
+
+        .hero {
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 100px 40px 60px; position: relative;
+            background: radial-gradient(ellipse at 50% 40%, rgba(139,92,246,0.06) 0%, transparent 60%);
+        }
+        .hero-content { position: relative; z-index: 1; max-width: 720px; text-align: center; }
+
+        .hero-icon-wrap {
+            width: 110px; height: 110px; margin: 0 auto 28px; position: relative;
+            animation: iconFloat 4s ease-in-out infinite;
+        }
+        @keyframes iconFloat { 0%,100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-12px) rotate(-3deg); } 75% { transform: translateY(8px) rotate(2deg); } }
+        .hero-icon-wrap::after {
+            content: ''; position: absolute; bottom: -14px; left: 15%; width: 70%; height: 14px;
+            background: radial-gradient(ellipse, rgba(139,92,246,0.3), transparent);
+            border-radius: 50%; animation: shPulse 4s ease-in-out infinite;
+        }
+        @keyframes shPulse { 0%,100% { opacity:0.4; transform:scaleX(1); } 50% { opacity:0.7; transform:scaleX(0.8); } }
+        .hero-icon-inner {
+            width: 110px; height: 110px; border-radius: 26px;
+            background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 20px 60px rgba(139,92,246,0.35);
+        }
+        .hero-icon-inner svg { width: 52px; height: 52px; }
+
+        .hero h1 {
+            font-size: clamp(38px, 7vw, 62px); font-weight: 900; letter-spacing: -2px;
+            background: linear-gradient(135deg, #8B5CF6, #06B6D4, #8B5CF6);
+            background-size: 200% 200%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: gradShift 3s ease-in-out infinite; margin-bottom: 6px;
+        }
+        @keyframes gradShift { 0%,100% { background-position:0% 50%; } 50% { background-position:100% 50%; } }
+        .hero .tagline { font-size: 20px; color: #8899bb; margin-bottom: 10px; }
+        .hero .subtitle { font-size: 15px; color: #556; max-width: 520px; margin: 0 auto 28px; line-height: 1.65; }
+
+        .badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+        .badge { padding: 6px 14px; border-radius: 18px; font-size: 11px; font-weight: 600; animation: bPop 0.5s ease-out both; }
+        .badge:nth-child(1) { animation-delay:0.1s; } .badge:nth-child(2) { animation-delay:0.2s; }
+        .badge:nth-child(3) { animation-delay:0.3s; } .badge:nth-child(4) { animation-delay:0.4s; }
+        @keyframes bPop { from { opacity:0; transform:scale(0.85) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .badge-purple { background: rgba(139,92,246,0.12); color: #a78bfa; border: 1px solid rgba(139,92,246,0.25); }
+        .badge-cyan { background: rgba(6,182,212,0.12); color: #22d3ee; border: 1px solid rgba(6,182,212,0.25); }
+        .badge-green { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+        .badge-orange { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
+
+        .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 15px 34px; text-decoration: none; border-radius: 13px;
+            font-weight: 700; font-size: 16px; cursor: pointer; border: none; transition: all 0.3s; font-family: inherit;
+        }
+        .btn-primary { background: linear-gradient(135deg, #8B5CF6, #06B6D4); color: #fff; box-shadow: 0 8px 30px rgba(139,92,246,0.3); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(139,92,246,0.45); }
+        .btn-ghost { background: rgba(255,255,255,0.06); color: #ccc; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-ghost:hover { background: rgba(255,255,255,0.1); transform: translateY(-3px); }
+
+        .section-title { text-align: center; font-size: clamp(22px,4vw,34px); font-weight: 800; color: #fff; margin-bottom: 8px; }
+        .section-sub { text-align: center; font-size: 15px; color: #8899bb; margin-bottom: 48px; }
+
+        /* Demo */
+        .demo-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .screen-wrap {
+            max-width: 700px; margin: 0 auto; border-radius: 18px; overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.4), 0 0 60px rgba(139,92,246,0.05);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .screen-bar {
+            background: #1c1c22; padding: 10px 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .sdot { width: 11px; height: 11px; border-radius: 50%; }
+        .sdot.r { background: #ff5f56; } .sdot.y { background: #ffbd2e; } .sdot.g { background: #27c93f; }
+        .screen-title { margin-left: 10px; font-size: 11px; color: #666; flex: 1; }
+        .screen-live { padding: 3px 10px; border-radius: 10px; font-size: 10px; font-weight: 700; background: rgba(16,185,129,0.15); color: #34d399; }
+
+        .demo-canvas {
+            background: linear-gradient(135deg, #0d0d14, #0a0a12);
+            position: relative; height: 380px; overflow: hidden;
+        }
+
+        .ghost-eye {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 100px; height: 100px; transition: transform 0.2s;
+        }
+        .ghost-eye-ring {
+            width: 100px; height: 100px; border-radius: 50%;
+            border: 3px solid #8B5CF6; opacity: 0.3;
+            position: absolute; top: 0; left: 0;
+            animation: eyeRing 3s ease-in-out infinite;
+        }
+        @keyframes eyeRing { 0%,100% { transform: scale(1); opacity:0.3; } 50% { transform: scale(1.15); opacity:0.6; } }
+        .ghost-eye-fill {
+            width: 100px; height: 100px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(139,92,246,0.15), transparent);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 40px; position: absolute; top: 0; left: 0;
+        }
+
+        .demo-stats {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 16px;
+        }
+        .demo-stat {
+            padding: 8px 16px; border-radius: 10px; text-align: center;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+        }
+        .demo-stat-val { font-size: 18px; font-weight: 800; color: #a78bfa; }
+        .demo-stat-lbl { font-size: 9px; color: #666; }
+
+        .demo-status {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            padding: 6px 18px; border-radius: 20px; font-size: 11px; font-weight: 600;
+        }
+        .demo-status.on { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .demo-status.off { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+
+        .demo-modes {
+            position: absolute; top: 20px; right: 20px;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .demo-mode-chip {
+            padding: 6px 12px; border-radius: 8px; font-size: 10px; font-family: inherit;
+            background: rgba(139,92,246,0.1); color: #a78bfa; border: 1px solid rgba(139,92,246,0.15);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .demo-mode-chip:hover, .demo-mode-chip.active { background: rgba(139,92,246,0.25); border-color: rgba(139,92,246,0.4); }
+
+        .demo-log {
+            position: absolute; bottom: 70px; left: 20px; right: 20px;
+            max-height: 100px; overflow: hidden;
+        }
+        .demo-log-entry {
+            font-size: 9px; font-family: 'SF Mono', monospace; color: #556; padding: 1px 0;
+            animation: logIn 0.3s ease-out;
+        }
+        @keyframes logIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+
+        .screen-toolbar {
+            background: #111118; padding: 10px 16px;
+            display: flex; gap: 12px; align-items: center; justify-content: center;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        .toolbar-chip {
+            display: flex; align-items: center; gap: 5px;
+            padding: 6px 14px; border-radius: 8px; font-size: 11px; font-weight: 600; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; border: none;
+        }
+        .toolbar-chip.start { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .toolbar-chip.start:hover { background: rgba(16,185,129,0.25); }
+        .toolbar-chip.stop { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        .toolbar-chip.stop:hover { background: rgba(239,68,68,0.25); }
+
+        /* Modes */
+        .modes-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .modes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; max-width: 900px; margin: 0 auto; }
+        .mode-card {
+            background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px; padding: 20px; text-align: center; transition: all 0.3s;
+        }
+        .mode-card:hover { transform: translateY(-4px); border-color: rgba(139,92,246,0.2); }
+        .mode-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+        .mode-card h3 { font-size: 15px; color: #fff; margin-bottom: 4px; }
+        .mode-card p { font-size: 12px; color: #8899bb; }
+
+        /* How */
+        .how-section { padding: 80px 40px; position: relative; z-index: 1; }
+        .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; }
+        .how-card {
+            background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px; padding: 24px; transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .how-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,#8B5CF6,transparent); opacity:0; transition:opacity 0.3s; }
+        .how-card:hover { transform: translateY(-4px); border-color: rgba(139,92,246,0.2); }
+        .how-card:hover::before { opacity: 1; }
+        .how-num { font-size: 28px; font-weight: 900; background: linear-gradient(135deg,#8B5CF6,#06B6D4); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom: 8px; }
+        .how-card h3 { font-size: 16px; color: #fff; margin-bottom: 6px; }
+        .how-card p { font-size: 13px; color: #8899bb; }
+
+        /* Install */
+        .install-section { padding: 60px 40px; position: relative; z-index: 1; }
+        .install-card {
+            max-width: 700px; margin: 0 auto;
+            background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px; padding: 24px;
+        }
+        .install-card h3 { font-size: 15px; margin-bottom: 12px; color: #fff; }
+        .code-block {
+            background: #080810; border-radius: 10px; padding: 14px;
+            font-family: 'SF Mono','Fira Code',monospace; font-size: 12px; line-height: 2; margin-bottom: 12px;
+        }
+        .cm { color: #556; } .cp { color: #34d399; } .cc { color: #e0e0e0; } .ch { color: #fbbf24; }
+
+        .download-section {
+            background: linear-gradient(135deg, #080810, #0a0a1a, #080810);
+            padding: 80px 40px; text-align: center; position: relative; z-index: 1;
+        }
+
+        footer {
+            padding: 24px; text-align: center; color: #334; font-size: 11px;
+            border-top: 1px solid rgba(255,255,255,0.03);
+            position: relative; z-index: 1;
+        }
+        footer a { color: #a0a0a0; text-decoration: none; }
+        footer a:hover { color: #fff; }
+
+        @media (max-width: 600px) {
+            .site-nav { padding: 16px 20px; }
+            .hero { padding: 100px 20px 40px; }
+            .demo-section, .modes-section, .how-section, .install-section, .download-section { padding: 60px 20px; }
+            .demo-stats { gap: 8px; }
+            .demo-modes { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Site nav -->
+<nav class="site-nav">
+    <a href="/" class="nav-brand">
+        <div class="nav-logo">N</div>
+        <span class="nav-title">Nigents</span>
+    </a>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">
+        <span class="nav-toggle-icon-open" aria-hidden="true">☰</span>
+        <span class="nav-toggle-icon-close" aria-hidden="true">×</span>
+    </button>
+    <div class="nav-links" id="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/how-it-works.html" class="nav-link">How it works</a>
+            <a href="/skills.html" class="nav-link">AI Skills</a>
+        <a href="/materials.html" class="nav-link">Free Materials</a>
+        <a href="/crazy-apps.html" class="nav-link active">Crazy apps</a>
+        <a href="/opencode-kits.html" class="nav-link">OpenCode kits</a>
+        <a href="/apps/" class="nav-link">Apps</a>
+        <a href="/login.html" class="nav-cta">Login →</a>
+    </div>
+</nav>
+<div class="nav-backdrop" id="nav-backdrop" aria-hidden="true" hidden></div>
+
+<div class="bg-grid"></div>
+
+<div class="hero">
+    <div class="hero-content">
+        <div class="hero-icon-wrap">
+            <div class="hero-icon-inner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2C8 7 4 9 4 13a8 8 0 0016 0c0-4-4-6-8-11z"/>
+                    <path d="M12 18a3 3 0 01-3-3c0-2 3-5 3-5s3 3 3 5a3 3 0 01-3 3z" fill="rgba(255,255,255,0.2)"/>
+                </svg>
+            </div>
+        </div>
+        <h1>GhostTouch</h1>
+        <p class="tagline">Keep Your Mac Awake, Silently</p>
+        <p class="subtitle">Simulates tiny invisible mouse movements and key presses to prevent sleep, screensaver, and idle timeouts. Perfect for long downloads, presentations, and remote sessions.</p>
+        <div class="badges">
+            <span class="badge badge-purple">4 Modes</span>
+            <span class="badge badge-cyan">Adjustable Interval</span>
+            <span class="badge badge-green">Zero CPU Impact</span>
+            <span class="badge badge-orange">100% Native Swift</span>
+        </div>
+        <div class="cta-row">
+            <a href="/downloads/GhostTouch-1.0.0.dmg" download class="btn btn-primary">⬇ Download GhostTouch.dmg</a>
+            <a href="#demo" class="btn btn-ghost">See Demo</a>
+        </div>
+    </div>
+</div>
+
+<div class="demo-section" id="demo">
+    <div class="section-title">Interactive Demo</div>
+    <div class="section-sub">Click Start to watch GhostTouch in action</div>
+    <div class="screen-wrap">
+        <div class="screen-bar">
+            <div class="sdot r"></div><div class="sdot y"></div><div class="sdot g"></div>
+            <div class="screen-title">GhostTouch — Anti-Sleep Engine</div>
+            <div class="screen-live" id="liveTag">INACTIVE</div>
+        </div>
+        <div class="demo-canvas">
+            <div class="demo-status off" id="demoStatus">💤 Sleeping</div>
+
+            <div class="ghost-eye" id="ghostEye">
+                <div class="ghost-eye-ring"></div>
+                <div class="ghost-eye-fill" id="eyeIcon">👁</div>
+            </div>
+
+            <div class="demo-modes">
+                <div class="demo-mode-chip active" onclick="setMode('mouse',event)">Mouse Jiggle</div>
+                <div class="demo-mode-chip" onclick="setMode('key',event)">Key Press</div>
+                <div class="demo-mode-chip" onclick="setMode('both',event)">Both</div>
+                <div class="demo-mode-chip" onclick="setMode('scroll',event)">Scroll</div>
+            </div>
+
+            <div class="demo-log" id="demoLog"></div>
+
+            <div class="demo-stats">
+                <div class="demo-stat"><div class="demo-stat-val" id="statActions">0</div><div class="demo-stat-lbl">ACTIONS</div></div>
+                <div class="demo-stat"><div class="demo-stat-val" id="statUptime">0s</div><div class="demo-stat-lbl">UPTIME</div></div>
+                <div class="demo-stat"><div class="demo-stat-val" id="statInterval">3s</div><div class="demo-stat-lbl">INTERVAL</div></div>
+            </div>
+        </div>
+        <div class="screen-toolbar">
+            <button class="toolbar-chip start" id="toggleBtn" onclick="toggleDemo()">▶ Start Simulation</button>
+        </div>
+    </div>
+</div>
+
+<div class="modes-section">
+    <div class="section-title">4 Anti-Sleep Modes</div>
+    <div class="section-sub">Choose how GhostTouch keeps your Mac awake</div>
+    <div class="modes-grid">
+        <div class="mode-card">
+            <span class="mode-icon">🖱</span>
+            <h3>Mouse Jiggle</h3>
+            <p>Tiny 1px mouse movement and back. Completely invisible.</p>
+        </div>
+        <div class="mode-card">
+            <span class="mode-icon">⌨</span>
+            <h3>Key Press</h3>
+            <p>Alternating Command/Option key taps. Silent and effective.</p>
+        </div>
+        <div class="mode-card">
+            <span class="mode-icon">🔄</span>
+            <h3>Mouse + Key</h3>
+            <p>Alternates between mouse and key actions each interval.</p>
+        </div>
+        <div class="mode-card">
+            <span class="mode-icon">📜</span>
+            <h3>Scroll Pulse</h3>
+            <p>Tiny scroll up then down. Works great for preventing idle.</p>
+        </div>
+    </div>
+</div>
+
+<div class="how-section">
+    <div class="section-title">How It Works</div>
+    <div class="section-sub">Three steps to an always-awake Mac</div>
+    <div class="how-grid">
+        <div class="how-card">
+            <div class="how-num">01</div>
+            <h3>Pick a Mode</h3>
+            <p>Choose between mouse jiggle, key press, both, or scroll pulse. Each has its own advantages.</p>
+        </div>
+        <div class="how-card">
+            <div class="how-num">02</div>
+            <h3>Set Interval</h3>
+            <p>Choose how often GhostTouch acts: every 15 seconds up to 5 minutes. Default is 30 seconds.</p>
+        </div>
+        <div class="how-card">
+            <div class="how-num">03</div>
+            <h3>Press Start</h3>
+            <p>GhostTouch runs silently in the background. Your Mac stays awake for downloads, renders, and presentations.</p>
+        </div>
+    </div>
+</div>
+
+<div class="install-section">
+    <div class="section-title">Installation</div>
+    <div class="section-sub">Get up and running in seconds</div>
+    <div class="install-card">
+        <h3>Quick Install</h3>
+        <div class="code-block">
+            <span class="cm"># 1. Open the DMG and drag to Applications</span><br>
+            <span class="cp">$</span> <span class="cc">open GhostTouch.dmg</span><br><br>
+            <span class="cm"># 2. Fix quarantine (unsigned app)</span><br>
+            <span class="cp">$</span> <span class="ch">xattr -cr</span> <span class="cc">/Applications/GhostTouch.app</span><br><br>
+            <span class="cm"># 3. Re-sign the app</span><br>
+            <span class="cp">$</span> <span class="ch">codesign --force --deep --sign -</span> <span class="cc">/Applications/GhostTouch.app</span><br><br>
+            <span class="cm"># 4. Launch!</span><br>
+            <span class="cp">$</span> <span class="cc">open /Applications/GhostTouch.app</span>
+        </div>
+        <p style="font-size:12px;color:#8899bb;">No accessibility permission needed. GhostTouch uses CGEvent to simulate input at the system level.</p>
+    </div>
+</div>
+
+<div class="download-section">
+    <div class="section-title" style="margin-bottom:12px;">Never Sleep Again</div>
+    <div class="section-sub">Download GhostTouch and keep your Mac running</div>
+    <a href="/downloads/GhostTouch-1.0.0.dmg" download class="btn btn-primary">⬇ Download GhostTouch.dmg</a>
+</div>
+
+<footer>
+    <a href="/crazy-apps.html">← All Crazy Apps</a> &nbsp;·&nbsp;
+    Nigents &mdash; GhostTouch &mdash; Built with SwiftUI + CGEvent
+</footer>
+
+<script>
+let running = false, actions = 0, uptime = 0, interval = 3, mode = 'mouse';
+let simTimer = null, upTimer = null;
+
+function toggleDemo() { if (running) stopDemo(); else startDemo(); }
+
+function startDemo() {
+    running = true; actions = 0; uptime = 0; updateStats();
+    document.getElementById('toggleBtn').innerHTML = '⏹ Stop Simulation';
+    document.getElementById('toggleBtn').className = 'toolbar-chip stop';
+    document.getElementById('demoStatus').className = 'demo-status on';
+    document.getElementById('demoStatus').innerHTML = '👁 Awake';
+    document.getElementById('liveTag').innerHTML = 'ACTIVE';
+    document.getElementById('liveTag').style.cssText = 'background:rgba(16,185,129,0.15);color:#34d399';
+    document.getElementById('eyeIcon').style.filter = 'drop-shadow(0 0 10px rgba(139,92,246,0.6))';
+    upTimer = setInterval(() => { uptime++; updateStats(); }, 1000);
+    simTimer = setInterval(doAction, interval * 1000);
+    addLog('GhostTouch activated');
+}
+
+function stopDemo() {
+    running = false; clearInterval(simTimer); clearInterval(upTimer);
+    document.getElementById('toggleBtn').innerHTML = '▶ Start Simulation';
+    document.getElementById('toggleBtn').className = 'toolbar-chip start';
+    document.getElementById('demoStatus').className = 'demo-status off';
+    document.getElementById('demoStatus').innerHTML = '💤 Sleeping';
+    document.getElementById('liveTag').innerHTML = 'INACTIVE';
+    document.getElementById('liveTag').style.cssText = 'background:rgba(239,68,68,0.15);color:#f87171';
+    document.getElementById('eyeIcon').style.filter = 'none';
+    addLog('GhostTouch stopped (ran ' + formatTime(uptime) + ')');
+}
+
+function doAction() {
+    actions++;
+    const msgs = { mouse:'Mouse jiggle (+1,+1)', key: actions%2===0?'Key press: Command':'Key press: Option', both:actions%2===0?'Mouse jiggle (+1,+1)':'Key press: Command', scroll:'Scroll pulse (+1,-1)' };
+    addLog(msgs[mode]); updateStats();
+    const eye = document.getElementById('ghostEye');
+    eye.style.transform = 'translate(-50%,-50%) scale(1.1)';
+    setTimeout(() => { eye.style.transform = 'translate(-50%,-50%) scale(1)'; }, 200);
+}
+
+function setMode(m, e) {
+    mode = m;
+    document.querySelectorAll('.demo-mode-chip').forEach(c => c.classList.remove('active'));
+    e.target.classList.add('active');
+}
+
+function addLog(msg) {
+    const log = document.getElementById('demoLog');
+    const time = new Date().toLocaleTimeString('en-US', {hour12:false});
+    const entry = document.createElement('div');
+    entry.className = 'demo-log-entry';
+    entry.textContent = '[' + time + '] ' + msg;
+    log.prepend(entry);
+    if (log.children.length > 12) log.removeChild(log.lastChild);
+}
+
+function updateStats() {
+    document.getElementById('statActions').textContent = actions;
+    document.getElementById('statUptime').textContent = formatTime(uptime);
+    document.getElementById('statInterval').textContent = interval + 's';
+}
+
+function formatTime(s) {
+    const m = Math.floor(s/60), sec = s%60;
+    return m > 0 ? m+'m '+sec+'s' : sec+'s';
+}
+
+// Nav toggle
+(function() {
+    var toggle = document.getElementById('nav-toggle');
+    var backdrop = document.getElementById('nav-backdrop');
+    if (!toggle) return;
+    function setOpen(open) {
+        document.body.classList.toggle('nav-open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (backdrop) backdrop.hidden = !open;
+    }
+    toggle.addEventListener('click', function() { setOpen(!document.body.classList.contains('nav-open')); });
+    if (backdrop) backdrop.addEventListener('click', function() { setOpen(false); });
+    document.getElementById('nav-links').querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function() { setOpen(false); });
+    });
+})();
+</script>
+
+</body>
+</html>

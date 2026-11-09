@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Escape — One hotkey flips every window to VS Code + Terminal in under 100 ms. From Nigents Crazy apps." />
+    <title>Escape — Crazy apps · Nigents</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #09080c;
+            --bg-secondary: #141116;
+            --bg-card: #111111;
+            --border: #2a2a35;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+            --accent: #ff4747;
+            --accent-dim: rgba(255, 71, 71, 0.15);
+            --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+            --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 71, 71, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 71, 71, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, var(--bg-primary) 0%, transparent 100%);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .nav-logo {
+            width: 40px; height: 40px; background: var(--accent); border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 20px; color: var(--bg-primary);
+        }
+        .nav-title { font-size: 22px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.5px; }
+        .nav-links { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; justify-content: flex-end; }
+        .nav-link { color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover { color: var(--text-primary); }
+        .soon-pill {
+            display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase; color: var(--bg-primary);
+            background: var(--accent); padding: 3px 9px; border-radius: 999px; vertical-align: middle;
+        }
+        .nav-cta {
+            padding: 10px 20px; border: 1px solid var(--accent); color: var(--accent);
+            text-decoration: none; font-size: 14px; font-weight: 600; transition: all 0.2s;
+        }
+        .nav-cta:hover { background: var(--accent); color: var(--bg-primary); }
+        .nav-toggle {
+            display: none; width: 44px; height: 44px;
+            align-items: center; justify-content: center; margin-left: auto;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text-primary); cursor: pointer;
+        }
+        .nav-toggle-icon-close { display: none; font-size: 28px; }
+        body.nav-open .nav-toggle-icon-open { display: none; }
+        body.nav-open .nav-toggle-icon-close { display: block; }
+        .nav-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 998; }
+        body.nav-open .nav-backdrop { display: block; }
+        body.nav-open { overflow: hidden; }
+
+        @media (max-width: 900px) {
+            .nav-toggle { display: flex; }
+            .nav-links {
+                display: none; position: fixed; top: 72px; left: 16px; right: 16px;
+                flex-direction: column; align-items: stretch;
+                background: var(--bg-secondary); border: 1px solid var(--border); padding: 12px; z-index: 999;
+            }
+            body.nav-open .nav-links { display: flex; }
+        }
+
+        main { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 120px 32px 80px; }
+
+        .hero-badge {
+            display: inline-block; font-family: var(--font-mono);
+            font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--accent); border: 1px solid rgba(255, 71, 71, 0.4);
+            padding: 8px 14px; margin-bottom: 20px;
+            animation: badgePulse 3s ease-in-out infinite;
+        }
+        @keyframes badgePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 71, 71, 0.22); }
+            50% { box-shadow: 0 0 24px 2px rgba(255, 71, 71, 0.12); }
+        }
+
+        .hero-title {
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
+            font-weight: 800; letter-spacing: -0.04em; line-height: 1.08; margin-bottom: 16px;
+        }
+        .hero-title .shimmer {
+            background: linear-gradient(90deg, var(--text-primary) 0%, var(--text-primary) 38%, var(--accent) 50%, var(--text-primary) 62%, var(--text-primary) 100%);
+            background-size: 200% 100%;
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            animation: textShimmer 4s linear infinite;
+        }
+        @keyframes textShimmer { 0% { background-position: 100% 50%; } 100% { background-position: -100% 50%; } }
+        .hero-title em { font-style: normal; color: var(--accent); }
+        .hero-lead { font-size: 1.1rem; color: var(--text-secondary); max-width: 52ch; margin-bottom: 28px; animation: fadeUp 0.8s ease both; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 48px; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 14px 24px; font-size: 14px; font-weight: 600;
+            text-decoration: none; border-radius: 0; transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); box-shadow: 0 8px 32px rgba(255,71,71,0.28); }
+        .btn-primary:hover { box-shadow: 0 12px 40px rgba(255,71,71,0.4); }
+        .btn-ghost { background: transparent; color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+        .stage {
+            margin: 32px 0 56px; padding: 48px 24px 40px;
+            background: linear-gradient(165deg, rgba(20,17,22,0.95) 0%, rgba(9,8,12,0.98) 100%);
+            border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+        }
+        .scene-wrap { display: flex; justify-content: center; }
+        .scene-wrap svg { max-width: 100%; height: auto; }
+
+        .slack-screen { opacity: 1; transition: opacity 0.3s; }
+        .vscode-screen { opacity: 0; transition: opacity 0.3s; }
+        .manager-svg { transform: translateX(120px); opacity: 0; transition: transform 1s ease-out, opacity 0.5s; }
+        .danger-bar { opacity: 0; transition: opacity 0.3s; }
+
+        .scene.phase-1 .manager-svg { transform: translateX(0); opacity: 1; }
+        .scene.phase-1 .danger-bar { opacity: 1; }
+        .scene.phase-2 .manager-svg { transform: translateX(0); opacity: 1; }
+        .scene.phase-2 .slack-screen { opacity: 0; }
+        .scene.phase-2 .vscode-screen { opacity: 1; }
+        .scene.phase-2 .danger-bar { opacity: 0; }
+        .scene.phase-3 .slack-screen { opacity: 0; }
+        .scene.phase-3 .vscode-screen { opacity: 1; }
+        .scene.phase-3 .manager-svg { transform: translateX(120px); opacity: 0; }
+
+        .scene-label {
+            text-align: center; font-size: 12px; color: var(--text-muted);
+            margin-top: 16px; font-family: var(--font-mono);
+        }
+
+        .section { margin-bottom: 56px; }
+        .section h2 { font-size: 1.35rem; font-weight: 700; margin-bottom: 10px; }
+        .section p.lead { color: var(--text-secondary); margin-bottom: 20px; max-width: 65ch; }
+
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+        .card {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 12px; padding: 22px; transition: border-color 0.2s;
+        }
+        .card:hover { border-color: rgba(255, 71, 71, 0.45); }
+        .card h3 { font-size: 15px; margin-bottom: 8px; }
+        .card p { font-size: 14px; color: var(--text-secondary); line-height: 1.55; }
+
+        .download-panel {
+            background: rgba(255, 71, 71, 0.08);
+            border: 1px solid rgba(255, 71, 71, 0.38);
+            border-radius: 12px; padding: 24px;
+        }
+        .download-panel ul { margin: 12px 0 0 1.2rem; color: var(--text-secondary); font-size: 14px; }
+        .mono { font-family: var(--font-mono); font-size: 0.9em; color: var(--accent); }
+
+        footer { border-top: 1px solid var(--border); padding-top: 24px; font-size: 13px; color: var(--text-muted); }
+        footer a { color: var(--accent); text-decoration: none; }
+
+        @media (max-width: 640px) { .nav { padding: 16px 20px; } main { padding-top: 100px; } }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-title .shimmer { animation: none; color: var(--text-primary); -webkit-text-fill-color: var(--text-primary); }
+            .hero-badge { animation: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">
+            <div class="nav-logo">N</div>
+            <span class="nav-title">Nigents</span>
+        </a>
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+            <span class="nav-toggle-icon-open" aria-hidden="true">&#9776;</span>
+            <span class="nav-toggle-icon-close" aria-hidden="true">&times;</span>
+        </button>
+        <div class="nav-links" id="nav-links" role="navigation" aria-label="Main">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/how-it-works.html" class="nav-link">How it works</a>
+            <a href="/skills.html" class="nav-link">AI Skills</a>
+            <a href="/materials.html" class="nav-link">Free Materials</a>
+            <a href="/crazy-apps.html" class="nav-link">Crazy apps</a>
+            <a href="/opencode-kits.html" class="nav-link">OpenCode kits <span class="soon-pill">Soon</span></a>
+            <a href="/apps/" class="nav-link">Apps</a>
+            <a href="/login.html" class="nav-cta">Login &rarr;</a>
+        </div>
+    </nav>
+    <div class="nav-backdrop" id="nav-backdrop" aria-hidden="true" hidden></div>
+
+    <main>
+        <header>
+            <p class="hero-badge">macOS &middot; Hotkey utility</p>
+            <h1 class="hero-title"><span class="shimmer">Escape</span> &mdash; don't get caught <em>slacking</em></h1>
+            <p class="hero-lead">
+                One hotkey flips every window to VS Code and Terminal in under 100 ms.
+                Part of our <strong style="color:var(--accent)">Crazy apps</strong> line &mdash; playful utilities, not enterprise fleet tooling.
+            </p>
+            <div class="cta-row">
+                <a class="btn btn-primary" href="/downloads/Escape-1.0.0.dmg" download>Download DMG</a>
+                <a class="btn btn-ghost" href="/crazy-apps.html">All crazy apps</a>
+                <a class="btn btn-ghost" href="#how">What you get</a>
+            </div>
+        </header>
+
+        <div class="stage" aria-hidden="true">
+            <div class="scene-wrap">
+                <div class="scene" id="scene">
+                    <svg viewBox="0 0 720 340" width="720" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Desk -->
+                        <rect x="60" y="260" width="440" height="12" rx="3" fill="#1e1e2e"/>
+                        <rect x="100" y="272" width="8" height="60" fill="#1a1a2a"/>
+                        <rect x="452" y="272" width="8" height="60" fill="#1a1a2a"/>
+                        <rect x="80" y="330" width="60" height="6" rx="2" fill="#1a1a2a"/>
+                        <rect x="420" y="330" width="60" height="6" rx="2" fill="#1a1a2a"/>
+
+                        <!-- Monitor frame -->
+                        <rect x="140" y="100" width="280" height="160" rx="8" fill="#0d0d1a" stroke="#333" stroke-width="2"/>
+                        <rect x="260" y="260" width="40" height="14" fill="#1a1a2a"/>
+
+                        <!-- Slack screen -->
+                        <g class="slack-screen">
+                            <rect x="148" y="108" width="264" height="144" rx="4" fill="#2d1b4e"/>
+                            <rect x="148" y="108" width="56" height="144" fill="#1a1133"/>
+                            <rect x="154" y="120" width="44" height="6" rx="2" fill="#7b5ea7" opacity="0.5"/>
+                            <rect x="154" y="132" width="36" height="4" rx="2" fill="#7b5ea7" opacity="0.3"/>
+                            <rect x="154" y="140" width="40" height="4" rx="2" fill="#7b5ea7" opacity="0.3"/>
+                            <rect x="154" y="148" width="32" height="4" rx="2" fill="#7b5ea7" opacity="0.3"/>
+                            <circle cx="218" cy="130" r="8" fill="#7b5ea7" opacity="0.4"/>
+                            <rect x="232" y="124" width="80" height="5" rx="2" fill="#9b7dcf" opacity="0.4"/>
+                            <rect x="232" y="133" width="120" height="4" rx="2" fill="#9b7dcf" opacity="0.25"/>
+                            <circle cx="218" cy="158" r="8" fill="#7b5ea7" opacity="0.4"/>
+                            <rect x="232" y="152" width="100" height="5" rx="2" fill="#9b7dcf" opacity="0.4"/>
+                            <rect x="232" y="161" width="140" height="4" rx="2" fill="#9b7dcf" opacity="0.25"/>
+                            <rect x="210" y="232" width="196" height="14" rx="4" fill="#1a1133"/>
+                        </g>
+
+                        <!-- VS Code + Terminal screen -->
+                        <g class="vscode-screen">
+                            <rect x="148" y="108" width="264" height="144" rx="4" fill="#1e1e2e"/>
+                            <rect x="148" y="108" width="40" height="90" fill="#181825"/>
+                            <rect x="154" y="116" width="28" height="4" rx="1" fill="#89b4fa" opacity="0.4"/>
+                            <rect x="154" y="124" width="24" height="4" rx="1" fill="#a6e3a1" opacity="0.3"/>
+                            <rect x="154" y="132" width="26" height="4" rx="1" fill="#a6e3a1" opacity="0.3"/>
+                            <rect x="154" y="140" width="22" height="4" rx="1" fill="#f9e2af" opacity="0.3"/>
+                            <rect x="196" y="116" width="60" height="4" rx="1" fill="#cba6f7" opacity="0.5"/>
+                            <rect x="196" y="124" width="100" height="4" rx="1" fill="#a6e3a1" opacity="0.4"/>
+                            <rect x="204" y="132" width="80" height="4" rx="1" fill="#89b4fa" opacity="0.35"/>
+                            <rect x="204" y="140" width="120" height="4" rx="1" fill="#f9e2af" opacity="0.35"/>
+                            <rect x="204" y="148" width="70" height="4" rx="1" fill="#a6e3a1" opacity="0.4"/>
+                            <rect x="196" y="156" width="90" height="4" rx="1" fill="#cba6f7" opacity="0.5"/>
+                            <rect x="204" y="164" width="110" height="4" rx="1" fill="#89b4fa" opacity="0.35"/>
+                            <rect x="204" y="172" width="60" height="4" rx="1" fill="#a6e3a1" opacity="0.4"/>
+                            <rect x="196" y="180" width="40" height="4" rx="1" fill="#cba6f7" opacity="0.5"/>
+                            <rect x="148" y="198" width="264" height="54" fill="#11111b"/>
+                            <rect x="148" y="198" width="264" height="1" fill="#333"/>
+                            <rect x="156" y="206" width="50" height="4" rx="1" fill="#a6e3a1" opacity="0.6"/>
+                            <rect x="210" y="206" width="80" height="4" rx="1" fill="#cdd6f4" opacity="0.3"/>
+                            <rect x="156" y="216" width="120" height="4" rx="1" fill="#cdd6f4" opacity="0.25"/>
+                            <rect x="156" y="226" width="40" height="4" rx="1" fill="#a6e3a1" opacity="0.6"/>
+                            <rect x="200" y="226" width="6" height="8" fill="#a6e3a1" opacity="0.8">
+                                <animate attributeName="opacity" values="0.8;0;0.8" dur="1s" repeatCount="indefinite"/>
+                            </rect>
+                        </g>
+
+                        <!-- ESC TRIGGERED bar -->
+                        <g class="danger-bar">
+                            <rect x="148" y="108" width="264" height="18" fill="#ff4747" opacity="0.9" rx="4"/>
+                            <text x="280" y="120" text-anchor="middle" fill="#fff" font-size="9" font-weight="700" font-family="monospace">ESC TRIGGERED</text>
+                        </g>
+
+                        <!-- Developer at desk -->
+                        <g>
+                            <rect x="250" y="290" width="60" height="8" rx="3" fill="#2a2a35"/>
+                            <rect x="276" y="298" width="8" height="30" fill="#2a2a35"/>
+                            <rect x="260" y="326" width="40" height="6" rx="3" fill="#2a2a35"/>
+                            <rect x="295" y="220" width="8" height="72" rx="4" fill="#2a2a35"/>
+                            <rect x="292" y="216" width="14" height="40" rx="4" fill="#333"/>
+                            <rect x="258" y="240" width="40" height="52" rx="6" fill="#1a1a2e"/>
+                            <rect x="230" y="248" width="36" height="8" rx="4" fill="#d4a574"/>
+                            <rect x="290" y="248" width="36" height="8" rx="4" fill="#d4a574"/>
+                            <circle cx="278" cy="224" r="18" fill="#d4a574"/>
+                            <path d="M260 218 Q260 200 278 200 Q296 200 296 218" fill="#1a1a2e"/>
+                            <circle cx="271" cy="224" r="5" stroke="#666" stroke-width="1.5" fill="none"/>
+                            <circle cx="285" cy="224" r="5" stroke="#666" stroke-width="1.5" fill="none"/>
+                            <line x1="276" y1="224" x2="280" y2="224" stroke="#666" stroke-width="1.5"/>
+                        </g>
+
+                        <!-- Manager walks in -->
+                        <g class="manager-svg">
+                            <rect x="560" y="230" width="44" height="60" rx="6" fill="#1e293b"/>
+                            <polygon points="582,236 578,260 586,260" fill="#ff4747" opacity="0.8"/>
+                            <circle cx="582" cy="210" r="18" fill="#c4956a"/>
+                            <path d="M564 204 Q564 190 582 188 Q600 190 600 204 L598 208 Q590 198 574 198 Z" fill="#2c1810"/>
+                            <line x1="573" y1="206" x2="579" y2="208" stroke="#2c1810" stroke-width="2"/>
+                            <line x1="585" y1="208" x2="591" y2="206" stroke="#2c1810" stroke-width="2"/>
+                            <circle cx="576" cy="212" r="2" fill="#1a1a2e"/>
+                            <circle cx="588" cy="212" r="2" fill="#1a1a2e"/>
+                            <rect x="566" y="290" width="12" height="42" rx="4" fill="#1e293b"/>
+                            <rect x="590" y="290" width="12" height="42" rx="4" fill="#1e293b"/>
+                            <rect x="562" y="328" width="20" height="8" rx="3" fill="#111"/>
+                            <rect x="588" y="328" width="20" height="8" rx="3" fill="#111"/>
+                            <rect x="540" y="254" width="14" height="18" rx="3" fill="#f5f5dc" opacity="0.8"/>
+                            <rect x="554" y="258" width="6" height="10" rx="5" fill="none" stroke="#f5f5dc" stroke-width="1.5" opacity="0.6"/>
+                            <rect x="542" y="244" width="24" height="10" rx="5" fill="#c4956a"/>
+                        </g>
+
+                        <!-- Keyboard -->
+                        <rect x="222" y="256" width="60" height="5" rx="2" fill="#2a2a35" stroke="#333" stroke-width="0.5"/>
+                        <rect x="226" y="257" width="4" height="3" rx="0.5" fill="#333"/>
+                        <rect x="232" y="257" width="4" height="3" rx="0.5" fill="#333"/>
+                        <rect x="238" y="257" width="4" height="3" rx="0.5" fill="#333"/>
+                        <rect x="244" y="257" width="4" height="3" rx="0.5" fill="#333"/>
+                        <rect x="250" y="257" width="4" height="3" rx="0.5" fill="#333"/>
+                        <rect x="256" y="257" width="4" height="3" rx="0.5" fill="#333"/>
+                        <rect x="262" y="257" width="4" height="3" rx="0.5" fill="#333"/>
+                        <rect x="268" y="257" width="4" height="3" rx="0.5" fill="#333"/>
+                        <rect x="274" y="257" width="4" height="3" rx="0.5" fill="#333"/>
+                        <!-- ESC key pulses -->
+                        <rect x="226" y="256.5" width="6" height="4" rx="1" fill="#ff4747" opacity="0.7">
+                            <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+                        </rect>
+                        <text x="229" y="260" text-anchor="middle" fill="#fff" font-size="3" font-weight="700" font-family="monospace">ESC</text>
+                    </svg>
+                </div>
+            </div>
+            <p class="scene-label">Slack open &rarr; manager spotted &rarr; <span style="color:var(--accent)">ESC</span> &rarr; VS Code + Terminal in 100 ms</p>
+        </div>
+
+        <section class="section" id="how">
+            <h2>What you get</h2>
+            <p class="lead">
+                Escape watches for a single hotkey. When pressed, it hides whatever you're doing and surfaces your "work" apps instantly. Release to restore.
+            </p>
+            <div class="grid-3">
+                <div class="card">
+                    <h3>Instant window flip</h3>
+                    <p>Every visible window hides and VS Code + Terminal come forward in under 100 ms. Faster than your manager can focus.</p>
+                </div>
+                <div class="card">
+                    <h3>Configurable trigger</h3>
+                    <p>Bind any hotkey or modifier combo. Default is ESC but you can use F13, Caps Lock remap, or a custom shortcut.</p>
+                </div>
+                <div class="card">
+                    <h3>Smart app roster</h3>
+                    <p>Choose which apps to show (VS Code, Terminal, Xcode) and which to hide (Slack, Discord, YouTube). Fully customizable.</p>
+                </div>
+                <div class="card">
+                    <h3>Restore on release</h3>
+                    <p>Hold mode: apps restore when you release the key. Toggle mode: press once to flip, press again to restore. Your call.</p>
+                </div>
+                <div class="card">
+                    <h3>Zero footprint</h3>
+                    <p>No dock icon, no menu bar clutter. Runs silently in the background until you need it.</p>
+                </div>
+                <div class="card">
+                    <h3>Fake typing mode</h3>
+                    <p>Optional: after flipping, Escape types random code characters into Terminal for 3 seconds. Maximum plausible deniability.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="download">
+            <h2>Install</h2>
+            <div class="download-panel">
+                <p class="lead" style="margin-bottom:0">Open the disk image, drag <span class="mono">Escape.app</span> into Applications, then eject the volume.</p>
+                <ul>
+                    <li>If Gatekeeper blocks: <strong>System Settings &rarr; Privacy &amp; Security</strong> &rarr; Open anyway.</li>
+                    <li>If needed: <span class="mono">xattr -cr ~/Downloads/Escape-1.0.0.dmg</span> then open again.</li>
+                    <li>Grant Accessibility permission when prompted (required for window management).</li>
+                </ul>
+                <div class="cta-row" style="margin-top:20px;margin-bottom:0">
+                    <a class="btn btn-primary" href="/downloads/Escape-1.0.0.dmg" download>Download Escape-1.0.0.dmg</a>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p><strong>Escape</strong> &middot; <a href="/crazy-apps.html">Crazy apps</a> &middot; <a href="/materials.html">Free materials</a> &middot; <a href="/">Nigents</a></p>
+        </footer>
+    </main>
+
+    <script>
+        (function () {
+            var toggle = document.getElementById('nav-toggle');
+            var backdrop = document.getElementById('nav-backdrop');
+            if (!toggle) return;
+            function setOpen(open) {
+                document.body.classList.toggle('nav-open', open);
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (backdrop) backdrop.hidden = !open;
+            }
+            toggle.addEventListener('click', function () {
+                setOpen(!document.body.classList.contains('nav-open'));
+            });
+            if (backdrop) backdrop.addEventListener('click', function () { setOpen(false); });
+            document.getElementById('nav-links').querySelectorAll('a').forEach(function (link) {
+                link.addEventListener('click', function () { setOpen(false); });
+            });
+
+            var scene = document.getElementById('scene');
+            if (!scene) return;
+            var phases = ['', 'phase-1', 'phase-2', 'phase-3'];
+            var timings = [2500, 1500, 2000, 2000];
+            var current = 0;
+            function nextPhase() {
+                scene.className = 'scene ' + phases[current];
+                var dur = timings[current];
+                current = (current + 1) % phases.length;
+                setTimeout(nextPhase, dur);
+            }
+            nextPhase();
+        })();
+    </script>
+</body>
+</html>

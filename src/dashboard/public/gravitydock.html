@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GravityDock — Turn your Mac apps into physics objects that bounce, float, and fly around your desktop. 4 physics modes, click to launch.">
+    <title>GravityDock — Your Apps Fly on Screen | Nigents</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09080c;
+            --bg2: #111018;
+            --border: #2a2a35;
+            --text: #ffffff;
+            --muted: #a0a0b0;
+            --dim: #555568;
+            --accent: #8B5CF6;
+            --accent2: #3B82F6;
+            --font: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* grid backdrop */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(139,92,246,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139,92,246,0.035) 1px, transparent 1px);
+            background-size: 55px 55px;
+            pointer-events: none; z-index: 0;
+        }
+
+        /* ─── NAV ─────────────────────────────────────── */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 18px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, var(--bg) 0%, transparent 100%);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .nav-logo {
+            width: 38px; height: 38px; border-radius: 8px;
+            background: #ff570a;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 18px; color: var(--bg);
+        }
+        .nav-name { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+        .nav-links { display: flex; align-items: center; gap: 22px; }
+        .nav-link { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }
+        .nav-link:hover { color: var(--text); }
+        .nav-back {
+            padding: 9px 18px; border: 1px solid var(--border);
+            color: var(--muted); text-decoration: none;
+            font-size: 13px; font-weight: 600; border-radius: 8px; transition: all .2s;
+        }
+        .nav-back:hover { border-color: var(--accent); color: var(--accent); }
+        .nav-toggle {
+            display: none; width: 42px; height: 42px;
+            align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text); cursor: pointer; font-size: 20px;
+        }
+        @media (max-width: 860px) {
+            .nav-toggle { display: flex; }
+            .nav-links {
+                display: none; position: fixed;
+                top: 68px; left: 16px; right: 16px;
+                flex-direction: column; align-items: stretch;
+                background: var(--bg2); border: 1px solid var(--border);
+                border-radius: 14px; padding: 14px; z-index: 999;
+            }
+            body.nav-open .nav-links { display: flex; }
+            .nav { padding: 16px 20px; }
+        }
+
+        /* ─── HERO ────────────────────────────────────── */
+        .hero {
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 120px 24px 60px; position: relative; z-index: 1;
+        }
+        .hero::before {
+            content: '';
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 600px; height: 400px;
+            background: radial-gradient(ellipse at 50% 30%, rgba(139,92,246,0.10) 0%, transparent 65%);
+            pointer-events: none;
+        }
+        .hero-content { text-align: center; max-width: 680px; position: relative; z-index: 1; }
+
+        /* app icon — proper SVG, not emoji */
+        .hero-icon {
+            width: 108px; height: 108px; margin: 0 auto 28px;
+            animation: iconFloat 4s ease-in-out infinite;
+            position: relative;
+        }
+        .hero-icon::after {
+            content: '';
+            position: absolute; bottom: -14px; left: 14%; width: 72%; height: 14px;
+            background: radial-gradient(ellipse, rgba(139,92,246,0.35), transparent);
+            border-radius: 50%; animation: shadowPulse 4s ease-in-out infinite;
+        }
+        @keyframes iconFloat {
+            0%,100% { transform: translateY(0) rotate(0deg); }
+            30% { transform: translateY(-13px) rotate(-2.5deg); }
+            70% { transform: translateY(7px) rotate(1.5deg); }
+        }
+        @keyframes shadowPulse {
+            0%,100% { opacity:.35; transform: scaleX(1); }
+            50% { opacity:.6; transform: scaleX(0.78); }
+        }
+        .hero-icon-inner {
+            width: 108px; height: 108px; border-radius: 26px;
+            background: linear-gradient(145deg, #8B5CF6 0%, #3B82F6 60%, #06B6D4 100%);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 18px 55px rgba(99,102,241,.38), inset 0 1px 0 rgba(255,255,255,.18);
+        }
+
+        .hero-kicker {
+            display: inline-block;
+            font-size: 11px; font-weight: 700; letter-spacing: .18em;
+            text-transform: uppercase; color: rgba(167,139,250,.8);
+            border: 1px solid rgba(139,92,246,.28); border-radius: 3px;
+            padding: 6px 14px; margin-bottom: 18px;
+        }
+        .hero-h1 {
+            font-size: clamp(42px, 7vw, 70px); font-weight: 900;
+            letter-spacing: -2.5px; line-height: 1.05; margin-bottom: 8px;
+            background: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 40%, #8B5CF6 80%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: gradShift 3.5s ease-in-out infinite;
+        }
+        @keyframes gradShift {
+            0%,100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .hero-tagline { font-size: 19px; color: var(--muted); margin-bottom: 10px; }
+        .hero-sub { font-size: 14px; color: var(--dim); max-width: 440px; margin: 0 auto 28px; line-height: 1.65; }
+
+        .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 34px; }
+        .badge {
+            padding: 5px 12px; border-radius: 999px; font-size: 11px; font-weight: 600;
+            animation: bPop .5s ease-out both;
+        }
+        .badge:nth-child(1){animation-delay:.08s} .badge:nth-child(2){animation-delay:.16s}
+        .badge:nth-child(3){animation-delay:.24s} .badge:nth-child(4){animation-delay:.32s}
+        @keyframes bPop { from{opacity:0;transform:scale(.82) translateY(8px)} to{opacity:1;transform:none} }
+        .b-purple { background:rgba(139,92,246,.12); color:#a78bfa; border:1px solid rgba(139,92,246,.25); }
+        .b-blue   { background:rgba(59,130,246,.12);  color:#60a5fa; border:1px solid rgba(59,130,246,.25); }
+        .b-green  { background:rgba(16,185,129,.12);  color:#34d399; border:1px solid rgba(16,185,129,.25); }
+        .b-orange { background:rgba(245,158,11,.12);  color:#fbbf24; border:1px solid rgba(245,158,11,.25); }
+
+        .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 32px; text-decoration: none; border-radius: 12px;
+            font-weight: 700; font-size: 15px; cursor: pointer; border: none; transition: all .3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #8B5CF6, #3B82F6);
+            color: #fff; box-shadow: 0 8px 28px rgba(99,102,241,.3);
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 38px rgba(99,102,241,.45); }
+        .btn-ghost {
+            background: rgba(255,255,255,.055); color: #bbb;
+            border: 1px solid rgba(255,255,255,.1);
+        }
+        .btn-ghost:hover { background: rgba(255,255,255,.09); transform: translateY(-3px); }
+
+        /* ─── DEMO SCREEN ─────────────────────────────── */
+        .demo-section { padding: 72px 24px; position: relative; z-index: 1; }
+        .section-label {
+            text-align: center; font-size: 11px; font-weight: 700;
+            letter-spacing: .18em; text-transform: uppercase;
+            color: rgba(139,92,246,.7); margin-bottom: 10px;
+        }
+        .section-title { text-align: center; font-size: clamp(26px,4vw,36px); font-weight: 800; color: var(--text); margin-bottom: 6px; }
+        .section-sub { text-align: center; font-size: 14px; color: var(--muted); margin-bottom: 40px; }
+
+        .screen-wrap {
+            max-width: 900px; margin: 0 auto;
+            border-radius: 18px; overflow: hidden;
+            box-shadow: 0 40px 90px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06);
+        }
+        .screen-bar {
+            background: #18181f; padding: 10px 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .sdot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+        .sdot.r { background: #ff5f56; } .sdot.y { background: #ffbd2e; } .sdot.g { background: #27c93f; }
+        .screen-title-bar { margin-left: 8px; font-size: 11px; color: #555; flex: 1; }
+        .screen-live {
+            padding: 3px 9px; border-radius: 8px; font-size: 10px; font-weight: 700;
+            background: rgba(99,102,241,.15); color: #818cf8; letter-spacing: .06em;
+        }
+
+        .screen-canvas {
+            background: linear-gradient(160deg, #0c0c15 0%, #080810 100%);
+            position: relative;
+            height: clamp(280px, 44vw, 460px);
+            overflow: hidden;
+        }
+
+        /* app icon tiles in canvas */
+        .fly-tile {
+            position: absolute;
+            width: 64px; height: 64px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            border-radius: 16px; cursor: pointer;
+            transition: box-shadow .15s;
+            will-change: transform;
+        }
+        .fly-tile:hover { box-shadow: 0 0 0 2px rgba(139,92,246,.5), 0 0 24px rgba(139,92,246,.3); }
+        .fly-tile-icon {
+            width: 46px; height: 46px; border-radius: 11px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 3px; flex-shrink: 0;
+        }
+        .fly-tile-label {
+            font-size: 8px; font-weight: 600; color: rgba(255,255,255,.65);
+            line-height: 1; text-align: center; max-width: 60px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
+        /* toolbar */
+        .screen-toolbar {
+            background: #0e0e16; padding: 10px 14px;
+            display: flex; gap: 8px; align-items: center; justify-content: center;
+            flex-wrap: wrap;
+            border-top: 1px solid rgba(255,255,255,.04);
+        }
+        .chip {
+            display: flex; align-items: center; gap: 5px;
+            padding: 6px 13px; border-radius: 8px; font-size: 11px; font-weight: 600;
+            background: rgba(99,102,241,.09); color: #818cf8; cursor: pointer;
+            transition: all .2s; border: 1px solid rgba(99,102,241,.14);
+            user-select: none;
+        }
+        .chip:hover { background: rgba(99,102,241,.18); }
+        .chip.active { background: rgba(99,102,241,.24); border-color: rgba(99,102,241,.4); color: #a5b4fc; }
+        .chip-sep { width: 1px; height: 18px; background: rgba(255,255,255,.06); flex-shrink: 0; }
+
+        /* ─── HOW IT WORKS ────────────────────────────── */
+        .how-section { padding: 72px 24px; position: relative; z-index: 1; }
+        .how-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 18px; max-width: 860px; margin: 0 auto;
+        }
+        .how-card {
+            background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.05);
+            border-radius: 16px; padding: 24px; transition: all .3s; position: relative; overflow: hidden;
+        }
+        .how-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, #8B5CF6, transparent);
+            opacity: 0; transition: opacity .3s;
+        }
+        .how-card:hover { transform: translateY(-4px); border-color: rgba(139,92,246,.22); }
+        .how-card:hover::before { opacity: 1; }
+        .how-num {
+            font-size: 30px; font-weight: 900; margin-bottom: 10px;
+            background: linear-gradient(135deg, #8B5CF6, #3B82F6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .how-card h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+        .how-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+        /* ─── MODES ───────────────────────────────────── */
+        .modes-section { padding: 72px 24px; position: relative; z-index: 1; }
+        .modes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 14px; max-width: 860px; margin: 0 auto;
+        }
+        .mode-card {
+            background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.05);
+            border-radius: 14px; padding: 22px; text-align: center; transition: all .3s;
+        }
+        .mode-card:hover { transform: translateY(-4px); border-color: rgba(139,92,246,.22); }
+        .mode-icon-wrap {
+            width: 52px; height: 52px; border-radius: 13px; margin: 0 auto 12px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(139,92,246,.08); border: 1px solid rgba(139,92,246,.15);
+        }
+        .mode-card h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+        .mode-card p { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+        /* ─── INSTALL ─────────────────────────────────── */
+        .install-section { padding: 60px 24px; position: relative; z-index: 1; }
+        .install-card {
+            max-width: 700px; margin: 0 auto;
+            background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.06);
+            border-radius: 18px; padding: 28px; overflow: hidden;
+        }
+        .install-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+        .code-block {
+            background: #06060f; border-radius: 10px; padding: 16px 18px;
+            font-family: 'SF Mono','Fira Code',monospace; font-size: 12px;
+            line-height: 2; margin-bottom: 16px; overflow-x: auto;
+            border: 1px solid rgba(255,255,255,.04);
+        }
+        .cm { color: #445; } .cp { color: #34d399; } .cc { color: #e0e0e0; } .ch { color: #fbbf24; }
+
+        /* ─── DOWNLOAD CTA ────────────────────────────── */
+        .dl-section {
+            padding: 80px 24px;
+            background: linear-gradient(160deg, #08080f, #0c0c1a, #08080f);
+            text-align: center; position: relative; z-index: 1; overflow: hidden;
+        }
+        .dl-section::before {
+            content: '';
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            width: 500px; height: 300px;
+            background: radial-gradient(ellipse, rgba(139,92,246,.08), transparent 70%);
+            pointer-events: none;
+        }
+        .dl-section .section-title { margin-bottom: 8px; }
+        .dl-note { font-size: 12px; color: var(--dim); margin-top: 16px; }
+
+        footer {
+            padding: 24px; text-align: center; font-size: 11px;
+            color: var(--dim); border-top: 1px solid rgba(255,255,255,.04);
+            position: relative; z-index: 1;
+        }
+        footer a { color: rgba(139,92,246,.7); text-decoration: none; }
+        footer a:hover { color: #a78bfa; }
+
+        @media (max-width: 600px) {
+            .hero { padding: 100px 16px 48px; }
+            .demo-section, .how-section, .modes-section, .install-section, .dl-section { padding: 56px 16px; }
+            .screen-toolbar { gap: 6px; }
+            .chip { padding: 5px 10px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+    <a href="/" class="nav-brand">
+        <div class="nav-logo">N</div>
+        <span class="nav-name">Nigents</span>
+    </a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">&#9776;</button>
+    <div class="nav-links" id="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/crazy-apps.html" class="nav-link">Crazy apps</a>
+        <a href="/materials.html" class="nav-link">Free Materials</a>
+        <a href="/crazy-apps.html" class="nav-back">All apps</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-icon">
+            <div class="hero-icon-inner">
+                <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+                    <!-- dock platform -->
+                    <rect x="6" y="38" width="40" height="8" rx="4" fill="rgba(255,255,255,0.15)"/>
+                    <!-- icon 1 floating high -->
+                    <rect x="10" y="8" width="12" height="12" rx="3.5" fill="rgba(255,255,255,0.85)"/>
+                    <!-- icon 2 mid float -->
+                    <rect x="26" y="16" width="12" height="12" rx="3.5" fill="rgba(255,255,255,0.6)"/>
+                    <!-- gravity arcs -->
+                    <path d="M16 20 Q16 36 16 36" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="3 3" fill="none"/>
+                    <path d="M32 28 Q32 36 32 36" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="3 3" fill="none"/>
+                </svg>
+            </div>
+        </div>
+
+        <p class="hero-kicker">macOS Physics App</p>
+        <h1 class="hero-h1">GravityDock</h1>
+        <p class="hero-tagline">Your Apps Fly on Screen</p>
+        <p class="hero-sub">Turn your Dock apps into physics objects that bounce, float, and fly around your desktop. Four real-time modes. Click any icon to launch the app instantly.</p>
+
+        <div class="badges">
+            <span class="badge b-purple">Real Physics</span>
+            <span class="badge b-blue">4 Modes</span>
+            <span class="badge b-green">Click to Launch</span>
+            <span class="badge b-orange">Dock Auto-Loads</span>
+        </div>
+        <div class="cta-row">
+            <a href="/downloads/GravityDock-1.0.0.dmg" download class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 3v13M7 11l5 5 5-5M3 20h18"/></svg>
+                Download DMG
+            </a>
+            <a href="#demo" class="btn btn-ghost">See Demo</a>
+        </div>
+    </div>
+</section>
+
+<!-- DEMO -->
+<section class="demo-section" id="demo">
+    <p class="section-label">Live Simulation</p>
+    <h2 class="section-title">Watch Your Apps Fly</h2>
+    <p class="section-sub">Real physics running in your browser — same engine as the app</p>
+
+    <div class="screen-wrap">
+        <div class="screen-bar">
+            <div class="sdot r"></div>
+            <div class="sdot y"></div>
+            <div class="sdot g"></div>
+            <div class="screen-title-bar">Desktop &mdash; GravityDock Active</div>
+            <div class="screen-live">LIVE</div>
+        </div>
+        <div class="screen-canvas" id="simCanvas"></div>
+        <div class="screen-toolbar">
+            <div class="chip active" data-mode="bounce">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                Bounce
+            </div>
+            <div class="chip" data-mode="float">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18 Q7 8 12 12 Q17 16 21 6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+                Float
+            </div>
+            <div class="chip" data-mode="gravity">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v14M5 14l7 7 7-7"/></svg>
+                Gravity
+            </div>
+            <div class="chip" data-mode="chaos">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4l6 6M14 14l6 6M4 20l6-6M14 10l6-6"/></svg>
+                Chaos
+            </div>
+            <div class="chip-sep"></div>
+            <div class="chip" id="btnShake">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4l3 3M17 4l3 3M4 20l3-3M17 20l3-3M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+                Shake
+            </div>
+            <div class="chip" id="btnExplode">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z"/></svg>
+                Explode
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section">
+    <p class="section-label">Setup</p>
+    <h2 class="section-title">How It Works</h2>
+    <p class="section-sub">Three steps to flying apps</p>
+    <div class="how-grid">
+        <div class="how-card">
+            <div class="how-num">01</div>
+            <h3>Pick Your Apps</h3>
+            <p>Choose which apps fly from the settings panel. Your Dock apps are auto-selected. Add or remove anything at any time.</p>
+        </div>
+        <div class="how-card">
+            <div class="how-num">02</div>
+            <h3>Choose a Mode</h3>
+            <p>Bounce off walls, drift in zero gravity, fall with real gravity, or go full chaos. Adjust speed and icon size in settings.</p>
+        </div>
+        <div class="how-card">
+            <div class="how-num">03</div>
+            <h3>Click to Launch</h3>
+            <p>Transparent floating panels appear over your screen. Click any flying icon to instantly open that app — fully functional.</p>
+        </div>
+    </div>
+</section>
+
+<!-- MODES -->
+<section class="modes-section">
+    <p class="section-label">Physics Engine</p>
+    <h2 class="section-title">4 Physics Modes</h2>
+    <p class="section-sub">Switch modes in real time without restarting</p>
+    <div class="modes-grid">
+        <div class="mode-card">
+            <div class="mode-icon-wrap">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v8M8 12h8"/>
+                </svg>
+            </div>
+            <h3>Bounce</h3>
+            <p>Icons ricochet off screen edges like rubber balls. Classic elastic physics.</p>
+        </div>
+        <div class="mode-card">
+            <div class="mode-icon-wrap">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round">
+                    <path d="M3 18 Q7 6 12 12 Q17 18 21 6"/>
+                </svg>
+            </div>
+            <h3>Float</h3>
+            <p>Icons drift peacefully in zero gravity. Wraps screen edges for a zen desktop.</p>
+        </div>
+        <div class="mode-card">
+            <div class="mode-icon-wrap">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round">
+                    <path d="M12 2v14M5 13l7 7 7-7"/>
+                </svg>
+            </div>
+            <h3>Gravity</h3>
+            <p>Real downward pull. Icons fall and pile up bouncing on the screen floor.</p>
+        </div>
+        <div class="mode-card">
+            <div class="mode-icon-wrap">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round">
+                    <path d="M4 4l5 5M15 4l5 5M4 20l5-5M15 20l5-5M2 12h4M18 12h4"/>
+                </svg>
+            </div>
+            <h3>Chaos</h3>
+            <p>Random forces push icons in every direction. Pure kinetic energy on screen.</p>
+        </div>
+    </div>
+</section>
+
+<!-- INSTALL -->
+<section class="install-section">
+    <p class="section-label">Get Started</p>
+    <h2 class="section-title">Installation</h2>
+    <p class="section-sub">Running in under 60 seconds</p>
+    <div class="install-card">
+        <h3 style="color:#a78bfa;">Quick Install</h3>
+        <div class="code-block">
+            <span class="cm"># Open the DMG and drag to Applications</span><br>
+            <span class="cp">$ </span><span class="cc">open GravityDock.dmg</span><br>
+            <span class="cp">$ </span><span class="cc">cp -R /Volumes/GravityDock/GravityDock.app /Applications/</span><br><br>
+            <span class="cm"># First launch — right-click the app icon and choose Open</span>
+        </div>
+        <h3 style="color:#fbbf24; margin-bottom:10px;">Fix: "App is damaged" warning</h3>
+        <div class="code-block">
+            <span class="cp">$ </span><span class="ch">xattr -cr /Applications/GravityDock.app</span><br>
+            <span class="cp">$ </span><span class="ch">codesign --force --deep --sign - /Applications/GravityDock.app</span>
+        </div>
+        <p style="font-size:12px;color:var(--dim);">Requires macOS 14 Sonoma or later. Universal binary — runs on Apple Silicon and Intel.</p>
+    </div>
+</section>
+
+<!-- DOWNLOAD CTA -->
+<section class="dl-section">
+    <h2 class="section-title">Download GravityDock</h2>
+    <p class="section-sub">For macOS 14+ &nbsp;&middot;&nbsp; Apple Silicon &amp; Intel &nbsp;&middot;&nbsp; Free</p>
+    <a href="/downloads/GravityDock-1.0.0.dmg" download class="btn btn-primary" style="font-size:16px;padding:16px 38px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 3v13M7 11l5 5 5-5M3 20h18"/></svg>
+        Download DMG — Free
+    </a>
+    <p class="dl-note">Built with SwiftUI &middot; CVDisplayLink &middot; NSPanel</p>
+</section>
+
+<footer>
+    <a href="/crazy-apps.html">Crazy apps</a> &nbsp;&middot;&nbsp;
+    <a href="/">Nigents</a> &nbsp;&middot;&nbsp;
+    GravityDock &copy; 2025
+</footer>
+
+<script>
+(function () {
+    // ── NAV toggle ──────────────────────────────────────────────────
+    var toggle = document.getElementById('nav-toggle');
+    var links  = document.getElementById('nav-links');
+    if (toggle) {
+        toggle.addEventListener('click', function () {
+            var open = document.body.classList.toggle('nav-open');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        document.addEventListener('click', function (e) {
+            if (!toggle.contains(e.target) && !links.contains(e.target)) {
+                document.body.classList.remove('nav-open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
+    // ── Physics simulation ──────────────────────────────────────────
+    var canvas = document.getElementById('simCanvas');
+    var mode   = 'bounce';
+    var icons  = [];
+    var raf;
+
+    // App definitions — proper SVG icons, no emoji
+    var apps = [
+        {
+            name: 'Finder',
+            bg: 'linear-gradient(145deg,#5AC8FA,#007AFF)',
+            svg: '<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="11" r="5.5" stroke="rgba(255,255,255,0.9)" stroke-width="2"/><path d="M7 18 Q13 21 19 18" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>'
+        },
+        {
+            name: 'Safari',
+            bg: 'linear-gradient(145deg,#34C3F0,#0099E8)',
+            svg: '<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="10" stroke="rgba(255,255,255,0.8)" stroke-width="1.8"/><path d="M13 4v3M13 19v3M4 13h3M19 13h3" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/><path d="M17 9l-5 5M9 17l5-5" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/></svg>'
+        },
+        {
+            name: 'Messages',
+            bg: 'linear-gradient(145deg,#34D058,#00B340)',
+            svg: '<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M4 6 Q4 4 6 4 L20 4 Q22 4 22 6 L22 16 Q22 18 20 18 L10 18 L5 22 L6 18 L6 18 Q4 18 4 16 Z" stroke="rgba(255,255,255,0.9)" stroke-width="1.8" fill="none"/></svg>'
+        },
+        {
+            name: 'Mail',
+            bg: 'linear-gradient(145deg,#5B9CF6,#1A6DD5)',
+            svg: '<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="3" y="7" width="20" height="14" rx="2.5" stroke="rgba(255,255,255,0.9)" stroke-width="1.8"/><path d="M3 9l10 7 10-7" stroke="rgba(255,255,255,0.9)" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>'
+        },
+        {
+            name: 'Music',
+            bg: 'linear-gradient(145deg,#FF6B9D,#E0145E)',
+            svg: '<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M10 18 L10 9 L20 7 L20 16" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="8.5" cy="19" r="3" stroke="rgba(255,255,255,0.9)" stroke-width="1.8"/><circle cx="18.5" cy="17" r="3" stroke="rgba(255,255,255,0.9)" stroke-width="1.8"/></svg>'
+        },
+        {
+            name: 'Notes',
+            bg: 'linear-gradient(145deg,#FFD60A,#FF9500)',
+            svg: '<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="5" y="4" width="16" height="18" rx="3" stroke="rgba(0,0,0,0.55)" stroke-width="1.8"/><path d="M9 9h8M9 13h8M9 17h5" stroke="rgba(0,0,0,0.55)" stroke-width="1.8" stroke-linecap="round"/></svg>'
+        },
+        {
+            name: 'Calendar',
+            bg: 'linear-gradient(145deg,#FF6B6B,#E0001B)',
+            svg: '<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="3" y="5" width="20" height="18" rx="3" stroke="rgba(255,255,255,0.8)" stroke-width="1.8"/><path d="M3 11h20" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/><path d="M8 3v4M18 3v4" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round"/><text x="13" y="21" text-anchor="middle" font-size="9" font-weight="900" fill="white">15</text></svg>'
+        },
+        {
+            name: 'Terminal',
+            bg: 'linear-gradient(145deg,#4A5568,#1A202C)',
+            svg: '<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="3" y="5" width="20" height="16" rx="3" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><path d="M8 12l4 3-4 3" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M14 18h4" stroke="#34d399" stroke-width="2" stroke-linecap="round"/></svg>'
+        },
+        {
+            name: 'Photos',
+            bg: 'linear-gradient(145deg,#FF9500,#FF2D55,#5856D6)',
+            svg: '<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="4.5" stroke="rgba(255,255,255,0.9)" stroke-width="2"/><circle cx="13" cy="13" r="1.5" fill="rgba(255,255,255,0.9)"/><path d="M13 3v3M13 20v3M3 13h3M20 13h3M6.4 6.4l2.1 2.1M17.5 17.5l2.1 2.1M6.4 19.6l2.1-2.1M17.5 8.5l2.1-2.1" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/></svg>'
+        },
+        {
+            name: 'VS Code',
+            bg: 'linear-gradient(145deg,#1E88E5,#0D47A1)',
+            svg: '<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M5 7l7 6-7 6" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M13 19h8" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round"/></svg>'
+        }
+    ];
+
+    function buildIcon(app) {
+        var d = document.createElement('div');
+        d.className = 'fly-tile';
+        var ic = document.createElement('div');
+        ic.className = 'fly-tile-icon';
+        ic.style.background = app.bg;
+        ic.innerHTML = app.svg;
+        var lbl = document.createElement('div');
+        lbl.className = 'fly-tile-label';
+        lbl.textContent = app.name;
+        d.appendChild(ic);
+        d.appendChild(lbl);
+        return d;
+    }
+
+    function initSim() {
+        canvas.innerHTML = '';
+        icons = [];
+        var rect = canvas.getBoundingClientRect();
+        var W = rect.width, H = rect.height;
+        // stagger start positions in a line that drops in
+        apps.forEach(function (app, i) {
+            var el = buildIcon(app);
+            canvas.appendChild(el);
+            icons.push({
+                el: el,
+                x: Math.random() * (W - 70) + 4,
+                y: -80 - i * 40,          // start above viewport → fall in
+                vx: (Math.random() - 0.5) * 80,
+                vy: 40 + Math.random() * 80,
+                angle: 0,
+                spin: (Math.random() - 0.5) * 60,
+                w: 64, h: 64
+            });
+        });
+        if (raf) cancelAnimationFrame(raf);
+        lastT = 0;
+        raf = requestAnimationFrame(step);
+    }
+
+    var lastT = 0;
+    function step(t) {
+        var dt = Math.min((t - lastT) / 1000, 0.05) || 0.016;
+        lastT = t;
+        var rect = canvas.getBoundingClientRect();
+        var W = rect.width, H = rect.height;
+
+        icons.forEach(function (ic) {
+            var grav = 0, drag = 1;
+            if (mode === 'gravity') { grav = 380; drag = 0.998; }
+            else if (mode === 'chaos') {
+                ic.vx += (Math.random() - 0.5) * 320 * dt;
+                ic.vy += (Math.random() - 0.5) * 320 * dt;
+                grav = 60; drag = 0.994;
+            } else if (mode === 'float') {
+                drag = 0.998;
+                ic.vx += (Math.random() - 0.5) * 8 * dt;
+                ic.vy += (Math.random() - 0.5) * 8 * dt;
+            } else {
+                drag = 1;
+            }
+
+            ic.vy += grav * dt;
+            ic.vx *= drag; ic.vy *= drag;
+
+            // clamp max speed
+            var spd = Math.sqrt(ic.vx * ic.vx + ic.vy * ic.vy);
+            if (spd > 500) { ic.vx = ic.vx / spd * 500; ic.vy = ic.vy / spd * 500; }
+
+            ic.x += ic.vx * dt;
+            ic.y += ic.vy * dt;
+
+            // spin proportional to horizontal speed
+            ic.spin += (ic.vx * 0.04 - ic.spin) * 0.08;
+            ic.angle += ic.spin * dt;
+
+            if (mode === 'bounce' || mode === 'gravity' || mode === 'chaos') {
+                if (ic.x < 0)         { ic.x = 0;      ic.vx =  Math.abs(ic.vx) * 0.78; ic.spin = Math.abs(ic.spin) * 0.7; }
+                if (ic.x + ic.w > W)  { ic.x = W - ic.w; ic.vx = -Math.abs(ic.vx) * 0.78; ic.spin = -Math.abs(ic.spin) * 0.7; }
+                if (ic.y < 0)         { ic.y = 0;      ic.vy =  Math.abs(ic.vy) * 0.78; }
+                if (ic.y + ic.h > H)  { ic.y = H - ic.h; ic.vy = -Math.abs(ic.vy) * 0.82; }
+            } else {
+                // wrap edges in float mode
+                if (ic.x + ic.w < -20) ic.x = W + 10;
+                if (ic.x > W + 20)     ic.x = -ic.w - 10;
+                if (ic.y + ic.h < -20) ic.y = H + 10;
+                if (ic.y > H + 20)     ic.y = -ic.h - 10;
+            }
+
+            var rot = Math.max(-18, Math.min(18, ic.angle));
+            ic.el.style.transform = 'translate(' + ic.x + 'px,' + ic.y + 'px) rotate(' + rot + 'deg)';
+        });
+
+        raf = requestAnimationFrame(step);
+    }
+
+    // Mode chips
+    document.querySelectorAll('.chip[data-mode]').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            mode = chip.dataset.mode;
+            document.querySelectorAll('.chip[data-mode]').forEach(function (c) { c.classList.remove('active'); });
+            chip.classList.add('active');
+        });
+    });
+
+    // Shake
+    document.getElementById('btnShake').addEventListener('click', function () {
+        icons.forEach(function (ic) {
+            ic.vx += (Math.random() - 0.5) * 600;
+            ic.vy += (Math.random() - 0.5) * 600;
+        });
+    });
+
+    // Explode
+    document.getElementById('btnExplode').addEventListener('click', function () {
+        var rect = canvas.getBoundingClientRect();
+        var cx = rect.width / 2, cy = rect.height / 2;
+        icons.forEach(function (ic) {
+            var dx = ic.x + 32 - cx, dy = ic.y + 32 - cy;
+            var d = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+            ic.vx = (dx / d) * 560;
+            ic.vy = (dy / d) * 560;
+        });
+    });
+
+    // Start
+    initSim();
+
+    // Re-init on resize (debounced)
+    var resizeTimer;
+    window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(initSim, 250);
+    });
+}());
+</script>
+</body>
+</html>
