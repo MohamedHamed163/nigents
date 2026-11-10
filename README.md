@@ -176,6 +176,19 @@ These are native macOS menu-bar toys and utilities, mostly written in Swift. Eac
 | <img src="docs/screenshots/crazy-apps/desktopload.png"/><br/>**Desktop Load** | <img src="docs/screenshots/crazy-apps/nightowldiary.png"/><br/>**NightOwlDiary** |
 | <img src="docs/screenshots/crazy-apps/whispertype.png"/><br/>**WhisperType** | |
 
+### 🖥️ Running natively on macOS
+
+Window captures from the apps running on an Apple Silicon Mac. Most live in the menu bar; these are their control panels.
+
+| | | | |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/screenshots/running/airsound.png" width="200"/><br/>**AirSound** | <img src="docs/screenshots/running/appjealousy.png" width="200"/><br/>**AppJealousy** | <img src="docs/screenshots/running/batterydna.png" width="200"/><br/>**Battery DNA** | <img src="docs/screenshots/running/breakalarm.png" width="200"/><br/>**Break Alarm** |
+| <img src="docs/screenshots/running/breathbar.png" width="200"/><br/>**BreathBar** | <img src="docs/screenshots/running/cursorage.png" width="200"/><br/>**CursorAge** | <img src="docs/screenshots/running/escape.png" width="200"/><br/>**Escape** | <img src="docs/screenshots/running/focusflow.png" width="200"/><br/>**FocusFlow** |
+| <img src="docs/screenshots/running/ghosttouch.png" width="200"/><br/>**GhostTouch** | <img src="docs/screenshots/running/gravitydock.png" width="200"/><br/>**GravityDock** | <img src="docs/screenshots/running/langflip.png" width="200"/><br/>**LangFlip** | <img src="docs/screenshots/running/moodboard.png" width="200"/><br/>**MoodBoard** |
+| <img src="docs/screenshots/running/mousetrailmap.png" width="200"/><br/>**MouseTrailMap** | <img src="docs/screenshots/running/nightowldiary.png" width="200"/><br/>**NightOwlDiary** | <img src="docs/screenshots/running/tiltdj.png" width="200"/><br/>**TiltDJ** | <img src="docs/screenshots/running/whispertype.png" width="200"/><br/>**WhisperType** |
+
+NotchHQ, DontForget and Rise&Open run without a standard window: they appear from the notch on hover or from a camera gesture.
+
 > The DMGs are unsigned experiments. On first launch, right-click the app and choose **Open** to get past Gatekeeper. Some apps ask for Accessibility, Camera or Microphone permission.
 
 ---
