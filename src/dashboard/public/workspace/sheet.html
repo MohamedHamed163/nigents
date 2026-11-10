@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workspace — Fix Brief | Nigents</title>
+  <link rel="stylesheet" href="brief.css" />
+  <link rel="stylesheet" href="workspace-howto.css" />
+  <script src="/workspace/workspace-alert.js?v=3"></script>
+  <script src="/workspace/workspace-multi-app.js?v=2"></script>
+</head>
+<body class="workspace-theme">
+  <!-- Modal + flash first so viewport-fixed layering stays correct -->
+  <div id="workspace-modal" class="workspace-modal" aria-hidden="true">
+    <div class="workspace-modal-scrim"></div>
+    <div class="workspace-modal-panel" role="dialog" aria-modal="true" aria-labelledby="workspace-modal-title">
+      <div class="workspace-modal-accent" aria-hidden="true"></div>
+      <h3 id="workspace-modal-title" class="workspace-modal-title"></h3>
+      <p id="workspace-modal-body" class="workspace-modal-body"></p>
+      <div class="workspace-modal-actions">
+        <button type="button" id="workspace-modal-btn-cancel" class="workspace-modal-btn secondary" style="display: none">Cancel</button>
+        <button type="button" id="workspace-modal-btn-primary" class="workspace-modal-btn primary">OK</button>
+      </div>
+    </div>
+  </div>
+  <div id="workspace-flash" class="workspace-flash" aria-live="polite" role="status">
+    <span class="workspace-flash-icon" aria-hidden="true"></span>
+    <span class="workspace-flash-text"></span>
+  </div>
+  <div class="top-banner"></div>
+  <nav class="hub-nav workspace-sheet-topnav" aria-label="Workspace section">
+    <a href="./">← Workspace hub</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="ai-features.html">AI features</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="sprints.html">Sprints</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="builds.html">Builds</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="designs.html">Designs</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="canvas.html">Canvas</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="flow.html">How it works</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="/">Nigents</a>
+  </nav>
+  <header class="header">
+    <div class="header-inner">
+      <div class="logos-row">
+        <div class="logo-block workspace-mark">
+          <div>
+            <div class="vb-name workspace-name-line" style="font-weight:800;color:#4D8EC5;">Workspace</div>
+            <div class="vb-sub workspace-sub-line"></div>
+          </div>
+        </div>
+        <div class="logo-divider">×</div>
+        <a href="/" class="logo-block" style="text-decoration:none;color:inherit;align-items:center;gap:10px;">
+          <div class="workspace-orb" style="width:44px;height:44px;font-size:18px;animation:none;">N</div>
+          <span style="font-weight:800;font-size:18px;letter-spacing:-0.04em;">Nigents</span>
+        </a>
+        <div class="logo-divider">Partner</div>
+        <div class="logo-block problemx">
+          <img src="assets/problem-x-logo.png" alt="Problem-X" />
+        </div>
+      </div>
+      <div class="brief-title shimmer-title" id="brief-title">Loading…</div>
+      <div class="brief-subtitle" id="brief-subtitle"></div>
+      <div class="header-meta-row" id="header-meta"></div>
+      <div class="edit-key-bar">
+        <span><strong>Edit key</strong> — must match server <code>WORKSPACE_EDIT_SECRET</code> (see <code>.env</code> on the host):</span>
+        <input type="password" id="edit-key-input" placeholder="Paste secret, then Save" autocomplete="off" />
+        <button type="button" id="save-edit-key">Save</button>
+      </div>
+    </div>
+  </header>
+  <div class="main" style="margin-top:18px;">
+    <!-- ── Flow diagram: how the bug brief works ─────────────────────── -->
+    <details class="workspace-howto">
+      <summary>
+        <span class="howto-arrow" aria-hidden="true">▸</span>
+        <span class="howto-label">How this bug brief works</span>
+        <span class="howto-tag">flow diagram</span>
+      </summary>
+      <div class="howto-body">
+        <p class="howto-intro">
+          Each card on this page is a bug to fix. You can edit any card if you have the
+          <strong>edit key</strong> set above. Comments stay attached to the bug forever — even after
+          it's marked done — so the history of the fix is preserved.
+        </p>
+        <div class="howto-diagram">
+          <pre class="mermaid">
+flowchart LR
+  A([Open sheet]) --&gt; B[Browse bug cards]
+  B --&gt; C[Click a card to expand]
+  C --&gt; D[Add criteria / tags<br/>/ images / URLs]
+  D --&gt; E[💬 Drop a comment<br/>edit later if needed]
+  E --&gt; F[Drag to reorder]
+  F --&gt; G([Mark done ✓])
+  G --&gt; H[Card collapses<br/>but stays visible]
+          </pre>
+        </div>
+        <div class="howto-foot">
+          <span>📍 You are here: <strong>Bug sheet</strong></span>
+          <a href="flow.html#comments">Full architecture diagrams ↗</a>
+        </div>
+      </div>
+    </details>
+  </div>
+  <main class="main" id="brief-root"></main>
+  <footer>
+    <div class="footer-logos">
+      <div class="footer-n" style="background:var(--accent-orange);" aria-hidden="true">N</div>
+      <img src="assets/problem-x-logo.png" alt="Problem-X" />
+    </div>
+    <div class="footer-txt">Developer fix briefs · Nigents · Problem-X · Consult Code Achieve</div>
+  </footer>
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search).get('slug');
+      var preset = typeof window.WORKSPACE_PRESET_SLUG === 'string' ? window.WORKSPACE_PRESET_SLUG : '';
+      if (!q && preset) {
+        history.replaceState(null, '', 'sheet.html?slug=' + encodeURIComponent(preset));
+      }
+    })();
+  </script>
+  <script src="brief.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="workspace-notifications.js"></script>
+  <script src="workspace-comments.js?v=3"></script>
+  <script src="workspace-howto.js" defer></script>
+</body>
+</html>

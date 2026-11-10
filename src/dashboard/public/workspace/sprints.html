@@ -1,0 +1,2520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sprints — Workspace · Nigents</title>
+  <!-- build: 2026-05-28 · v5 — ALL sprint modals are native <dialog> -->
+  <meta name="workspace-sprints-build" content="2026-05-28-overlay-v5-all-dialogs" />
+  <link rel="stylesheet" href="brief.css" />
+  <link rel="stylesheet" href="workspace-howto.css" />
+  <script src="/workspace/workspace-alert.js?v=3"></script>
+  <script src="/workspace/workspace-multi-app.js?v=1"></script>
+  <style>
+    .sp-wrap { max-width: 1280px; margin: 0 auto; padding: clamp(16px, 4vw, 36px) var(--gutter); }
+    .sp-head { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+    .sp-head h1 { font-size:28px; font-weight:800; letter-spacing:-0.02em; margin:0; }
+    .sp-head .sp-sub { color:var(--text-muted); font-size:13px; margin-top:6px; }
+    .sp-btn-primary {
+      background:var(--accent-orange,#ff570a); color:#0a0a0a; border:none;
+      padding:10px 18px; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer;
+      transition:transform .12s, box-shadow .2s;
+    }
+    .sp-btn-primary:hover { transform:translateY(-1px); box-shadow:0 8px 22px rgba(255,87,10,.35); }
+    .sp-btn-ghost {
+      background:transparent; color:var(--text-primary); border:1px solid var(--border);
+      padding:8px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
+      text-decoration:none; display:inline-block;
+    }
+    .sp-btn-ghost:hover { border-color:var(--accent-orange); color:var(--accent-orange); }
+
+    .sp-tabs { display:flex; gap:6px; margin:18px 0; border-bottom:1px solid var(--border); }
+    .sp-tab { padding:10px 16px; font-size:13px; font-weight:600; cursor:pointer;
+              border:none; background:none; color:var(--text-secondary);
+              border-bottom:2px solid transparent; margin-bottom:-1px; }
+    .sp-tab.active { color:var(--accent-orange); border-bottom-color:var(--accent-orange); }
+    .sp-tab .count { display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px;
+                     background:rgba(255,255,255,.07); font-size:11px; color:var(--text-muted); }
+    .sp-tab.active .count { background:rgba(255,87,10,.15); color:var(--accent-orange); }
+
+    /* ── Sprint card grid ─────────────────────────────────────── */
+    .sp-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px; }
+    .sp-card {
+      position:relative; overflow:hidden;
+      background:linear-gradient(155deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+      border:1px solid var(--border); border-radius:14px; padding:18px 20px;
+      cursor:pointer;
+      transition:border-color .2s, transform .15s, box-shadow .2s;
+      animation:spFadeUp .35s ease both;
+    }
+    @keyframes spFadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    .sp-card::before {
+      content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+      background:var(--accent-orange);
+    }
+    .sp-card.status-planning::before  { background:#cdcdd8; }
+    .sp-card.status-active::before    { background:var(--accent-green); }
+    .sp-card.status-completed::before { background:var(--blue-accent); }
+    .sp-card.status-cancelled::before { background:var(--danger); }
+    .sp-card:hover {
+      border-color:var(--accent-orange); transform:translateY(-2px);
+      box-shadow:0 12px 30px -10px rgba(0,0,0,.4);
+    }
+    .sp-card-row { display:flex; gap:14px; align-items:flex-start; }
+    .sp-card-main { flex:1; min-width:0; }
+    .sp-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px; }
+    .sp-card h3 {
+      font-size:16px; font-weight:800; margin:0; color:var(--text-primary);
+      letter-spacing:-0.01em; line-height:1.3;
+      overflow:hidden; text-overflow:ellipsis; display:-webkit-box;
+      -webkit-line-clamp:1; -webkit-box-orient:vertical;
+    }
+    .sp-status { padding:3px 9px; border-radius:6px; font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; flex-shrink:0; }
+    .sp-status.planning  { background:rgba(168,168,179,.15); color:#cdcdd8; }
+    .sp-status.active    { background:rgba(46,230,184,.18); color:var(--accent-green); }
+    .sp-status.completed { background:rgba(94,179,255,.15); color:var(--blue-accent); }
+    .sp-status.cancelled { background:rgba(248,113,113,.15); color:var(--danger); }
+    .sp-card .goal {
+      font-size:13px; color:var(--text-soft); min-height:36px; margin-bottom:10px; line-height:1.45;
+      overflow:hidden; text-overflow:ellipsis; display:-webkit-box;
+      -webkit-line-clamp:2; -webkit-box-orient:vertical;
+    }
+
+    /* Donut progress ring */
+    .sp-ring { flex-shrink:0; position:relative; width:64px; height:64px; }
+    .sp-ring svg { width:64px; height:64px; transform:rotate(-90deg); }
+    .sp-ring .bg  { stroke:rgba(255,255,255,.06); }
+    .sp-ring .fg  { stroke:var(--accent-orange); transition:stroke-dashoffset .6s ease; }
+    .sp-card.status-active    .sp-ring .fg { stroke:var(--accent-green); }
+    .sp-card.status-completed .sp-ring .fg { stroke:var(--blue-accent); }
+    .sp-ring .pct {
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      font-family:ui-monospace,monospace; font-size:12px; font-weight:800; color:var(--text-primary);
+    }
+
+    .sp-meta { display:flex; gap:14px; font-size:11px; color:var(--text-muted); font-family:var(--mono); flex-wrap:wrap; margin-top:6px; }
+    .sp-meta strong { color:var(--text-secondary); font-weight:700; }
+    .sp-meta .sep { color:rgba(255,255,255,.15); }
+
+    .sp-card-foot {
+      display:flex; justify-content:space-between; align-items:center;
+      margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,.04);
+      font-size:11px;
+    }
+    .sp-card-dates { color:var(--text-muted); font-family:var(--mono); }
+    .sp-card-days  { font-weight:700; }
+    .sp-card-days.urgent { color:var(--danger); }
+    .sp-card-days.soon   { color:#ffb86b; }
+    .sp-card-days.ok     { color:var(--accent-green); }
+
+    /* ── Sprint detail (board + burndown) ─────────────────────────── */
+    .sp-detail { display:none; }
+    .sp-detail.show { display:block; }
+    .sp-detail-head { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px; align-items:flex-start; }
+    .sp-detail-head h2 { font-size:26px; font-weight:800; margin:0 0 4px; letter-spacing:-0.02em; }
+    .sp-detail-meta { font-size:12px; color:var(--text-muted); font-family:var(--mono); display:flex; gap:14px; flex-wrap:wrap; margin-top:6px; }
+    .sp-detail-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+    /* Hero stat strip — visible only when a sprint is open */
+    .sp-hero {
+      display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;
+      margin:18px 0 6px;
+    }
+    @media (max-width:700px) { .sp-hero { grid-template-columns:1fr 1fr; } }
+    .sp-stat {
+      position:relative; overflow:hidden;
+      background:linear-gradient(150deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border:1px solid var(--border); border-radius:12px; padding:14px 16px;
+    }
+    .sp-stat .sp-stat-label {
+      font-size:10px; font-weight:800; letter-spacing:.16em; text-transform:uppercase;
+      color:var(--text-muted); font-family:var(--mono); margin-bottom:6px;
+    }
+    .sp-stat .sp-stat-value {
+      font-size:24px; font-weight:800; letter-spacing:-0.02em; color:var(--text-primary);
+      font-variant-numeric:tabular-nums;
+    }
+    .sp-stat .sp-stat-sub { font-size:11px; color:var(--text-muted); margin-top:4px; font-family:var(--mono); }
+    .sp-stat.accent-orange .sp-stat-value { color:var(--accent-orange); }
+    .sp-stat.accent-green  .sp-stat-value { color:var(--accent-green); }
+    .sp-stat.accent-blue   .sp-stat-value { color:var(--blue-accent); }
+    .sp-stat.accent-danger .sp-stat-value { color:var(--danger); }
+    .sp-stat .sp-stat-bar {
+      margin-top:10px; height:5px; background:rgba(255,255,255,.06);
+      border-radius:3px; overflow:hidden;
+    }
+    .sp-stat .sp-stat-bar > span {
+      display:block; height:100%; background:linear-gradient(90deg, var(--accent-orange), #ff8a40);
+      transition:width .5s ease;
+    }
+    .sp-stat.accent-green .sp-stat-bar > span { background:linear-gradient(90deg, var(--accent-green), #5eead4); }
+
+    /* ── Quick filter chips above the board ───────────────────── */
+    .sp-board-filters {
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      margin:18px 0 6px; padding:10px 14px;
+      background:var(--bg-card); border:1px solid var(--border); border-radius:10px;
+    }
+    .sp-board-filters .fbl {
+      font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase;
+      color:var(--text-muted); font-family:var(--mono); margin-right:4px;
+    }
+    .sp-fchip {
+      padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700;
+      background:rgba(255,255,255,.04); border:1px solid var(--border);
+      color:var(--text-secondary); cursor:pointer; transition:all .15s;
+    }
+    .sp-fchip:hover { border-color:var(--accent-orange); color:var(--accent-orange); }
+    .sp-fchip.active {
+      background:rgba(255,87,10,.15); border-color:var(--accent-orange); color:var(--accent-orange);
+    }
+    .sp-board-search {
+      margin-left:auto; padding:5px 10px; background:var(--bg-primary);
+      border:1px solid var(--border); border-radius:6px; color:var(--text-primary);
+      font:inherit; font-size:12px; min-width:180px; outline:none;
+    }
+    .sp-board-search:focus { border-color:var(--accent-orange); }
+
+    /* ── Kanban board ─────────────────────────────────────────── */
+    .sp-board {
+      display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px;
+      margin-top:12px;
+    }
+    @media (max-width: 900px) { .sp-board { grid-template-columns:1fr 1fr; } }
+    @media (max-width: 600px) { .sp-board { grid-template-columns:1fr; } }
+    .sp-col {
+      position:relative; overflow:hidden;
+      background:var(--bg-elevated); border:1px solid var(--border); border-radius:12px;
+      padding:0; min-height:300px;
+      display:flex; flex-direction:column;
+    }
+    .sp-col::before {
+      content:''; position:absolute; left:0; top:0; right:0; height:3px;
+      background:var(--col-accent, #cdcdd8); opacity:.7;
+    }
+    .sp-col[data-state="todo"]        { --col-accent:#cdcdd8; }
+    .sp-col[data-state="in_progress"] { --col-accent:#ffb86b; }
+    .sp-col[data-state="in_review"]   { --col-accent:#a78bfa; }
+    .sp-col[data-state="done"]        { --col-accent:var(--accent-green); }
+    .sp-col-head {
+      position:sticky; top:0; z-index:1;
+      display:flex; justify-content:space-between; align-items:center;
+      margin:0; padding:14px 14px 10px;
+      background:linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-elevated) 80%, transparent 100%);
+    }
+    .sp-col-head h4 {
+      display:flex; align-items:center; gap:8px;
+      font-size:11px; font-weight:800; color:var(--col-accent); text-transform:uppercase; letter-spacing:.12em; margin:0;
+    }
+    .sp-col-head h4::before {
+      content:''; display:inline-block; width:8px; height:8px; border-radius:50%;
+      background:var(--col-accent); flex-shrink:0;
+    }
+    .sp-col-head .count {
+      padding:2px 9px; border-radius:999px; background:rgba(255,255,255,.06);
+      font-size:11px; font-weight:700; color:var(--text-secondary); font-family:var(--mono);
+    }
+    .sp-col-list {
+      flex:1; overflow-y:auto; padding:0 10px 14px; min-height:60px;
+    }
+
+    /* Issue card — Jira-like compact card with priority bar on the left */
+    .sp-card-issue {
+      position:relative; overflow:hidden;
+      background:var(--bg-card); border:1px solid var(--border); border-radius:10px;
+      padding:12px 14px 10px; margin-bottom:8px;
+      cursor:grab;
+      transition:border-color .15s, transform .12s, box-shadow .2s;
+      animation:spFadeUp .25s ease both;
+    }
+    .sp-card-issue::before {
+      content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+      background:var(--card-pri, var(--text-muted));
+    }
+    .sp-card-issue.pri-high   { --card-pri:var(--danger); }
+    .sp-card-issue.pri-medium { --card-pri:#ffb86b; }
+    .sp-card-issue.pri-low    { --card-pri:var(--blue-accent); }
+    .sp-card-issue:hover { transform:translateY(-1px); box-shadow:0 6px 18px -6px rgba(0,0,0,.5); border-color:var(--card-pri); }
+    .sp-card-issue.dragging { opacity:.35; }
+    .sp-col.drag-over { background:rgba(255,87,10,.06); }
+    .sp-col.drag-over::before { background:var(--accent-orange); opacity:1; }
+    .sp-card-issue .pre {
+      display:flex; align-items:center; gap:6px; margin-bottom:5px;
+      font-size:10px; font-family:ui-monospace,monospace; color:var(--text-muted); font-weight:600;
+    }
+    .sp-card-issue .pre .sp-type {
+      padding:1px 6px; border-radius:4px; background:rgba(255,255,255,.05);
+      color:var(--text-secondary); text-transform:uppercase; letter-spacing:.06em;
+    }
+    .sp-card-issue .title {
+      font-size:13.5px; font-weight:600; color:var(--text-primary); margin-bottom:9px;
+      line-height:1.4; letter-spacing:-0.005em;
+    }
+    .sp-card-issue .foot {
+      display:flex; justify-content:space-between; align-items:center; gap:8px;
+    }
+    .sp-card-issue .foot-left  { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .sp-card-issue .foot-right { display:flex; align-items:center; gap:6px; }
+
+    .sp-chip {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:2px 7px; border-radius:5px; font-size:10px; font-weight:700;
+      font-family:var(--mono); letter-spacing:.04em;
+    }
+    .sp-chip.pri-high   { background:rgba(248,113,113,.18); color:var(--danger); }
+    .sp-chip.pri-medium { background:rgba(255,184,107,.15); color:#ffb86b; }
+    .sp-chip.pri-low    { background:rgba(94,179,255,.12); color:var(--blue-accent); }
+    .sp-chip.points     { background:rgba(46,230,184,.15); color:var(--accent-green); }
+    .sp-chip.sheet      { background:rgba(255,255,255,.04); color:var(--text-muted); }
+    .sp-chip.due        { background:rgba(255,184,107,.12); color:#ffb86b; }
+    .sp-chip.due.overdue { background:rgba(248,113,113,.18); color:var(--danger); }
+
+    /* Circular assignee avatar */
+    .sp-avatar {
+      width:24px; height:24px; border-radius:50%;
+      display:inline-flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:10px; text-transform:uppercase;
+      background:linear-gradient(135deg, var(--accent-orange) 0%, #ff7e35 100%);
+      color:#09080c;
+      border:2px solid var(--bg-card);
+      box-shadow:0 2px 6px -1px rgba(0,0,0,.4);
+    }
+    .sp-avatar.role-developer { background:linear-gradient(135deg,#5eb3ff 0%,#3d8fd9 100%); }
+    .sp-avatar.role-designer  { background:linear-gradient(135deg,#a78bfa 0%,#8b6dd9 100%); }
+    .sp-avatar.role-tester    { background:linear-gradient(135deg,#2ee6b8 0%,#1bbf95 100%); }
+    .sp-avatar.unassigned     { background:rgba(255,255,255,.05); color:var(--text-muted); }
+
+    .sp-comments-pill {
+      display:inline-flex; align-items:center; gap:3px;
+      font-size:10px; color:var(--text-muted); font-family:var(--mono);
+    }
+    .sp-comments-pill svg { width:11px; height:11px; opacity:.75; }
+
+    .sp-empty { padding:24px 16px; text-align:center; color:var(--text-muted); font-size:13px;
+                background:var(--bg-card); border:1px dashed var(--border); border-radius:10px; }
+
+    /* ── Burndown SVG (polished) ──────────────────────────────── */
+    .sp-burndown { background:var(--bg-elevated); border:1px solid var(--border); border-radius:12px;
+                   padding:18px 20px; margin-top:22px; }
+    .sp-burndown-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
+    .sp-burndown h3 { font-size:13px; font-weight:800; color:var(--text-primary); margin:0; letter-spacing:-0.01em; }
+    .sp-burndown .legend { display:flex; gap:14px; font-size:11px; color:var(--text-muted); font-family:var(--mono); }
+    .sp-burndown .legend .swatch { display:inline-block; width:10px; height:10px; vertical-align:middle; margin-right:6px; border-radius:2px; }
+    .sp-burndown .legend .ideal  .swatch { background:#5e6072; }
+    .sp-burndown .legend .actual .swatch { background:var(--accent-orange); }
+    .sp-burndown svg { width:100%; height:auto; max-height:280px; display:block; }
+
+    /* ── Modal (create/edit sprint) ──────────────────────────────── */
+    /* Native <dialog> for top-layer overlay — same approach as the issue
+       drawer. Browser places <dialog open> opened via showModal() in the
+       top layer above every other element. */
+    dialog.sp-modal.sp-dialog-static {
+      border: none;
+      padding: 0;
+      margin: auto;
+      max-width: 540px;
+      width: calc(100vw - 32px);
+      max-height: 90vh;
+      background: transparent;
+      color: var(--text-primary);
+      overflow: visible;
+    }
+    dialog.sp-modal.sp-dialog-static::backdrop {
+      background: rgba(8, 7, 11, 0.82);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    /* Defensive fallback if showModal() isn't supported */
+    dialog.sp-modal.sp-dialog-static[open]:not(:modal) {
+      position: fixed !important;
+      inset: 0 !important;
+      margin: auto !important;
+      z-index: 99999 !important;
+    }
+    /* Legacy <div class="sp-modal"> styles — kept for any non-static modals
+       (e.g. dynamically created via JS as a <div>). Modern static ones are
+       <dialog> elements and use the rules above. */
+    .sp-modal:not(dialog) { position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:1000;
+                display:none; align-items:center; justify-content:center; padding:20px; }
+    .sp-modal:not(dialog).open { display:flex; }
+    .sp-modal-panel { background:var(--bg-elevated); border:1px solid var(--border); border-radius:14px;
+                      padding:28px; max-width:520px; width:100%; max-height:90vh; overflow-y:auto; }
+    .sp-modal-panel h3 { margin:0 0 6px; font-size:18px; font-weight:800; }
+    .sp-modal-panel .hint { color:var(--text-soft); font-size:13px; margin-bottom:16px; }
+    .sp-modal-panel label { display:block; font-size:11px; font-weight:700; letter-spacing:.06em;
+                            text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; font-family:var(--mono); }
+    .sp-modal-panel input, .sp-modal-panel select, .sp-modal-panel textarea {
+      width:100%; padding:10px 12px; background:var(--bg-primary); color:var(--text-primary);
+      border:1px solid var(--border); border-radius:8px; font:inherit; outline:none; margin-bottom:14px;
+    }
+    .sp-modal-panel textarea { min-height:70px; resize:vertical; }
+    .sp-modal-panel .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .sp-modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+    .sp-err { color:var(--danger); font-size:13px; margin-bottom:10px; display:none; }
+    .sp-err.show { display:block; }
+
+    /* Add-existing-issues picker */
+    .sp-picker-list { max-height:280px; overflow-y:auto; border:1px solid var(--border);
+                      border-radius:8px; background:var(--bg-primary); margin-bottom:14px; }
+    .sp-picker-row { display:flex; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border);
+                     cursor:pointer; }
+    .sp-picker-row:last-child { border-bottom:none; }
+    .sp-picker-row:hover { background:rgba(255,255,255,.02); }
+    .sp-picker-row input { width:auto; margin:2px 0 0; }
+    .sp-picker-row .meta { flex:1; }
+    .sp-picker-row .t { font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:2px; }
+    .sp-picker-row .s { font-size:11px; color:var(--text-muted); font-family:var(--mono); }
+
+    .sp-back { display:inline-flex; align-items:center; gap:6px; color:var(--text-muted);
+               text-decoration:none; font-size:13px; padding:6px 0; }
+    .sp-back:hover { color:var(--accent-orange); }
+
+    /* ── Jira-style detail drawer ─────────────────────────────── */
+    /* The issue "drawer" is a native <dialog> opened with showModal() —
+       the browser places it in the TOP LAYER above every element on the
+       page. No z-index or position tricks needed; can't be pushed down
+       by transformed ancestors. We just style it to look right. */
+    dialog.sp-drawer-dialog {
+      /* Reset the default <dialog> chrome (white border, margin auto) */
+      border: none;
+      padding: 0;
+      margin: auto;            /* keeps the dialog centred in the viewport */
+      max-width: 720px;
+      width: calc(100vw - 32px);
+      max-height: 88vh;
+      background: transparent; /* the panel inside provides the visible chrome */
+      color: var(--text-primary);
+      overflow: visible;
+    }
+    /* The native ::backdrop is the dark blurred layer behind the dialog. */
+    dialog.sp-drawer-dialog::backdrop {
+      background: rgba(8, 7, 11, 0.82);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    /* Defensive: if showModal() failed and we fell back to [open] attribute,
+       the dialog renders inline by default — force it into a fixed overlay. */
+    dialog.sp-drawer-dialog[open]:not(:modal) {
+      position: fixed !important;
+      inset: 0 !important;
+      margin: auto !important;
+      z-index: 99999 !important;
+    }
+    /* Legacy <div class="sp-drawer"> styles — kept ONLY for the
+       no-showModal-support fallback; in modern browsers <dialog>::backdrop
+       handles all of this and these rules don't apply. */
+    .sp-drawer:not(dialog) {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 99999 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 24px !important;
+      margin: 0 !important;
+      background: rgba(8, 7, 11, 0.82) !important;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      overflow-y: auto !important;
+    }
+    .sp-drawer-panel {
+      position: relative;
+      max-width: 720px;
+      width: 100%;
+      max-height: 88vh;
+      height: auto;
+      border-radius: 16px;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(155deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+      border: 1px solid var(--border);
+      box-shadow: 0 30px 90px -20px rgba(0, 0, 0, 0.75);
+      animation: spDrawerPop 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      overflow: hidden;          /* keep rounded corners on inner content */
+    }
+    /* When dialog is centred via margin:auto, the panel fills it.
+       When fallback overlay is used (legacy div path), centering happens
+       via flex on .sp-drawer:not(dialog). Both work without margin tweaks. */
+    @keyframes spDrawerPop {
+      from { transform: translateY(8px) scale(0.97); opacity: 0; }
+      to   { transform: translateY(0)   scale(1);    opacity: 1; }
+    }
+    .sp-drawer-head {
+      display:flex; justify-content:space-between; align-items:flex-start; gap:14px;
+      padding:22px 26px 14px; border-bottom:1px solid var(--border);
+      border-radius:16px 16px 0 0;
+    }
+    .sp-drawer-eyebrow {
+      font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+      color:var(--text-muted); font-family:ui-monospace,monospace; margin-bottom:6px;
+    }
+    .sp-drawer-title {
+      margin:0; font-size:18px; font-weight:800; letter-spacing:-0.01em;
+      line-height:1.3; color:var(--text-primary);
+    }
+    .sp-drawer-open {
+      flex-shrink:0; font-size:11px; font-weight:700; letter-spacing:.05em;
+      color:var(--accent-orange); text-decoration:none;
+      padding:6px 10px; border:1px solid rgba(255,87,10,.4); border-radius:6px;
+      transition:all .15s;
+    }
+    .sp-drawer-open:hover { background:rgba(255,87,10,.1); }
+    .sp-drawer-body { flex:1 1 auto; overflow-y:auto; padding:18px 26px 8px; min-height:0; }
+    .sp-drawer-fields label { margin-top:10px; }
+    .sp-drawer-fields .row { margin-top:10px; }
+    .sp-drawer-prompt {
+      padding:10px 12px; background:rgba(255,255,255,.025);
+      border:1px solid rgba(255,255,255,.05); border-radius:8px;
+      font-size:13px; line-height:1.55; color:var(--text-secondary);
+      white-space:pre-wrap; word-wrap:break-word; margin-top:6px;
+    }
+    .sp-drawer-actions {
+      padding:14px 26px; border-top:1px solid var(--border);
+      background:var(--bg-elevated);
+      border-radius:0 0 16px 16px;
+      flex-shrink:0;
+    }
+    @media (max-width: 700px) {
+      .sp-drawer { padding:12px; }
+      .sp-drawer-panel { max-height:95vh; }
+    }
+
+    /* ── Enhanced issue drawer (qe-* classes) ─────────────────── */
+    .qe-head-v2 {
+      padding:20px 26px 16px;
+      background:linear-gradient(180deg, rgba(255,107,26,.04) 0%, transparent 100%);
+      border-bottom:1px solid var(--border);
+    }
+    .qe-head-inner { display:flex; flex-direction:column; gap:8px; }
+    .qe-head-row1 {
+      display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+    }
+    .qe-id-pill {
+      font-family:ui-monospace,monospace; font-size:11px; font-weight:700;
+      padding:3px 9px; border-radius:5px;
+      background:rgba(255,255,255,.06); color:var(--text-secondary); letter-spacing:.04em;
+    }
+    .qe-status-pill {
+      font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+      padding:3px 9px; border-radius:5px;
+      font-family:ui-monospace,monospace;
+    }
+    .qe-status-pill.state-backlog,
+    .qe-status-pill.state-todo        { background:rgba(205,205,216,.12); color:#cdcdd8; }
+    .qe-status-pill.state-in_progress { background:rgba(255,184,107,.15); color:#ffb86b; }
+    .qe-status-pill.state-in_review   { background:rgba(167,139,250,.15); color:#a78bfa; }
+    .qe-status-pill.state-done        { background:rgba(46,230,184,.18); color:var(--accent-green); }
+    .qe-status-pill.state-cancelled   { background:rgba(248,113,113,.12); color:var(--danger); }
+
+    .qe-prio-pill {
+      font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+      padding:3px 9px; border-radius:5px;
+      font-family:ui-monospace,monospace;
+    }
+    .qe-prio-pill.pri-high   { background:rgba(248,113,113,.18); color:var(--danger); }
+    .qe-prio-pill.pri-medium { background:rgba(255,184,107,.15); color:#ffb86b; }
+    .qe-prio-pill.pri-low    { background:rgba(94,179,255,.12); color:var(--blue-accent); }
+
+    .qe-type-pill {
+      font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+      padding:3px 9px; border-radius:5px;
+      background:rgba(255,255,255,.04); color:var(--text-muted);
+      font-family:ui-monospace,monospace;
+    }
+    .qe-overdue-pill {
+      font-size:10px; font-weight:800; letter-spacing:.1em;
+      padding:3px 10px; border-radius:5px;
+      background:rgba(248,113,113,.22); color:var(--danger);
+      font-family:ui-monospace,monospace;
+      animation:qe-pulse 2.2s ease-in-out infinite;
+    }
+    @keyframes qe-pulse { 0%, 100% { box-shadow:0 0 0 0 rgba(248,113,113,0); } 50% { box-shadow:0 0 0 4px rgba(248,113,113,.18); } }
+
+    .qe-title-v2 {
+      font-size:20px; font-weight:800; letter-spacing:-0.018em; line-height:1.3;
+      color:var(--text-primary); margin:4px 0 0;
+    }
+    .qe-sheet-line { font-size:12.5px; color:var(--text-muted); margin-top:2px; }
+    .qe-sheet-line strong { color:var(--text-secondary); font-weight:600; }
+
+    .qe-meta-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+    .qe-meta-chip {
+      font-size:11px; padding:3px 9px; border-radius:999px;
+      background:rgba(255,255,255,.04); color:var(--text-muted);
+      font-family:ui-monospace,monospace;
+    }
+    .qe-meta-chip.done       { background:rgba(46,230,184,.1); color:var(--accent-green); }
+    .qe-meta-chip.assignee   { background:rgba(94,179,255,.1); color:var(--blue-accent); }
+    .qe-meta-chip.unassigned { background:rgba(248,113,113,.08); color:var(--danger); }
+    .qe-meta-chip strong { color:inherit; font-weight:700; }
+
+    /* Sections in the body */
+    .qe-section { margin:18px 0; }
+    .qe-section-head {
+      font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;
+      color:var(--text-muted); font-family:ui-monospace,monospace;
+      margin-bottom:8px;
+    }
+    .qe-desc-section .qe-desc {
+      padding:14px 16px; background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.05); border-radius:10px;
+      font-size:13.5px; line-height:1.65; color:var(--text-primary);
+      white-space:pre-wrap; word-wrap:break-word; max-height:280px; overflow-y:auto;
+    }
+
+    /* Criteria checklist */
+    .qe-crit { list-style:none; padding:0; margin:0; }
+    .qe-crit li {
+      display:flex; align-items:flex-start; gap:10px;
+      padding:7px 0; font-size:13px; color:var(--text-primary); line-height:1.5;
+      border-bottom:1px solid rgba(255,255,255,.03);
+    }
+    .qe-crit li:last-child { border-bottom:none; }
+    .qe-crit li.is-done    { color:var(--text-muted); text-decoration:line-through; }
+    .qe-crit-box {
+      flex-shrink:0; width:18px; height:18px; border-radius:4px;
+      border:1.5px solid rgba(255,255,255,.15);
+      display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:11px; color:var(--accent-green);
+      background:rgba(255,255,255,.02); margin-top:1px;
+    }
+    .qe-crit li.is-done .qe-crit-box {
+      background:rgba(46,230,184,.15); border-color:var(--accent-green);
+    }
+
+    /* Tags */
+    .qe-tags { display:flex; gap:6px; flex-wrap:wrap; }
+    .qe-tag {
+      padding:3px 10px; border-radius:999px;
+      background:rgba(94,179,255,.1); color:var(--blue-accent);
+      font-size:11px; font-weight:700; font-family:ui-monospace,monospace;
+      letter-spacing:.02em;
+    }
+
+    /* Media tiles */
+    .qe-media { display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:8px; }
+    .qe-media-tile {
+      display:block; border-radius:8px; overflow:hidden;
+      border:1px solid rgba(255,255,255,.06); aspect-ratio:1/1;
+      background:rgba(255,255,255,.03); position:relative;
+      transition:border-color .15s, transform .12s;
+    }
+    .qe-media-tile:hover { border-color:var(--accent-orange); transform:translateY(-1px); }
+    .qe-media-tile img { width:100%; height:100%; object-fit:cover; display:block; }
+    .qe-media-tile.is-link {
+      display:flex; align-items:center; justify-content:center; padding:8px;
+      font-size:10.5px; color:var(--blue-accent); text-decoration:none; text-align:center;
+      line-height:1.4; word-wrap:break-word;
+    }
+
+    /* ── Late-reason panel inside the drawer ──────────────────── */
+    .sp-late-panel {
+      margin-top:18px; padding:14px 16px; border-radius:12px;
+      background:linear-gradient(180deg, rgba(248,113,113,.06) 0%, rgba(248,113,113,.02) 100%);
+      border:1px solid rgba(248,113,113,.22);
+    }
+    .sp-late-head { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-primary); margin-bottom:10px; }
+    .sp-late-head strong { color:#f87171; font-weight:800; letter-spacing:.01em; }
+    .sp-late-count { padding:2px 9px; border-radius:999px; background:rgba(248,113,113,.18); color:#f87171; font-size:11px; font-weight:700; font-family:ui-monospace,monospace; min-width:22px; text-align:center; }
+    .sp-late-banner {
+      padding:8px 12px; border-radius:8px; margin-bottom:10px;
+      background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.3);
+      color:#fca5a5; font-size:12.5px; line-height:1.5; font-weight:500;
+    }
+    .sp-late-banner strong { color:#f87171; }
+    .sp-late-list { display:flex; flex-direction:column; gap:0; margin-bottom:10px; }
+    .sp-late-entry {
+      padding:10px 0; border-bottom:1px solid rgba(255,255,255,.04);
+      animation:spCommentIn .25s ease both;
+    }
+    .sp-late-entry:last-of-type { border-bottom:none; }
+    .sp-late-entry-meta { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:5px; font-size:11px; color:var(--text-muted); font-family:ui-monospace,monospace; }
+    .sp-late-entry-meta .sp-late-author { color:var(--text-primary); font-weight:700; font-size:12px; font-family:inherit; }
+    .sp-late-entry-meta .sp-late-shift {
+      padding:1px 7px; border-radius:4px; background:rgba(255,184,107,.15); color:#ffb86b;
+      font-weight:700; font-size:10px; letter-spacing:.04em;
+    }
+    .sp-late-entry-body {
+      font-size:13px; line-height:1.55; color:var(--text-primary);
+      padding:8px 12px; background:rgba(255,255,255,.025);
+      border:1px solid rgba(255,255,255,.04); border-radius:8px;
+      white-space:pre-wrap; word-wrap:break-word;
+    }
+    .sp-late-form { padding-top:10px; border-top:1px solid rgba(248,113,113,.18); }
+    .sp-late-form-head { font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#fca5a5; margin-bottom:8px; }
+    .sp-late-form textarea {
+      width:100%; padding:10px 12px; background:var(--bg-primary); color:var(--text-primary);
+      border:1px solid rgba(248,113,113,.25); border-radius:8px; font:inherit; outline:none;
+      resize:vertical; min-height:64px; transition:border-color .2s, box-shadow .2s;
+    }
+    .sp-late-form textarea:focus { border-color:#f87171; box-shadow:0 0 0 3px rgba(248,113,113,.12); }
+    .sp-late-form-row { display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap; }
+    .sp-late-form-row .sp-late-due-label {
+      font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+      color:var(--text-muted); font-family:var(--mono);
+    }
+    .sp-late-form-row input[type="date"] {
+      padding:7px 10px; background:var(--bg-primary); color:var(--text-primary);
+      border:1px solid var(--border); border-radius:6px; font:inherit; outline:none;
+    }
+    .sp-late-form-row .sp-btn-primary { margin-left:auto; padding:7px 14px; font-size:12px; }
+    .sp-late-form-row .sp-btn-primary:disabled { opacity:.4; cursor:not-allowed; background:rgba(255,255,255,.08); color:rgba(255,255,255,.4); box-shadow:none; }
+    .sp-late-err { padding:6px 10px; margin-top:6px; background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.3); color:#f87171; font-size:11.5px; font-weight:600; border-radius:6px; display:none; }
+    .sp-late-err.show { display:block; }
+
+    /* Board-card overdue badge */
+    .sp-card-issue.overdue::after {
+      content:''; position:absolute; right:0; top:0; bottom:0; width:3px;
+      background:#f87171; opacity:.65;
+    }
+    .sp-chip.due.overdue { animation:sp-overdue-pulse 2.2s ease-in-out infinite; }
+    @keyframes sp-overdue-pulse { 0%, 100% { box-shadow:0 0 0 0 rgba(248,113,113,0); } 50% { box-shadow:0 0 0 3px rgba(248,113,113,.18); } }
+    .sp-chip.late-reasons { background:rgba(255,184,107,.15); color:#ffb86b; }
+    /* Sprint-list overdue badge */
+    .sp-card-overdue {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:2px 8px; border-radius:999px;
+      background:rgba(248,113,113,.16); color:#fca5a5;
+      font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+      margin-left:6px; font-family:ui-monospace,monospace;
+    }
+
+    /* ── Comments inside the drawer ───────────────────────────── */
+    .sp-drawer-comments { margin-top:24px; padding-top:18px; border-top:1px solid var(--border); }
+    .sp-comments-head {
+      display:flex; align-items:center; gap:10px;
+      font-size:13px; color:var(--text-primary); margin-bottom:14px;
+    }
+    .sp-comments-count {
+      padding:2px 9px; border-radius:999px;
+      background:rgba(255,255,255,0.06); color:var(--text-secondary);
+      font-size:11px; font-weight:700; font-family:ui-monospace,monospace;
+      min-width:22px; text-align:center;
+    }
+    .sp-comments-list { display:flex; flex-direction:column; gap:0; }
+    .sp-comment {
+      display:flex; gap:12px; padding:12px 0;
+      border-bottom:1px solid rgba(255,255,255,.05);
+      animation: spCommentIn .25s ease both;
+    }
+    .sp-comment:last-of-type { border-bottom:none; }
+    @keyframes spCommentIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+    .sp-comment-avatar {
+      flex-shrink:0; width:32px; height:32px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:13px; text-transform:uppercase;
+      background:linear-gradient(135deg, var(--accent-orange,#ff570a) 0%, #ff7e35 100%);
+      color:#09080c;
+      box-shadow:0 3px 10px -3px rgba(255,87,10,.4);
+    }
+    .sp-comment-avatar.role-developer { background:linear-gradient(135deg,#5eb3ff 0%,#3d8fd9 100%); box-shadow:0 3px 10px -3px rgba(94,179,255,.4); }
+    .sp-comment-avatar.role-designer  { background:linear-gradient(135deg,#a78bfa 0%,#8b6dd9 100%); box-shadow:0 3px 10px -3px rgba(167,139,250,.4); }
+    .sp-comment-avatar.role-tester    { background:linear-gradient(135deg,#2ee6b8 0%,#1bbf95 100%); box-shadow:0 3px 10px -3px rgba(46,230,184,.4); }
+    .sp-comment-body { flex:1; min-width:0; }
+    .sp-comment-meta { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:5px; }
+    .sp-comment-author { font-weight:700; font-size:13px; color:var(--text-primary); }
+    .sp-comment-role {
+      font-size:9.5px; padding:2px 7px; border-radius:4px;
+      background:rgba(255,255,255,0.05); color:var(--text-muted);
+      text-transform:uppercase; letter-spacing:.08em; font-weight:800;
+    }
+    .sp-comment-role.role-admin     { background:rgba(255,87,10,.18); color:var(--accent-orange); }
+    .sp-comment-role.role-developer { background:rgba(94,179,255,.15); color:#5eb3ff; }
+    .sp-comment-role.role-designer  { background:rgba(167,139,250,.18); color:#a78bfa; }
+    .sp-comment-role.role-tester    { background:rgba(46,230,184,.18); color:#2ee6b8; }
+    .sp-comment-time { font-size:11px; color:var(--text-muted); font-family:ui-monospace,monospace; margin-left:auto; }
+    .sp-comment-text {
+      font-size:13px; line-height:1.55; color:var(--text-primary);
+      white-space:pre-wrap; word-wrap:break-word;
+      padding:8px 12px; background:rgba(255,255,255,.025);
+      border:1px solid rgba(255,255,255,.04); border-radius:9px;
+    }
+    .sp-comment-actions { margin-top:5px; opacity:0; transition:opacity .15s; }
+    .sp-comment:hover .sp-comment-actions { opacity:1; }
+    .sp-comment-actions button {
+      background:none; border:none; padding:2px 0;
+      font-size:11px; color:var(--text-muted); cursor:pointer; font-weight:600;
+    }
+    .sp-comment-actions button:hover { color:#ff5566; }
+    .sp-comment-actions button[data-act="edit"]:hover { color:var(--accent-orange); }
+    .sp-edited-tag {
+      display:inline-block; margin-left:6px;
+      padding:1px 7px; border-radius:999px;
+      background:rgba(255,255,255,.06); color:var(--text-muted);
+      font-family:ui-monospace,monospace; font-size:10px; font-weight:600; letter-spacing:.04em;
+    }
+    .sp-comment.editing .sp-comment-text,
+    .sp-comment.editing .sp-comment-actions { display:none; }
+    /* Inline-edit textarea shared by drawer + bug-sheet comments */
+    .bc-edit-wrap {
+      background:rgba(255,87,10,.05);
+      border:1px solid rgba(255,87,10,.35);
+      border-radius:10px; overflow:hidden;
+      box-shadow:0 0 0 4px rgba(255,87,10,.06);
+      transition:border-color .2s, box-shadow .2s;
+    }
+    .bc-edit-wrap:focus-within { border-color:rgba(255,87,10,.6); box-shadow:0 0 0 4px rgba(255,87,10,.1); }
+    .bc-edit-wrap textarea {
+      width:100%; min-height:70px; max-height:320px;
+      padding:10px 14px 6px; background:transparent;
+      color:var(--text-primary);
+      border:none; outline:none; resize:vertical;
+      font:inherit; font-size:13px; line-height:1.55; display:block;
+    }
+    .bc-edit-wrap .bc-edit-bar {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:6px 12px 8px; border-top:1px solid rgba(255,87,10,.18); gap:10px;
+    }
+    .bc-edit-wrap .bc-edit-hint { font-size:11px; color:var(--text-muted); }
+    .bc-edit-wrap .bc-edit-hint kbd {
+      display:inline-block; padding:1px 6px; border-radius:4px;
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08);
+      font-family:ui-monospace,monospace; font-size:10px;
+      color:var(--text-secondary); margin:0 2px;
+    }
+    .bc-edit-wrap .bc-edit-btns { display:flex; gap:6px; }
+    .bc-edit-wrap button {
+      border:none; cursor:pointer; padding:5px 12px; border-radius:999px;
+      font-size:11px; font-weight:700; letter-spacing:.02em;
+      transition:transform .12s, opacity .2s;
+    }
+    .bc-edit-wrap button.bc-save {
+      background:linear-gradient(135deg, var(--accent-orange) 0%, #ff7e35 100%);
+      color:#09080c; box-shadow:0 3px 10px -3px rgba(255,87,10,.5);
+    }
+    .bc-edit-wrap button.bc-save:disabled {
+      opacity:.4; cursor:not-allowed; background:rgba(255,255,255,.08);
+      color:rgba(255,255,255,.4); box-shadow:none;
+    }
+    .bc-edit-wrap button.bc-save:not(:disabled):hover { transform:translateY(-1px); }
+    .bc-edit-wrap button.bc-cancel {
+      background:transparent; color:var(--text-muted);
+      border:1px solid rgba(255,255,255,.1);
+    }
+    .bc-edit-wrap button.bc-cancel:hover { color:var(--text-primary); border-color:rgba(255,255,255,.2); }
+    .bc-edit-err {
+      padding:6px 12px; background:rgba(248,113,113,.08);
+      border-top:1px solid rgba(248,113,113,.3);
+      color:#f87171; font-size:11.5px; font-weight:600; display:none;
+    }
+    .bc-edit-err.show { display:block; }
+    .sp-comment-input { display:flex; gap:10px; margin-top:14px; align-items:flex-start; }
+    .sp-comment-wrap {
+      flex:1; background:rgba(255,255,255,.025);
+      border:1px solid rgba(255,255,255,.08); border-radius:12px; overflow:hidden;
+      transition:border-color .2s, box-shadow .2s, background .2s;
+    }
+    .sp-comment-wrap:focus-within {
+      border-color:rgba(255,87,10,.55); background:rgba(255,87,10,.04);
+      box-shadow:0 0 0 4px rgba(255,87,10,.08);
+    }
+    .sp-comment-wrap textarea {
+      width:100%; min-height:62px; max-height:200px;
+      padding:11px 14px 6px; background:transparent; color:var(--text-primary);
+      border:none; outline:none; font:inherit; font-size:13px; line-height:1.5; resize:none;
+    }
+    .sp-comment-wrap textarea::placeholder { color:rgba(255,255,255,.3); font-style:italic; }
+    .sp-comment-toolbar {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:6px 12px 8px; border-top:1px solid rgba(255,255,255,.04); gap:10px;
+    }
+    .sp-comment-hint { font-size:11px; color:var(--text-muted); }
+    .sp-comment-toolbar .sp-btn-primary { padding:5px 13px; font-size:11px; }
+    .sp-comment-toolbar .sp-btn-primary:disabled {
+      opacity:.35; cursor:not-allowed; background:rgba(255,255,255,.08); color:rgba(255,255,255,.4);
+    }
+    .sp-comment-err {
+      padding:6px 12px; background:rgba(248,113,113,.08);
+      border-top:1px solid rgba(248,113,113,.3);
+      color:#f87171; font-size:11.5px; font-weight:600; display:none;
+    }
+    .sp-comment-err.show { display:block; }
+
+    @media (max-width: 700px) {
+      .sp-drawer-panel { max-width:100%; }
+      .sp-comment-actions { opacity:1; }
+    }
+  </style>
+</head>
+<body class="workspace-theme">
+  <div class="top-banner"></div>
+  <nav class="hub-nav workspace-sheet-topnav" aria-label="Workspace section">
+    <a href="./">← Workspace hub</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="sprints.html" style="color:var(--accent-orange);">Sprints</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="builds.html">Builds</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="designs.html">Designs</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="canvas.html">Canvas</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="flow.html">How it works</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="/">Nigents</a>
+  </nav>
+
+  <main class="sp-wrap">
+    <!-- List view -->
+    <section id="sp-list-view">
+      <!-- ── Flow diagram: how sprints work ───────────────────────────── -->
+      <details class="workspace-howto">
+        <summary>
+          <span class="howto-arrow" aria-hidden="true">▸</span>
+          <span class="howto-label">How sprints work</span>
+          <span class="howto-tag">flow diagram</span>
+        </summary>
+        <div class="howto-body">
+          <p class="howto-intro">
+            Click any step to jump to it. A sprint moves left-to-right: create it, fill it with work,
+            start it, work the board, and complete it. Late tasks branch off into the late-reason
+            flow that pings the admin on Telegram.
+          </p>
+          <div class="howto-diagram">
+            <pre class="mermaid">
+flowchart LR
+  A([➕ New sprint]) --&gt; B[Add issues<br/>backlog or Quick-add]
+  B --&gt; C[Assign owner<br/>+ estimate + start/end]
+  C --&gt; D([▶ Start sprint])
+  D --&gt; E[Drag cards<br/>Todo → In progress → Review → Done]
+  E --&gt; F{Past due?}
+  F -- no --&gt; H([✓ Complete sprint])
+  F -- yes --&gt; G[📝 File late reason<br/>📡 Telegram pings admin]
+  G --&gt; E
+            </pre>
+          </div>
+          <div class="howto-foot">
+            <span>📍 You are here: <strong>Sprints</strong></span>
+            <a href="flow.html#sprint">Full architecture diagrams ↗</a>
+          </div>
+        </div>
+      </details>
+
+      <div class="sp-head">
+        <div>
+          <h1>Sprints</h1>
+          <div class="sp-sub">Plan, run, and track delivery sprints for the current app.</div>
+        </div>
+        <button class="sp-btn-primary" id="sp-create-btn">+ New sprint</button>
+      </div>
+
+      <div class="sp-tabs">
+        <button class="sp-tab active" data-filter="all">All <span class="count" id="sp-c-all">0</span></button>
+        <button class="sp-tab" data-filter="active">Active <span class="count" id="sp-c-active">0</span></button>
+        <button class="sp-tab" data-filter="planning">Planning <span class="count" id="sp-c-planning">0</span></button>
+        <button class="sp-tab" data-filter="completed">Completed <span class="count" id="sp-c-completed">0</span></button>
+      </div>
+
+      <div class="sp-grid" id="sp-grid">
+        <div class="sp-empty">Loading sprints…</div>
+      </div>
+    </section>
+
+    <!-- Detail view -->
+    <section id="sp-detail-view" class="sp-detail">
+      <a href="#" class="sp-back" id="sp-back-btn">← back to sprints</a>
+      <div class="sp-detail-head">
+        <div>
+          <h2 id="sp-d-name">…</h2>
+          <div id="sp-d-goal" style="color:var(--text-soft); font-size:14px; margin-top:4px; max-width:60ch;"></div>
+          <div class="sp-detail-meta" id="sp-d-meta"></div>
+        </div>
+        <div class="sp-detail-actions">
+          <button class="sp-btn-primary" id="sp-d-quick-add">+ Quick add</button>
+          <button class="sp-btn-ghost" id="sp-d-add-issues">From backlog</button>
+          <button class="sp-btn-ghost" id="sp-d-start"   style="display:none">▶ Start sprint</button>
+          <button class="sp-btn-ghost" id="sp-d-complete" style="display:none">✓ Complete</button>
+          <button class="sp-btn-ghost" id="sp-d-edit">Edit</button>
+        </div>
+      </div>
+
+      <!-- Hero stat strip: planned / done / issues / time left -->
+      <div class="sp-hero" id="sp-hero"></div>
+
+      <!-- Quick filter chips above the board -->
+      <div class="sp-board-filters" id="sp-board-filters"></div>
+
+      <div class="sp-board" id="sp-board">
+        <div class="sp-col" data-state="todo">
+          <div class="sp-col-head"><h4>Todo</h4><span class="count" data-count="todo">0</span></div>
+          <div class="sp-col-list" data-state="todo"></div>
+        </div>
+        <div class="sp-col" data-state="in_progress">
+          <div class="sp-col-head"><h4>In progress</h4><span class="count" data-count="in_progress">0</span></div>
+          <div class="sp-col-list" data-state="in_progress"></div>
+        </div>
+        <div class="sp-col" data-state="in_review">
+          <div class="sp-col-head"><h4>In review</h4><span class="count" data-count="in_review">0</span></div>
+          <div class="sp-col-list" data-state="in_review"></div>
+        </div>
+        <div class="sp-col" data-state="done">
+          <div class="sp-col-head"><h4>Done</h4><span class="count" data-count="done">0</span></div>
+          <div class="sp-col-list" data-state="done"></div>
+        </div>
+      </div>
+
+      <div class="sp-burndown">
+        <div class="sp-burndown-head">
+          <h3>Burndown</h3>
+          <div class="legend">
+            <span class="ideal"><span class="swatch"></span>Ideal</span>
+            <span class="actual"><span class="swatch"></span>Actual</span>
+          </div>
+        </div>
+        <div id="sp-burndown-render"><div class="sp-empty">No data yet.</div></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sprint create/edit modal — native <dialog> for true top-layer overlay -->
+  <dialog class="sp-modal sp-dialog-static" id="sp-modal">
+    <div class="sp-modal-panel">
+      <h3 id="sp-modal-title">New sprint</h3>
+      <p class="hint">A sprint groups a set of issues with a start + end date and a goal.</p>
+      <div class="sp-err" id="sp-modal-err"></div>
+      <label>Name</label>
+      <input id="sp-f-name" type="text" maxlength="120" placeholder="e.g. Sprint 12 — Auth hardening" />
+      <label>Goal (optional)</label>
+      <textarea id="sp-f-goal" placeholder="What does success look like for this sprint?"></textarea>
+      <div class="row">
+        <div>
+          <label>Start date</label>
+          <input id="sp-f-start" type="date" />
+        </div>
+        <div>
+          <label>End date</label>
+          <input id="sp-f-end" type="date" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Capacity (story points)</label>
+          <input id="sp-f-cap" type="number" min="0" max="999" placeholder="e.g. 30" />
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="sp-f-status">
+            <option value="planning">Planning</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+      <div class="sp-modal-actions">
+        <button class="sp-btn-ghost" id="sp-modal-cancel">Cancel</button>
+        <button class="sp-btn-ghost" id="sp-modal-delete" style="display:none;color:var(--danger);border-color:rgba(248,113,113,.4)">Delete</button>
+        <button class="sp-btn-primary" id="sp-modal-save">Save</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Add-issues picker — native <dialog> for true top-layer overlay -->
+  <dialog class="sp-modal sp-dialog-static" id="sp-picker-modal">
+    <div class="sp-modal-panel">
+      <h3>Add issues to sprint</h3>
+      <p class="hint">Tick issues from the backlog. They'll appear on the board in Todo.</p>
+      <div class="sp-err" id="sp-picker-err"></div>
+      <label>Filter by sheet</label>
+      <select id="sp-picker-sheet"><option value="">All sheets</option></select>
+      <div class="sp-picker-list" id="sp-picker-list">
+        <div class="sp-empty">Loading…</div>
+      </div>
+      <div class="sp-modal-actions">
+        <button class="sp-btn-ghost" id="sp-picker-cancel">Cancel</button>
+        <button class="sp-btn-primary" id="sp-picker-add">Add selected</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Quick-add: create a brand-new task and drop it into the sprint in one step — native <dialog> -->
+  <dialog class="sp-modal sp-dialog-static" id="sp-quick-modal">
+    <div class="sp-modal-panel">
+      <h3>Quick add — new task into this sprint</h3>
+      <p class="hint">Create any kind of task on the fly: a bug, a feature, a chore, a research note. It gets filed against a sheet and added to the sprint immediately.</p>
+      <div class="sp-err" id="sp-quick-err"></div>
+      <label>Title</label>
+      <input id="sp-q-title" type="text" maxlength="500" placeholder="e.g. Wire Stripe Checkout into onboarding" />
+      <label>Description / notes (optional)</label>
+      <textarea id="sp-q-desc" placeholder="More context for whoever picks this up…"></textarea>
+      <div class="row">
+        <div>
+          <label>Sheet</label>
+          <select id="sp-q-sheet"></select>
+        </div>
+        <div>
+          <label>Type</label>
+          <select id="sp-q-type">
+            <option value="task">Task</option>
+            <option value="bug">Bug</option>
+            <option value="feature">Feature</option>
+            <option value="chore">Chore</option>
+            <option value="research">Research</option>
+            <option value="docs">Docs</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Priority</label>
+          <select id="sp-q-priority">
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div>
+          <label>Estimate (points)</label>
+          <input id="sp-q-est" type="number" min="0" max="99" placeholder="e.g. 3" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Assign to (optional)</label>
+          <select id="sp-q-assignee"><option value="">— unassigned —</option></select>
+        </div>
+        <div>
+          <label>Due date (optional)</label>
+          <input id="sp-q-due" type="date" />
+        </div>
+      </div>
+      <div class="sp-modal-actions">
+        <button class="sp-btn-ghost" id="sp-q-cancel">Cancel</button>
+        <button class="sp-btn-primary" id="sp-q-save">Add to sprint</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+  (function () {
+    'use strict';
+    var $ = function (s) { return document.querySelector(s); };
+    var esc = function (s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+      });
+    };
+    function fmtDate(s) { if (!s) return '—'; try { return new Date(s).toLocaleDateString(undefined, { month:'short', day:'numeric' }); } catch (_) { return s; } }
+    function daysLeft(end) {
+      if (!end) return '';
+      var d = Math.ceil((new Date(end) - new Date()) / 86400000);
+      if (d < 0)  return Math.abs(d) + 'd ago';
+      if (d === 0) return 'today';
+      return d + 'd left';
+    }
+
+    var state = {
+      sprints: [], currentFilter: 'all', detail: null, editingId: null,
+      boardFilters: { priority: 'all', assignee: 'all', search: '' },
+    };
+
+    // ── Helpers to open / close native <dialog> modals ────────────────
+    // Uses showModal() so the browser places the dialog in the TOP LAYER
+    // (above every other element regardless of z-index/transforms). Falls
+    // back to the legacy .open class for browsers without <dialog> support.
+    function spOpenModal(sel) {
+      var el = (typeof sel === 'string') ? $(sel) : sel;
+      if (!el) return;
+      if (el.tagName === 'DIALOG' && typeof el.showModal === 'function') {
+        try { if (!el.open) el.showModal(); }
+        catch (_) { el.setAttribute('open', ''); }
+      } else {
+        el.classList.add('open');
+      }
+    }
+    function spCloseModal(sel) {
+      var el = (typeof sel === 'string') ? $(sel) : sel;
+      if (!el) return;
+      if (el.tagName === 'DIALOG' && typeof el.close === 'function') {
+        try { el.close(); } catch (_) { el.removeAttribute('open'); }
+      }
+      el.classList.remove('open');
+    }
+    var URL_PARAMS = new URLSearchParams(location.search);
+
+    // ── List + filtering ────────────────────────────────────────
+    function applyFilter(filter) {
+      state.currentFilter = filter;
+      document.querySelectorAll('.sp-tab').forEach(function (t) {
+        t.classList.toggle('active', t.dataset.filter === filter);
+      });
+      renderList();
+    }
+    function renderList() {
+      var counts = { all: state.sprints.length, active: 0, planning: 0, completed: 0 };
+      state.sprints.forEach(function (s) { counts[s.status] = (counts[s.status] || 0) + 1; });
+      $('#sp-c-all').textContent       = counts.all;
+      $('#sp-c-active').textContent    = counts.active;
+      $('#sp-c-planning').textContent  = counts.planning;
+      $('#sp-c-completed').textContent = counts.completed;
+
+      var shown = state.currentFilter === 'all'
+        ? state.sprints
+        : state.sprints.filter(function (s) { return s.status === state.currentFilter; });
+
+      var grid = $('#sp-grid');
+      if (!shown.length) {
+        grid.innerHTML = '<div class="sp-empty">No sprints yet. Click + New sprint to create the first one.</div>';
+        return;
+      }
+      // SVG donut: circumference = 2πr where r=26 → ~163.36
+      var R = 26, C = 2 * Math.PI * R;
+      grid.innerHTML = shown.map(function (s) {
+        var done  = Number(s.done_points || 0);
+        var total = Number(s.total_points || 0);
+        var pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+        var dash  = C - (pct / 100) * C;
+        var dl    = s.end_date ? daysLeft(s.end_date) : '';
+        var dlCls = '';
+        if (dl) {
+          if (/ago/.test(dl) || dl === 'today') dlCls = 'urgent';
+          else {
+            var n = parseInt(dl, 10);
+            if (!isNaN(n)) dlCls = n <= 3 ? 'soon' : 'ok';
+          }
+        }
+        return (
+          '<div class="sp-card status-' + esc(s.status) + '" data-id="' + s.id + '">' +
+            '<div class="sp-card-row">' +
+              '<div class="sp-card-main">' +
+                '<div class="sp-card-head">' +
+                  '<h3>' + esc(s.name) + '</h3>' +
+                  '<span class="sp-status ' + esc(s.status) + '">' + esc(s.status) + '</span>' +
+                '</div>' +
+                (Number(s.overdue_count) > 0
+                  ? '<span class="sp-card-overdue" title="' + esc(s.overdue_count) + ' overdue task(s)">⚠ ' + esc(s.overdue_count) + ' overdue</span>'
+                  : '') +
+                '<div class="goal">' + esc(s.goal || 'No goal set — click to add one.') + '</div>' +
+                '<div class="sp-meta">' +
+                  '<span><strong>' + (s.issue_count || 0) + '</strong> issues</span>' +
+                  '<span class="sep">·</span>' +
+                  '<span><strong>' + done + '/' + total + '</strong> pts</span>' +
+                  (s.capacity_points ? '<span class="sep">·</span><span>cap <strong>' + s.capacity_points + '</strong></span>' : '') +
+                '</div>' +
+              '</div>' +
+              '<div class="sp-ring" aria-label="' + pct + '% complete">' +
+                '<svg viewBox="0 0 64 64">' +
+                  '<circle class="bg" cx="32" cy="32" r="' + R + '" fill="none" stroke-width="6" />' +
+                  '<circle class="fg" cx="32" cy="32" r="' + R + '" fill="none" stroke-width="6" stroke-linecap="round"' +
+                    ' stroke-dasharray="' + C.toFixed(2) + '" stroke-dashoffset="' + dash.toFixed(2) + '" />' +
+                '</svg>' +
+                '<div class="pct">' + pct + '%</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="sp-card-foot">' +
+              '<span class="sp-card-dates">' + (s.start_date ? fmtDate(s.start_date) + ' → ' + fmtDate(s.end_date) : 'No dates set') + '</span>' +
+              (dl ? '<span class="sp-card-days ' + dlCls + '">' + esc(dl) + '</span>' : '<span></span>') +
+            '</div>' +
+          '</div>'
+        );
+      }).join('');
+      grid.querySelectorAll('.sp-card').forEach(function (el) {
+        el.addEventListener('click', function () { openDetail(Number(el.dataset.id)); });
+      });
+    }
+
+    async function loadSprints() {
+      var r = await fetch('/api/workspace/sprints');
+      var j = await r.json();
+      if (!j.success) { $('#sp-grid').innerHTML = '<div class="sp-empty" style="color:var(--danger)">' + esc(j.error || 'Failed') + '</div>'; return; }
+      state.sprints = j.sprints || [];
+      renderList();
+      // Auto-open from URL: ?sprint=12
+      var openId = URL_PARAMS.get('sprint');
+      if (openId) { openDetail(Number(openId)); }
+    }
+
+    // ── Modal: create/edit sprint ───────────────────────────────
+    function openSprintModal(sprint) {
+      state.editingId = sprint ? sprint.id : null;
+      $('#sp-modal-title').textContent = sprint ? 'Edit sprint' : 'New sprint';
+      $('#sp-modal-err').classList.remove('show');
+      $('#sp-modal-delete').style.display = sprint ? 'inline-block' : 'none';
+      $('#sp-f-name').value   = sprint ? (sprint.name || '') : '';
+      $('#sp-f-goal').value   = sprint ? (sprint.goal || '') : '';
+      $('#sp-f-start').value  = sprint ? (sprint.start_date || '') : '';
+      $('#sp-f-end').value    = sprint ? (sprint.end_date || '')   : '';
+      $('#sp-f-cap').value    = sprint && sprint.capacity_points != null ? sprint.capacity_points : '';
+      $('#sp-f-status').value = sprint ? (sprint.status || 'planning') : 'planning';
+      spOpenModal('#sp-modal');
+      setTimeout(function () { $('#sp-f-name').focus(); }, 30);
+    }
+    $('#sp-create-btn').addEventListener('click', function () { openSprintModal(null); });
+    $('#sp-modal-cancel').addEventListener('click', function () { spCloseModal('#sp-modal'); });
+    $('#sp-modal-save').addEventListener('click', async function () {
+      var payload = {
+        name:          $('#sp-f-name').value.trim(),
+        goal:          $('#sp-f-goal').value.trim() || null,
+        start_date:    $('#sp-f-start').value || null,
+        end_date:      $('#sp-f-end').value   || null,
+        capacity_points: $('#sp-f-cap').value || null,
+        status:        $('#sp-f-status').value,
+      };
+      if (!payload.name) { $('#sp-modal-err').textContent = 'Name is required.'; $('#sp-modal-err').classList.add('show'); return; }
+      var url    = state.editingId ? '/api/workspace/sprints/' + state.editingId : '/api/workspace/sprints';
+      var method = state.editingId ? 'PATCH' : 'POST';
+      var r = await fetch(url, { method:method, headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(payload) });
+      var j = await r.json();
+      if (!j.success) { $('#sp-modal-err').textContent = j.error || 'Failed'; $('#sp-modal-err').classList.add('show'); return; }
+      spCloseModal('#sp-modal');
+      await loadSprints();
+      var id = state.editingId || j.id;
+      if (id) openDetail(id);
+    });
+    $('#sp-modal-delete').addEventListener('click', async function () {
+      if (!state.editingId) return;
+      if (!(await WorkspaceAlert.confirm('Delete this sprint? Issues stay; only the sprint + assignments are removed.', { danger: true, title: 'Delete sprint', confirmText: 'Delete' }))) return;
+      var r = await fetch('/api/workspace/sprints/' + state.editingId, { method:'DELETE' });
+      var j = await r.json();
+      if (!j.success) { $('#sp-modal-err').textContent = j.error || 'Failed'; $('#sp-modal-err').classList.add('show'); return; }
+      spCloseModal('#sp-modal');
+      backToList();
+      await loadSprints();
+    });
+
+    // ── Detail view (board + burndown) ──────────────────────────
+    function backToList() {
+      state.detail = null;
+      $('#sp-detail-view').classList.remove('show');
+      $('#sp-list-view').style.display = 'block';
+      history.replaceState(null, '', location.pathname + (URL_PARAMS.get('app') ? '?app=' + URL_PARAMS.get('app') : ''));
+    }
+    $('#sp-back-btn').addEventListener('click', function (e) { e.preventDefault(); backToList(); });
+
+    async function openDetail(id) {
+      $('#sp-list-view').style.display = 'none';
+      $('#sp-detail-view').classList.add('show');
+      $('#sp-d-name').textContent = 'Loading…';
+      var url = location.pathname + '?' +
+        (URL_PARAMS.get('app') ? 'app=' + URL_PARAMS.get('app') + '&' : '') + 'sprint=' + id;
+      history.replaceState(null, '', url);
+
+      var r = await fetch('/api/workspace/sprints/' + id);
+      var j = await r.json();
+      if (!j.success) { $('#sp-d-name').textContent = 'Error: ' + (j.error || ''); return; }
+      state.detail = j;
+      // Reset board filters whenever a different sprint is opened
+      state.boardFilters = { priority: 'all', assignee: 'all', search: '' };
+      var s = j.sprint;
+      $('#sp-d-name').innerHTML = esc(s.name) + ' <span class="sp-status ' + esc(s.status) + '" style="vertical-align:middle;margin-left:8px;">' + esc(s.status) + '</span>';
+      $('#sp-d-goal').textContent = s.goal || '';
+      $('#sp-d-meta').innerHTML =
+        (s.start_date ? '<span>' + fmtDate(s.start_date) + ' → ' + fmtDate(s.end_date) + '</span>' : '') +
+        (s.capacity_points ? '<span>Capacity: <strong>' + s.capacity_points + '</strong> pts</span>' : '') +
+        '<span>' + j.issues.length + ' issues</span>';
+      $('#sp-d-start').style.display    = s.status === 'planning'  ? 'inline-block' : 'none';
+      $('#sp-d-complete').style.display = s.status === 'active'    ? 'inline-block' : 'none';
+
+      renderHero(j);
+      renderFilterChips(j.issues);
+      renderBoard(j.issues);
+      loadBurndown(id);
+    }
+
+    // ── Hero stat strip ───────────────────────────────────────────
+    function renderHero(detail) {
+      var s = detail.sprint;
+      var issues = detail.issues || [];
+      var totalPts = 0, donePts = 0, doneCount = 0;
+      issues.forEach(function (it) {
+        var pts = Number(it.estimate_points || 0);
+        totalPts += pts;
+        if (it.state === 'done' || it.is_done) { donePts += pts; doneCount += 1; }
+      });
+      var pct = totalPts > 0 ? Math.round((donePts / totalPts) * 100) : 0;
+      var dl  = s.end_date ? daysLeft(s.end_date) : 'No end date';
+      var dlAccent = 'accent-blue';
+      if (s.end_date) {
+        if (/ago/.test(dl) || dl === 'today') dlAccent = 'accent-danger';
+        else {
+          var n = parseInt(dl, 10);
+          if (!isNaN(n) && n <= 3) dlAccent = 'accent-orange';
+          else dlAccent = 'accent-green';
+        }
+      }
+      var capLine = s.capacity_points
+        ? totalPts + ' / ' + s.capacity_points + ' planned'
+        : (totalPts + ' planned');
+      $('#sp-hero').innerHTML =
+        '<div class="sp-stat accent-orange">' +
+          '<div class="sp-stat-label">Planned points</div>' +
+          '<div class="sp-stat-value">' + totalPts + '</div>' +
+          '<div class="sp-stat-sub">' + esc(capLine) + '</div>' +
+          (s.capacity_points
+            ? '<div class="sp-stat-bar"><span style="width:' + Math.min(100, Math.round((totalPts / s.capacity_points) * 100)) + '%"></span></div>'
+            : '') +
+        '</div>' +
+        '<div class="sp-stat accent-green">' +
+          '<div class="sp-stat-label">Completed</div>' +
+          '<div class="sp-stat-value">' + donePts + ' <span style="font-size:13px;color:var(--text-muted);font-weight:600;">/ ' + totalPts + ' pts</span></div>' +
+          '<div class="sp-stat-sub">' + pct + '% of work shipped</div>' +
+          '<div class="sp-stat-bar"><span style="width:' + pct + '%"></span></div>' +
+        '</div>' +
+        '<div class="sp-stat accent-blue">' +
+          '<div class="sp-stat-label">Issues</div>' +
+          '<div class="sp-stat-value">' + doneCount + ' <span style="font-size:13px;color:var(--text-muted);font-weight:600;">/ ' + issues.length + '</span></div>' +
+          '<div class="sp-stat-sub">' + (issues.length - doneCount) + ' still open</div>' +
+        '</div>' +
+        '<div class="sp-stat ' + dlAccent + '">' +
+          '<div class="sp-stat-label">' + (s.status === 'completed' ? 'Sprint length' : 'Time') + '</div>' +
+          '<div class="sp-stat-value">' + esc(dl) + '</div>' +
+          '<div class="sp-stat-sub">' + (s.start_date ? fmtDate(s.start_date) + ' → ' + fmtDate(s.end_date) : 'set dates to enable burndown') + '</div>' +
+        '</div>';
+    }
+
+    // ── Filter chips above the board ──────────────────────────────
+    function renderFilterChips(issues) {
+      var pri = state.boardFilters.priority;
+      var asg = state.boardFilters.assignee;
+      // Collect distinct assignees from the sprint
+      var seen = {}, assignees = [];
+      issues.forEach(function (it) {
+        if (it.assignee_id != null && !seen[it.assignee_id]) {
+          seen[it.assignee_id] = true;
+          assignees.push({ id: String(it.assignee_id), name: it.assignee_name || ('#' + it.assignee_id) });
+        }
+      });
+      var hasUnassigned = issues.some(function (it) { return it.assignee_id == null; });
+
+      var html =
+        '<span class="fbl">Priority</span>' +
+        '<button class="sp-fchip' + (pri === 'all'    ? ' active' : '') + '" data-pri="all">All</button>' +
+        '<button class="sp-fchip' + (pri === 'high'   ? ' active' : '') + '" data-pri="high">High</button>' +
+        '<button class="sp-fchip' + (pri === 'medium' ? ' active' : '') + '" data-pri="medium">Medium</button>' +
+        '<button class="sp-fchip' + (pri === 'low'    ? ' active' : '') + '" data-pri="low">Low</button>' +
+        '<span class="fbl" style="margin-left:8px;">Assignee</span>' +
+        '<button class="sp-fchip' + (asg === 'all' ? ' active' : '') + '" data-asg="all">All</button>' +
+        (hasUnassigned
+          ? '<button class="sp-fchip' + (asg === 'none' ? ' active' : '') + '" data-asg="none">Unassigned</button>'
+          : '') +
+        assignees.map(function (a) {
+          return '<button class="sp-fchip' + (asg === a.id ? ' active' : '') + '" data-asg="' + esc(a.id) + '">' + esc(a.name) + '</button>';
+        }).join('') +
+        '<input class="sp-board-search" id="sp-board-q" type="search" placeholder="Filter by title…" value="' + esc(state.boardFilters.search) + '" />';
+      $('#sp-board-filters').innerHTML = html;
+
+      document.querySelectorAll('#sp-board-filters [data-pri]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.boardFilters.priority = b.dataset.pri;
+          renderFilterChips(state.detail.issues);
+          renderBoard(state.detail.issues);
+        });
+      });
+      document.querySelectorAll('#sp-board-filters [data-asg]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.boardFilters.assignee = b.dataset.asg;
+          renderFilterChips(state.detail.issues);
+          renderBoard(state.detail.issues);
+        });
+      });
+      var qEl = document.getElementById('sp-board-q');
+      if (qEl) {
+        qEl.addEventListener('input', function () {
+          state.boardFilters.search = qEl.value;
+          renderBoard(state.detail.issues);
+        });
+      }
+    }
+
+    function applyBoardFilters(issues) {
+      var f = state.boardFilters;
+      var q = (f.search || '').toLowerCase().trim();
+      return issues.filter(function (it) {
+        if (f.priority !== 'all' && (it.priority || 'medium') !== f.priority) return false;
+        if (f.assignee === 'none' && it.assignee_id != null) return false;
+        if (f.assignee !== 'all' && f.assignee !== 'none' && String(it.assignee_id) !== String(f.assignee)) return false;
+        if (q && String(it.title || '').toLowerCase().indexOf(q) === -1) return false;
+        return true;
+      });
+    }
+
+    function renderBoard(issues) {
+      var filtered = applyBoardFilters(issues);
+      var byState = { todo:[], in_progress:[], in_review:[], done:[] };
+      filtered.forEach(function (it) {
+        var s = it.state || 'todo';
+        if (s === 'backlog') s = 'todo';
+        if (s === 'cancelled') return;  // hide cancelled
+        if (!byState[s]) byState[s] = [];
+        byState[s].push(it);
+      });
+      ['todo','in_progress','in_review','done'].forEach(function (st) {
+        var list = byState[st] || [];
+        document.querySelector('.sp-col-list[data-state="' + st + '"]').innerHTML = list.length
+          ? list.map(issueCard).join('')
+          : '<div class="sp-empty" style="padding:14px 8px; border:1px dashed rgba(255,255,255,.06); background:transparent;">Drop here</div>';
+        document.querySelector('.sp-col-head .count[data-count="' + st + '"]').textContent = list.length;
+      });
+      bindBoardInteractions();
+    }
+
+    function avatarFor(it) {
+      if (!it.assignee_name) {
+        return '<span class="sp-avatar unassigned" title="Unassigned">?</span>';
+      }
+      var role = (it.assignee_role || '').toLowerCase();
+      var cls  = role ? 'role-' + esc(role) : '';
+      return '<span class="sp-avatar ' + cls + '" title="' + esc(it.assignee_name) + (role ? ' (' + esc(role) + ')' : '') + '">' +
+               esc(initial(it.assignee_name)) +
+             '</span>';
+    }
+
+    function issueCard(it) {
+      var pri  = esc(it.priority || 'medium');
+      var type = esc(it.issue_type || 'task');
+      var leftChips =
+        '<span class="sp-chip pri-' + pri + '">' + pri + '</span>' +
+        (it.estimate_points != null ? '<span class="sp-chip points">' + esc(it.estimate_points) + ' pt</span>' : '');
+
+      // Due-date chip — flag as overdue if past. Also drives the card's overdue class.
+      var overdue = false;
+      if (it.due_date) {
+        try {
+          var d = new Date(it.due_date);
+          overdue = d < new Date(new Date().toDateString()) && it.state !== 'done' && !it.is_done;
+        } catch (_) {}
+        leftChips += '<span class="sp-chip due' + (overdue ? ' overdue' : '') + '" title="Due ' + esc(it.due_date) + '">' +
+                       (overdue ? '⚠ ' : '⏱ ') + esc(fmtDate(it.due_date)) +
+                     '</span>';
+      }
+      // Late-reason count chip — shows how many reasons have been filed on this issue
+      if (it.late_reason_count && Number(it.late_reason_count) > 0) {
+        leftChips += '<span class="sp-chip late-reasons" title="' +
+                       esc(it.late_reason_count) + ' late reason(s) filed">📝 ' + esc(it.late_reason_count) + '</span>';
+      }
+      if (it.sheet_label) {
+        leftChips += '<span class="sp-chip sheet" title="' + esc(it.sheet_label) + '">' + esc(it.sheet_platform || it.sheet_label) + '</span>';
+      }
+      var commentPill = (it.comment_count && Number(it.comment_count) > 0)
+        ? '<span class="sp-comments-pill" title="' + esc(it.comment_count) + ' comments">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+            esc(it.comment_count) +
+          '</span>'
+        : '';
+      return (
+        '<div class="sp-card-issue pri-' + pri + (overdue ? ' overdue' : '') + '" draggable="true" data-id="' + it.id + '">' +
+          '<div class="pre">' +
+            '<span>#' + esc(it.id) + '</span>' +
+            '<span class="sp-type">' + type + '</span>' +
+            (overdue ? '<span class="sp-late-flag" style="margin-left:auto;color:#f87171;font-weight:800;letter-spacing:.06em;">OVERDUE</span>' : '') +
+          '</div>' +
+          '<div class="title">' + esc(it.title) + '</div>' +
+          '<div class="foot">' +
+            '<div class="foot-left">' + leftChips + '</div>' +
+            '<div class="foot-right">' + commentPill + avatarFor(it) + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function bindBoardInteractions() {
+      document.querySelectorAll('.sp-card-issue').forEach(function (card) {
+        card.addEventListener('dragstart', function (e) {
+          card.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', card.dataset.id);
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragend', function () { card.classList.remove('dragging'); });
+        // Click → quick edit (assignee + estimate + state via prompt — simple v1)
+        card.addEventListener('click', function () { quickEditIssue(Number(card.dataset.id)); });
+      });
+      document.querySelectorAll('.sp-col').forEach(function (col) {
+        col.addEventListener('dragover', function (e) {
+          e.preventDefault();
+          col.classList.add('drag-over');
+        });
+        col.addEventListener('dragleave', function () { col.classList.remove('drag-over'); });
+        col.addEventListener('drop', async function (e) {
+          e.preventDefault();
+          col.classList.remove('drag-over');
+          var id = Number(e.dataTransfer.getData('text/plain'));
+          var newState = col.dataset.state;
+          if (!id || !newState) return;
+          var r = await fetch('/api/workspace/issues/' + id + '/assign', {
+            method:'PATCH', headers:{ 'Content-Type':'application/json' },
+            body: JSON.stringify({ state: newState })
+          });
+          var j = await r.json();
+          if (!j.success) { WorkspaceAlert.flash('Move failed: ' + (j.error || ''), 'error'); return; }
+          if (state.detail) openDetail(state.detail.sprint.id);  // reload
+        });
+      });
+    }
+
+    function shortcutKey() {
+      try {
+        var isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform) ||
+                    /Mac/i.test((navigator.userAgentData && navigator.userAgentData.platform) || '');
+        return isMac ? '⌘' : 'Ctrl';
+      } catch (_) { return 'Ctrl'; }
+    }
+
+    // ── Inline-edit a comment row in the sprint drawer ───────────────────
+    // row: the .sp-comment element; cid: comment id; issueId: parent issue id;
+    // afterSave: callback to reload the thread (so the "edited" tag appears).
+    function startInlineEditDrawer(row, cid, issueId, afterSave) {
+      if (row.classList.contains('editing')) {
+        var ex = row.querySelector('.bc-edit-wrap textarea');
+        if (ex) ex.focus();
+        return;
+      }
+      var textEl = row.querySelector('.sp-comment-text');
+      var original = row.dataset.body != null ? row.dataset.body : textEl.textContent;
+
+      var wrap = document.createElement('div');
+      wrap.className = 'bc-edit-wrap';
+      wrap.innerHTML =
+        '<textarea maxlength="8000"></textarea>' +
+        '<div class="bc-edit-bar">' +
+          '<span class="bc-edit-hint">' +
+            '<kbd>' + shortcutKey() + '</kbd><kbd>Enter</kbd> save · <kbd>Esc</kbd> cancel' +
+          '</span>' +
+          '<span class="bc-edit-btns">' +
+            '<button type="button" class="bc-cancel">Cancel</button>' +
+            '<button type="button" class="bc-save">Save</button>' +
+          '</span>' +
+        '</div>' +
+        '<div class="bc-edit-err"></div>';
+      textEl.insertAdjacentElement('afterend', wrap);
+      row.classList.add('editing');
+
+      var ta = wrap.querySelector('textarea');
+      var saveBt = wrap.querySelector('.bc-save');
+      var cancBt = wrap.querySelector('.bc-cancel');
+      var errEl  = wrap.querySelector('.bc-edit-err');
+      ta.value = original;
+      function autoGrow() {
+        ta.style.height = 'auto';
+        ta.style.height = Math.min(ta.scrollHeight, 320) + 'px';
+      }
+      autoGrow();
+      ta.focus();
+      try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (_) {}
+      function refresh() {
+        var v = ta.value.trim();
+        saveBt.disabled = !v || v === original.trim();
+      }
+      refresh();
+      ta.addEventListener('input', function () { autoGrow(); refresh(); errEl.classList.remove('show'); });
+
+      function close() {
+        row.classList.remove('editing');
+        wrap.remove();
+      }
+      cancBt.addEventListener('click', close);
+
+      async function save() {
+        var next = ta.value.trim();
+        if (!next) { errEl.textContent = 'Comment cannot be empty.'; errEl.classList.add('show'); return; }
+        if (next === original.trim()) { close(); return; }
+        var origLabel = saveBt.textContent;
+        saveBt.disabled = true; saveBt.textContent = 'saving…';
+        errEl.classList.remove('show');
+        try {
+          var r = await fetch('/api/workspace/issues/' + issueId + '/comments/' + cid, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ body: next }),
+          });
+          var j = await r.json();
+          if (!j.success) {
+            errEl.textContent = j.error || 'Edit failed';
+            errEl.classList.add('show');
+            saveBt.disabled = false; saveBt.textContent = origLabel;
+            return;
+          }
+          if (typeof afterSave === 'function') await afterSave();
+        } catch (e) {
+          errEl.textContent = 'Network error: ' + (e.message || '');
+          errEl.classList.add('show');
+          saveBt.disabled = false; saveBt.textContent = origLabel;
+        }
+      }
+      saveBt.addEventListener('click', save);
+      ta.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          e.preventDefault();
+          if (!saveBt.disabled) save();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          close();
+        }
+      });
+    }
+
+    // Cached "who am I" so the comment composer can attribute correctly
+    var meCache = null;
+    async function whoAmI() {
+      if (meCache !== null) return meCache;
+      try {
+        var r = await fetch('/api/workspace/me');
+        var j = await r.json();
+        meCache = (j && j.success) ? j.user : null;
+      } catch (_) { meCache = null; }
+      return meCache;
+    }
+    function initial(s) { return String(s || '?').trim().charAt(0).toUpperCase() || '?'; }
+    function fmtRel(s) {
+      if (!s) return '';
+      try {
+        var d = new Date(s); var diff = Math.floor((Date.now() - d) / 1000);
+        if (diff < 60)    return diff + 's ago';
+        if (diff < 3600)  return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+        return d.toLocaleDateString();
+      } catch (_) { return s; }
+    }
+
+    // Tracks the currently open issue drawer (if any) — prevents stacking
+    // duplicate modals when a user rapidly clicks the same card, AND swaps
+    // cleanly when they click a different card while one is open.
+    // Shape: { id: <number>, el: <Element>, escHandler: <fn>, prevOverflow: <string> } | null
+    var openIssueDrawer = null;
+
+    function closeIssueDrawer() {
+      if (!openIssueDrawer) return;
+      if (openIssueDrawer.escHandler) {
+        document.removeEventListener('keydown', openIssueDrawer.escHandler);
+      }
+      if (openIssueDrawer.el) {
+        var el = openIssueDrawer.el;
+        // Close the native <dialog> if it's open (no-op if .close doesn't exist)
+        try { if (typeof el.close === 'function') el.close(); } catch (_) {}
+        if (el.parentNode) el.remove();
+      }
+      // Restore page scroll
+      if (openIssueDrawer.prevOverflow !== undefined) {
+        document.body.style.overflow = openIssueDrawer.prevOverflow;
+      } else {
+        document.body.style.overflow = '';
+      }
+      openIssueDrawer = null;
+    }
+
+    // ── Jira-style detail drawer: edit fields + COMMENTS thread inline ──
+    async function quickEditIssue(id) {
+      // Idempotent guard — clicking the same card again is a no-op
+      if (openIssueDrawer && openIssueDrawer.id === id) return;
+      // Clicking a different card while one is open → close the old one first
+      if (openIssueDrawer) closeIssueDrawer();
+      // Reserve the slot synchronously so any rapid 2nd click during the
+      // awaits below is correctly recognised as "already opening this id"
+      openIssueDrawer = { id: id, el: null };
+
+      var issue = state.detail.issues.find(function (x) { return x.id === id; });
+      if (!issue) { openIssueDrawer = null; return; }
+      var me = await whoAmI();
+      var usersResp = await fetch('/api/workspace/users-lite').then(function (r) { return r.json(); })
+                                                            .catch(function () { return { users: [] }; });
+      // Between the await above and now the user may have closed or switched.
+      // If openIssueDrawer no longer points at us, abort silently.
+      if (!openIssueDrawer || openIssueDrawer.id !== id) return;
+      var userOpts = '<option value="">— unassigned —</option>' +
+        (usersResp.users || []).map(function (u) {
+          return '<option value="' + u.id + '"' + (issue.assignee_id == u.id ? ' selected' : '') + '>' + esc(u.name) + ' (' + esc(u.role) + ')</option>';
+        }).join('');
+
+      // ── Build hero chips: status pill + priority + type + due-state ──
+      var prio  = String(issue.priority || 'medium').toLowerCase();
+      var st    = String(issue.state || 'backlog').toLowerCase();
+      var pastDue = false;
+      try {
+        if (issue.due_date) {
+          var dd = new Date(issue.due_date);
+          pastDue = dd < new Date(new Date().toDateString())
+                    && issue.state !== 'done' && issue.state !== 'cancelled' && !issue.is_done;
+        }
+      } catch (_) {}
+
+      // Render criteria as a checklist if present, tags as chips, media as thumbs
+      var critArr = Array.isArray(issue.criteria) ? issue.criteria : [];
+      var tagArr  = Array.isArray(issue.tags)     ? issue.tags     : [];
+      var mediaArr = Array.isArray(issue.issue_media) ? issue.issue_media : [];
+
+      var criteriaHtml = critArr.length
+        ? '<div class="qe-section"><div class="qe-section-head">Acceptance criteria</div>' +
+            '<ul class="qe-crit">' +
+              critArr.map(function (c) {
+                var txt = typeof c === 'string' ? c : (c && (c.text || c.label || c.title || JSON.stringify(c)));
+                var done = !!(c && (c.done || c.checked || c.completed));
+                return '<li class="' + (done ? 'is-done' : '') + '"><span class="qe-crit-box">' + (done ? '✓' : '') + '</span>' + esc(txt) + '</li>';
+              }).join('') +
+            '</ul>' +
+          '</div>'
+        : '';
+
+      var tagsHtml = tagArr.length
+        ? '<div class="qe-section"><div class="qe-section-head">Tags</div>' +
+            '<div class="qe-tags">' +
+              tagArr.map(function (t) { return '<span class="qe-tag">' + esc(String(t)) + '</span>'; }).join('') +
+            '</div>' +
+          '</div>'
+        : '';
+
+      var mediaHtml = mediaArr.length
+        ? '<div class="qe-section"><div class="qe-section-head">Attachments (' + mediaArr.length + ')</div>' +
+            '<div class="qe-media">' +
+              mediaArr.slice(0, 8).map(function (m) {
+                var u = (m && (m.url || m.src)) || '';
+                if (!u) return '';
+                var isImg = /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(u);
+                return isImg
+                  ? '<a class="qe-media-tile" href="' + esc(u) + '" target="_blank" rel="noopener" title="' + esc(m.label || m.name || '') + '"><img src="' + esc(u) + '" alt="" loading="lazy" /></a>'
+                  : '<a class="qe-media-tile is-link" href="' + esc(u) + '" target="_blank" rel="noopener">' + esc((m.label || m.name || u).slice(0, 28)) + ' ↗</a>';
+              }).join('') +
+            '</div>' +
+          '</div>'
+        : '';
+
+      // Compact metadata strip: when started, when completed, who's assigned
+      var metaChips = [];
+      if (issue.started_at)    metaChips.push('<span class="qe-meta-chip">started ' + esc(fmtRel(issue.started_at)) + '</span>');
+      if (issue.completed_at)  metaChips.push('<span class="qe-meta-chip done">completed ' + esc(fmtRel(issue.completed_at)) + '</span>');
+      if (issue.assignee_name) metaChips.push('<span class="qe-meta-chip assignee">assigned to <strong>' + esc(issue.assignee_name) + '</strong></span>');
+      else                     metaChips.push('<span class="qe-meta-chip unassigned">unassigned</span>');
+
+      // We use the NATIVE <dialog> element with showModal() — the browser
+      // places it in the "top layer" which renders ABOVE every other
+      // element on the page (including position:fixed, transforms, etc.).
+      // It's the most reliable way to get a true overlay that can't be
+      // pushed below the page by any cascading CSS or transformed ancestor.
+      var modal = document.createElement('dialog');
+      modal.className = 'sp-modal open sp-drawer sp-drawer-dialog';
+      modal.innerHTML =
+        '<div class="sp-modal-panel sp-drawer-panel">' +
+          /* ── Hero head ─────────────────────────── */
+          '<div class="sp-drawer-head qe-head-v2">' +
+            '<div class="qe-head-inner">' +
+              '<div class="qe-head-row1">' +
+                '<span class="qe-id-pill">#' + esc(issue.id) + '</span>' +
+                '<span class="qe-status-pill state-' + esc(st) + '">' + esc(st.replace('_',' ')) + '</span>' +
+                '<span class="qe-prio-pill pri-' + esc(prio) + '">' + esc(prio) + '</span>' +
+                (issue.issue_type ? '<span class="qe-type-pill">' + esc(issue.issue_type) + '</span>' : '') +
+                (pastDue ? '<span class="qe-overdue-pill">OVERDUE</span>' : '') +
+                '<a class="sp-drawer-open" href="sheet.html?slug=' + encodeURIComponent(issue.sheet_slug || '') + '#card-' + esc(issue.id) + '" target="_blank" rel="noopener" style="margin-left:auto;">Open in sheet ↗</a>' +
+              '</div>' +
+              '<h3 class="sp-drawer-title qe-title-v2">' + esc(issue.title) + '</h3>' +
+              (issue.sheet_label ? '<div class="qe-sheet-line">in <strong>' + esc(issue.sheet_label) + (issue.sheet_platform ? ' · ' + esc(issue.sheet_platform) : '') + '</strong></div>' : '') +
+              (metaChips.length ? '<div class="qe-meta-row">' + metaChips.join('') + '</div>' : '') +
+            '</div>' +
+          '</div>' +
+
+          '<div class="sp-drawer-body">' +
+            /* ── Description (full, no truncation) ── */
+            (issue.prompt_text
+              ? '<div class="qe-section qe-desc-section">' +
+                  '<div class="qe-section-head">Description</div>' +
+                  '<div class="qe-desc">' + esc(issue.prompt_text) + '</div>' +
+                '</div>'
+              : '') +
+
+            criteriaHtml +
+            tagsHtml +
+            mediaHtml +
+
+            /* ── Edit fields (assignee, dates, estimate, state) ── */
+            '<div class="qe-section">' +
+              '<div class="qe-section-head">Edit</div>' +
+              '<div class="sp-drawer-fields">' +
+                '<label>Assignee</label><select id="qe-assignee">' + userOpts + '</select>' +
+                '<div class="row">' +
+                  '<div><label>Start date</label><input id="qe-start" type="date" value="' + (issue.start_date || '') + '" /></div>' +
+                  '<div><label>End date (due)</label><input id="qe-due" type="date" value="' + (issue.due_date || '') + '" /></div>' +
+                '</div>' +
+                '<div class="row">' +
+                  '<div><label>Estimate (points)</label><input id="qe-est" type="number" min="0" max="99" value="' + (issue.estimate_points != null ? issue.estimate_points : '') + '" /></div>' +
+                  '<div><label>State</label><select id="qe-state">' +
+                    ['todo','in_progress','in_review','done','cancelled'].map(function (st2) {
+                      return '<option value="' + st2 + '"' + (issue.state === st2 ? ' selected' : '') + '>' + st2.replace('_',' ') + '</option>';
+                    }).join('') +
+                  '</select></div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            /* ── Late-reason panel ── */
+            '<div class="sp-late-panel" id="qe-late-panel">' +
+              '<div class="sp-late-head">' +
+                '<strong>Late reasons</strong>' +
+                '<span class="sp-late-count" id="qe-late-count">…</span>' +
+              '</div>' +
+              '<div id="qe-late-list" class="sp-late-list"></div>' +
+              '<div id="qe-late-form" class="sp-late-form" style="display:none;">' +
+                '<div class="sp-late-form-head">Submit a late reason</div>' +
+                '<textarea id="qe-late-reason" placeholder="Why is this task slipping? Be specific — blockers, dependencies, scope changes…" maxlength="4000" rows="3"></textarea>' +
+                '<div class="sp-late-form-row">' +
+                  '<label class="sp-late-due-label">New ETA (optional)</label>' +
+                  '<input id="qe-late-newdue" type="date" />' +
+                  '<button class="sp-btn-primary" id="qe-late-post" type="button" disabled>Submit reason</button>' +
+                '</div>' +
+                '<div class="sp-late-err" id="qe-late-err"></div>' +
+              '</div>' +
+            '</div>' +
+
+            /* ── Comments thread ── */
+            '<div class="sp-drawer-comments">' +
+              '<div class="sp-comments-head">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;color:var(--accent-orange);"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+                '<strong>Discussion</strong>' +
+                '<span class="sp-comments-count" id="qe-c-count">…</span>' +
+              '</div>' +
+              '<div id="qe-comments-list" class="sp-comments-list"><div class="sp-empty" style="padding:14px 8px;">Loading…</div></div>' +
+              '<div class="sp-comment-input">' +
+                '<div class="sp-comment-avatar">' + esc(initial(me && me.name)) + '</div>' +
+                '<div class="sp-comment-wrap">' +
+                  '<textarea id="qe-comment-body" placeholder="Reply, ask, or update the team…" maxlength="8000" rows="2"></textarea>' +
+                  '<div class="sp-comment-toolbar">' +
+                    '<span class="sp-comment-hint">Posting as <strong>' + esc((me && me.name) || 'Anonymous') + '</strong>' + (me && me.role ? ' (' + esc(me.role) + ')' : '') + '</span>' +
+                    '<button class="sp-btn-primary" id="qe-c-post" disabled>Post</button>' +
+                  '</div>' +
+                  '<div class="sp-comment-err" id="qe-c-err"></div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="sp-modal-actions sp-drawer-actions">' +
+            '<button class="sp-btn-ghost" id="qe-cancel">Close</button>' +
+            '<button class="sp-btn-ghost" id="qe-remove" style="color:var(--danger);border-color:rgba(248,113,113,.4)">Remove from sprint</button>' +
+            '<button class="sp-btn-primary" id="qe-save">Save changes</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(modal);
+      // showModal() puts the <dialog> in the BROWSER TOP LAYER — above
+      // every element on the page regardless of z-index, transforms, or
+      // any other CSS gotcha. Fall back to a styled-div approach for
+      // ancient browsers that don't support showModal (none in practice).
+      if (typeof modal.showModal === 'function') {
+        try { modal.showModal(); }
+        catch (_) { modal.setAttribute('open', ''); }
+      } else {
+        modal.setAttribute('open', '');
+      }
+      // Record the live element so closeIssueDrawer() (and the guard logic
+      // at the top of quickEditIssue) can detect and remove it later.
+      openIssueDrawer.el = modal;
+      // Lock the page underneath — prevents accidental background scroll
+      openIssueDrawer.prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      // Backdrop click → close. <dialog> fires the click on the dialog
+      // itself when the user clicks on the ::backdrop pseudo-element area.
+      modal.addEventListener('click', function (e) {
+        // Only treat clicks ON the dialog element itself (not its inner
+        // panel) as backdrop clicks
+        if (e.target === modal) closeIssueDrawer();
+      });
+      // <dialog> dispatches 'cancel' when Esc is pressed — we still
+      // remove our tracker so the dedup logic stays consistent.
+      modal.addEventListener('cancel', function (e) {
+        e.preventDefault();   // stop the default close (we'll do our own teardown)
+        closeIssueDrawer();
+      });
+      // No separate Esc handler needed — <dialog> handles it natively
+      openIssueDrawer.escHandler = null;
+
+      // Cancel button → close (backdrop click already wired above)
+      modal.querySelector('#qe-cancel').addEventListener('click', closeIssueDrawer);
+
+      // Alias used by Save / Remove / Late-reason ETA handlers below — keeps
+      // the call sites short while preserving the dedup + esc cleanup.
+      var localClose = closeIssueDrawer;
+
+      modal.querySelector('#qe-save').addEventListener('click', async function () {
+        var payload = {
+          assignee_id:     modal.querySelector('#qe-assignee').value || null,
+          estimate_points: modal.querySelector('#qe-est').value      || null,
+          start_date:      modal.querySelector('#qe-start').value    || null,
+          due_date:        modal.querySelector('#qe-due').value      || null,
+          state:           modal.querySelector('#qe-state').value,
+        };
+        var r = await fetch('/api/workspace/issues/' + id + '/assign', {
+          method:'PATCH', headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify(payload)
+        });
+        var j = await r.json();
+        if (!j.success) { WorkspaceAlert.flash(j.error || 'Save failed', 'error'); return; }
+        localClose();
+        WorkspaceAlert.flash('Issue updated', 'success');
+        openDetail(state.detail.sprint.id);
+      });
+      modal.querySelector('#qe-remove').addEventListener('click', async function () {
+        if (!(await WorkspaceAlert.confirm('Remove this issue from the sprint? (Issue itself stays.)', { title: 'Remove from sprint', danger: true, confirmText: 'Remove' }))) return;
+        var r = await fetch('/api/workspace/sprints/' + state.detail.sprint.id + '/issues/' + id, { method:'DELETE' });
+        var j = await r.json();
+        if (!j.success) { WorkspaceAlert.flash(j.error || 'Remove failed', 'error'); return; }
+        localClose();
+        WorkspaceAlert.flash('Issue removed from sprint', 'success');
+        openDetail(state.detail.sprint.id);
+      });
+
+      // ── Comments thread ─────────────────────────────────────
+      var listEl  = modal.querySelector('#qe-comments-list');
+      var countEl = modal.querySelector('#qe-c-count');
+      var taEl    = modal.querySelector('#qe-comment-body');
+      var postBtn = modal.querySelector('#qe-c-post');
+      var errEl   = modal.querySelector('#qe-c-err');
+
+      function renderCommentRow(c, currentUser) {
+        var roleClass = c.user_role ? 'role-' + esc(c.user_role) : '';
+        var canEdit = currentUser && currentUser.id &&
+          (Number(currentUser.id) === Number(c.user_id) || currentUser.role === 'admin');
+        var editedTag = c.edited_at
+          ? '<span class="sp-edited-tag" title="Last edited ' + esc(fmtRel(c.edited_at)) + '">edited</span>'
+          : '';
+        return (
+          '<div class="sp-comment ' + roleClass + '" data-cid="' + c.id + '" data-body="' + esc(c.body) + '">' +
+            '<div class="sp-comment-avatar ' + roleClass + '">' + esc(initial(c.user_name)) + '</div>' +
+            '<div class="sp-comment-body">' +
+              '<div class="sp-comment-meta">' +
+                '<span class="sp-comment-author">' + esc(c.user_name || 'Anonymous') + '</span>' +
+                (c.user_role ? '<span class="sp-comment-role ' + roleClass + '">' + esc(c.user_role) + '</span>' : '') +
+                '<span class="sp-comment-time">' + esc(fmtRel(c.created_at)) + editedTag + '</span>' +
+              '</div>' +
+              '<div class="sp-comment-text">' + esc(c.body) + '</div>' +
+              (canEdit
+                ? '<div class="sp-comment-actions">' +
+                    '<button data-act="edit" type="button">Edit</button>' +
+                    '<button data-act="del" type="button" class="del">Delete</button>' +
+                  '</div>'
+                : '') +
+            '</div>' +
+          '</div>'
+        );
+      }
+
+      async function loadComments() {
+        try {
+          var r = await fetch('/api/workspace/issues/' + id + '/comments');
+          var j = await r.json();
+          var comments = (j && j.comments) || [];
+          countEl.textContent = comments.length;
+          listEl.innerHTML = comments.length
+            ? comments.map(function (c) { return renderCommentRow(c, me); }).join('')
+            : '<div class="sp-empty" style="padding:14px 8px;">No comments yet — start the conversation.</div>';
+          // Delete-comment binders
+          listEl.querySelectorAll('[data-act="del"]').forEach(function (b) {
+            b.addEventListener('click', async function () {
+              var cid = Number(b.closest('.sp-comment').dataset.cid);
+              if (!(await WorkspaceAlert.confirm('Delete this comment?', { title: 'Delete comment', danger: true, confirmText: 'Delete' }))) return;
+              var dr = await fetch('/api/workspace/issues/' + id + '/comments/' + cid, { method: 'DELETE' });
+              var dj = await dr.json();
+              if (!dj.success) { WorkspaceAlert.flash(dj.error || 'Delete failed', 'error'); return; }
+              await loadComments();
+            });
+          });
+          // Edit-comment binders (inline edit)
+          listEl.querySelectorAll('[data-act="edit"]').forEach(function (b) {
+            b.addEventListener('click', function () {
+              var row = b.closest('.sp-comment');
+              startInlineEditDrawer(row, Number(row.dataset.cid), id, loadComments);
+            });
+          });
+        } catch (e) {
+          listEl.innerHTML = '<div class="sp-empty" style="padding:14px 8px;">Failed to load comments.</div>';
+        }
+      }
+
+      function refreshPostBtn() { postBtn.disabled = !taEl.value.trim(); }
+      taEl.addEventListener('input', refreshPostBtn);
+      taEl.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !postBtn.disabled) {
+          e.preventDefault(); postBtn.click();
+        }
+      });
+
+      postBtn.addEventListener('click', async function () {
+        var body = taEl.value.trim();
+        if (!body) return;
+        errEl.textContent = ''; errEl.classList.remove('show');
+        var orig = postBtn.innerHTML; postBtn.disabled = true; postBtn.textContent = 'posting…';
+        try {
+          var r = await fetch('/api/workspace/issues/' + id + '/comments', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ body: body }),
+          });
+          var j = await r.json();
+          if (!j.success) {
+            errEl.textContent = j.error || 'Failed to post';
+            errEl.classList.add('show');
+            postBtn.disabled = false; postBtn.innerHTML = orig;
+            return;
+          }
+          taEl.value = '';
+          postBtn.innerHTML = orig; refreshPostBtn();
+          await loadComments();
+        } catch (e) {
+          errEl.textContent = 'Network error: ' + (e.message || '');
+          errEl.classList.add('show');
+          postBtn.disabled = false; postBtn.innerHTML = orig;
+        }
+      });
+
+      await loadComments();
+
+      // ── Late-reason panel ─────────────────────────────────────
+      // The panel always lists prior reasons. The submission form only shows
+      // up when (a) the issue is past due AND not yet done, AND (b) the
+      // current user is the assignee or an admin.
+      var lateListEl  = modal.querySelector('#qe-late-list');
+      var lateCountEl = modal.querySelector('#qe-late-count');
+      var lateFormEl  = modal.querySelector('#qe-late-form');
+      var lateTaEl    = modal.querySelector('#qe-late-reason');
+      var lateDueEl   = modal.querySelector('#qe-late-newdue');
+      var latePostEl  = modal.querySelector('#qe-late-post');
+      var lateErrEl   = modal.querySelector('#qe-late-err');
+
+      function isPastDue(dueStr) {
+        if (!dueStr) return false;
+        try {
+          var d = new Date(dueStr);
+          return d < new Date(new Date().toDateString());
+        } catch (_) { return false; }
+      }
+      var pastDue = isPastDue(issue.due_date) &&
+                    issue.state !== 'done' && issue.state !== 'cancelled' && !issue.is_done;
+      var canFile = me && (
+        (me.id && Number(me.id) === Number(issue.assignee_id)) ||
+        me.role === 'admin'
+      );
+      if (pastDue && canFile) {
+        lateFormEl.style.display = 'block';
+      }
+      // Pre-fill the new-ETA picker with tomorrow as a sane default
+      try {
+        var tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
+        lateDueEl.value = tmr.toISOString().slice(0, 10);
+      } catch (_) {}
+
+      function refreshLatePost() {
+        latePostEl.disabled = !lateTaEl.value.trim();
+      }
+      lateTaEl.addEventListener('input', function () {
+        refreshLatePost();
+        lateErrEl.classList.remove('show');
+      });
+
+      function renderLateEntry(r) {
+        var roleClass = r.user_role ? 'role-' + esc(r.user_role) : '';
+        var shift = (r.old_due_date && r.new_due_date && r.old_due_date !== r.new_due_date)
+          ? '<span class="sp-late-shift">' + esc(r.old_due_date) + ' → ' + esc(r.new_due_date) + '</span>'
+          : (r.new_due_date ? '<span class="sp-late-shift">new ETA ' + esc(r.new_due_date) + '</span>' : '');
+        return (
+          '<div class="sp-late-entry">' +
+            '<div class="sp-late-entry-meta">' +
+              '<span class="sp-late-author">' + esc(r.user_name || 'Anonymous') + '</span>' +
+              (r.user_role ? '<span class="sp-comment-role ' + roleClass + '">' + esc(r.user_role) + '</span>' : '') +
+              '<span>' + esc(fmtRel(r.submitted_at)) + '</span>' +
+              shift +
+            '</div>' +
+            '<div class="sp-late-entry-body">' + esc(r.reason) + '</div>' +
+          '</div>'
+        );
+      }
+
+      async function loadLateReasons() {
+        try {
+          var r = await fetch('/api/workspace/issues/' + id + '/late-reasons');
+          var j = await r.json();
+          var rs = (j && j.reasons) || [];
+          lateCountEl.textContent = rs.length;
+          if (pastDue) {
+            // Show a banner above the list explaining why this exists
+            var bannerHtml = '<div class="sp-late-banner">' +
+              '<strong>This task is past due.</strong> ' +
+              (canFile
+                ? 'You\'re the assignee — please file a reason below so the team has context.'
+                : 'The assignee should file a reason explaining the slip.') +
+              '</div>';
+            lateListEl.innerHTML = bannerHtml + (rs.length
+              ? rs.map(renderLateEntry).join('')
+              : '<div class="sp-empty" style="padding:10px 8px;">No reasons filed yet.</div>');
+          } else {
+            lateListEl.innerHTML = rs.length
+              ? rs.map(renderLateEntry).join('')
+              : '<div class="sp-empty" style="padding:10px 8px;">No late reasons on file — nice.</div>';
+          }
+        } catch (_) {
+          lateListEl.innerHTML = '<div class="sp-empty">Failed to load late reasons.</div>';
+        }
+      }
+
+      latePostEl.addEventListener('click', async function () {
+        var reason = lateTaEl.value.trim();
+        if (!reason) { lateErrEl.textContent = 'Type a reason first.'; lateErrEl.classList.add('show'); return; }
+        var orig = latePostEl.textContent;
+        latePostEl.disabled = true; latePostEl.textContent = 'submitting…';
+        lateErrEl.classList.remove('show');
+        try {
+          var r = await fetch('/api/workspace/issues/' + id + '/late-reason', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: reason, new_due_date: lateDueEl.value || null }),
+          });
+          var j = await r.json();
+          if (!j.success) {
+            lateErrEl.textContent = j.error || 'Failed';
+            lateErrEl.classList.add('show');
+            latePostEl.disabled = false; latePostEl.textContent = orig;
+            return;
+          }
+          lateTaEl.value = '';
+          refreshLatePost();
+          latePostEl.textContent = orig;
+          await loadLateReasons();
+          // If a new ETA was set, the issue's due_date changed → refresh the
+          // whole sprint detail so the board card reflects the new colour
+          if (j.new_due_date) {
+            localClose();
+            openDetail(state.detail.sprint.id);
+          }
+        } catch (e) {
+          lateErrEl.textContent = 'Network error: ' + (e.message || '');
+          lateErrEl.classList.add('show');
+          latePostEl.disabled = false; latePostEl.textContent = orig;
+        }
+      });
+
+      // ⌘/Ctrl+Enter to submit late reason
+      lateTaEl.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !latePostEl.disabled) {
+          e.preventDefault(); latePostEl.click();
+        }
+      });
+
+      await loadLateReasons();
+    }
+
+    // ── Start / Complete buttons ───────────────────────────────
+    async function patchStatus(newStatus) {
+      if (!state.detail) return;
+      var r = await fetch('/api/workspace/sprints/' + state.detail.sprint.id, {
+        method:'PATCH', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      var j = await r.json();
+      if (!j.success) { WorkspaceAlert.flash(j.error || 'Failed', 'error'); return; }
+      openDetail(state.detail.sprint.id);
+      loadSprints();
+    }
+    $('#sp-d-start').addEventListener('click', function () { patchStatus('active'); });
+    $('#sp-d-complete').addEventListener('click', async function () {
+      if (await WorkspaceAlert.confirm('Complete this sprint? Burndown will be frozen and the sprint will move to the completed list.', { title: 'Complete sprint', confirmText: 'Complete' })) {
+        patchStatus('completed');
+      }
+    });
+    $('#sp-d-edit').addEventListener('click', function () { if (state.detail) openSprintModal(state.detail.sprint); });
+
+    // ── Add-issues picker ───────────────────────────────────────
+    $('#sp-d-add-issues').addEventListener('click', async function () {
+      $('#sp-picker-err').classList.remove('show');
+      $('#sp-picker-list').innerHTML = '<div class="sp-empty">Loading…</div>';
+      spOpenModal('#sp-picker-modal');
+
+      // 1. Load sheets for this app + populate dropdown
+      var sheetsRes = await (await fetch('/api/workspace/sheets')).json();
+      var sheets = (sheetsRes && sheetsRes.sheets) || [];
+      var sel = $('#sp-picker-sheet');
+      sel.innerHTML = '<option value="">All sheets</option>' +
+        sheets.map(function (s) { return '<option value="' + esc(s.slug) + '">' + esc(s.label + ' · ' + (s.platform_line || s.slug)) + '</option>'; }).join('');
+
+      // 2. Fetch issues from each sheet, merge
+      async function reload() {
+        var picked = sel.value;
+        $('#sp-picker-list').innerHTML = '<div class="sp-empty">Loading issues…</div>';
+        var sheetsToFetch = picked ? [picked] : sheets.map(function (s) { return s.slug; });
+        var allIssues = [];
+        for (var i = 0; i < sheetsToFetch.length; i++) {
+          var d = await (await fetch('/api/workspace/sheets/' + encodeURIComponent(sheetsToFetch[i]))).json();
+          if (d && d.success && d.issues) allIssues = allIssues.concat(d.issues.map(function (x) { return Object.assign({}, x, { sheet_slug: sheetsToFetch[i] }); }));
+        }
+        // Exclude already-in-this-sprint
+        var existing = new Set((state.detail && state.detail.issues || []).map(function (x) { return x.id; }));
+        var pickable = allIssues.filter(function (x) { return !existing.has(x.id) && !x.is_done && x.state !== 'done' && x.state !== 'cancelled'; });
+        if (!pickable.length) { $('#sp-picker-list').innerHTML = '<div class="sp-empty">No backlog issues to add (filtered out done + already-in-sprint).</div>'; return; }
+        $('#sp-picker-list').innerHTML = pickable.map(function (x) {
+          return (
+            '<label class="sp-picker-row">' +
+              '<input type="checkbox" data-id="' + x.id + '" />' +
+              '<div class="meta">' +
+                '<div class="t">' + esc(x.title) + '</div>' +
+                '<div class="s">#' + x.id + ' · ' + esc(x.priority || '') + ' · ' + esc(x.sheet_slug) + '</div>' +
+              '</div>' +
+            '</label>'
+          );
+        }).join('');
+      }
+      await reload();
+      sel.onchange = reload;
+    });
+    $('#sp-picker-cancel').addEventListener('click', function () { spCloseModal('#sp-picker-modal'); });
+
+    // ── Quick-add: create a brand-new task and drop it into the sprint ─
+    $('#sp-d-quick-add').addEventListener('click', async function () {
+      if (!state.detail) { WorkspaceAlert.flash('Open a sprint first.', 'info'); return; }
+      // Reset form
+      $('#sp-q-title').value = '';
+      $('#sp-q-desc').value  = '';
+      $('#sp-q-est').value   = '';
+      $('#sp-q-due').value   = '';
+      $('#sp-q-priority').value = 'medium';
+      $('#sp-q-type').value     = 'task';
+      $('#sp-quick-err').classList.remove('show');
+
+      // Populate sheets dropdown from current app
+      var sheetsResp;
+      try {
+        var sr = await fetch('/api/workspace/sheets');
+        sheetsResp = await sr.json();
+      } catch (_) { sheetsResp = { sheets: [] }; }
+      var sheets = (sheetsResp && sheetsResp.sheets) || [];
+      $('#sp-q-sheet').innerHTML = sheets.length
+        ? sheets.map(function (s) {
+            var label = (s.platform_line || s.label || s.slug);
+            return '<option value="' + esc(s.slug) + '">' + esc(label) + '</option>';
+          }).join('')
+        : '<option value="">— no sheets in this app —</option>';
+
+      // Populate assignee dropdown from users-lite
+      try {
+        var ur = await fetch('/api/workspace/users-lite');
+        var uj = await ur.json();
+        $('#sp-q-assignee').innerHTML =
+          '<option value="">— unassigned —</option>' +
+          ((uj && uj.users) || []).map(function (u) {
+            return '<option value="' + u.id + '">' + esc(u.name) + ' (' + esc(u.role) + ')</option>';
+          }).join('');
+      } catch (_) {
+        $('#sp-q-assignee').innerHTML = '<option value="">— unassigned —</option>';
+      }
+
+      spOpenModal('#sp-quick-modal');
+      setTimeout(function () { $('#sp-q-title').focus(); }, 50);
+    });
+
+    $('#sp-q-cancel').addEventListener('click', function () {
+      spCloseModal('#sp-quick-modal');
+    });
+
+    $('#sp-q-save').addEventListener('click', async function () {
+      var btn = $('#sp-q-save'), err = $('#sp-quick-err');
+      err.classList.remove('show');
+
+      var title    = $('#sp-q-title').value.trim();
+      var desc     = $('#sp-q-desc').value.trim();
+      var sheet    = $('#sp-q-sheet').value;
+      var type     = $('#sp-q-type').value;
+      var priority = $('#sp-q-priority').value;
+      var est      = $('#sp-q-est').value;
+      var assignee = $('#sp-q-assignee').value;
+      var due      = $('#sp-q-due').value;
+
+      if (!title) { err.textContent = 'Title is required.'; err.classList.add('show'); return; }
+      if (!sheet) { err.textContent = 'Pick a sheet to file this against. Create one in the workspace if there are none.'; err.classList.add('show'); return; }
+
+      var origLabel = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Creating…';
+      try {
+        // 1) Create the issue on the chosen sheet
+        var createRes = await fetch('/api/workspace/sheets/' + encodeURIComponent(sheet) + '/issues', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: title,
+            prompt_text: desc || title,        // server requires non-empty prompt_text
+            priority: priority,
+            issue_type: type,
+          }),
+        });
+        var createJ = await createRes.json();
+        if (!createJ.success || !createJ.id) {
+          err.textContent = 'Create failed: ' + (createJ.error || 'unknown');
+          err.classList.add('show');
+          btn.disabled = false; btn.textContent = origLabel;
+          return;
+        }
+        var newId = createJ.id;
+
+        // 2) Add it to the current sprint
+        var addRes = await fetch('/api/workspace/sprints/' + state.detail.sprint.id + '/issues', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ issue_ids: [newId] }),
+        });
+        var addJ = await addRes.json();
+        if (!addJ.success) {
+          err.textContent = 'Issue created but not added to sprint: ' + (addJ.error || 'unknown');
+          err.classList.add('show');
+          btn.disabled = false; btn.textContent = origLabel;
+          return;
+        }
+
+        // 3) Set the issue's sprint-level fields (state=todo + assignee/estimate/due if provided)
+        var patchPayload = { state: 'todo' };
+        if (assignee) patchPayload.assignee_id     = assignee;
+        if (est)      patchPayload.estimate_points = est;
+        if (due)      patchPayload.due_date        = due;
+        await fetch('/api/workspace/issues/' + newId + '/assign', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patchPayload),
+        }).catch(function () {});
+
+        spCloseModal('#sp-quick-modal');
+        btn.disabled = false; btn.textContent = origLabel;
+        openDetail(state.detail.sprint.id);
+      } catch (e) {
+        err.textContent = 'Network error: ' + (e.message || '');
+        err.classList.add('show');
+        btn.disabled = false; btn.textContent = origLabel;
+      }
+    });
+
+    // Submit-on-Enter for the title field (skips when typing in textarea)
+    $('#sp-q-title').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        $('#sp-q-save').click();
+      }
+    });
+    $('#sp-picker-add').addEventListener('click', async function () {
+      if (!state.detail) return;
+      var ids = Array.prototype.map.call(
+        document.querySelectorAll('#sp-picker-list input[type=checkbox]:checked'),
+        function (c) { return Number(c.dataset.id); }
+      );
+      if (!ids.length) { $('#sp-picker-err').textContent = 'Tick at least one issue.'; $('#sp-picker-err').classList.add('show'); return; }
+      var r = await fetch('/api/workspace/sprints/' + state.detail.sprint.id + '/issues', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ issue_ids: ids })
+      });
+      var j = await r.json();
+      if (!j.success) { $('#sp-picker-err').textContent = j.error || 'Failed'; $('#sp-picker-err').classList.add('show'); return; }
+      // Move them to "todo" state if they were 'backlog' so they show up on the board
+      for (var i = 0; i < ids.length; i++) {
+        await fetch('/api/workspace/issues/' + ids[i] + '/assign', {
+          method:'PATCH', headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({ state: 'todo' })
+        }).catch(function () {});
+      }
+      spCloseModal('#sp-picker-modal');
+      openDetail(state.detail.sprint.id);
+    });
+
+    // ── Burndown ────────────────────────────────────────────────
+    async function loadBurndown(id) {
+      var box = $('#sp-burndown-render');
+      box.innerHTML = '<div class="sp-empty">Loading burndown…</div>';
+      var r = await fetch('/api/workspace/sprints/' + id + '/burndown');
+      var j = await r.json();
+      if (!j.success || !j.days || !j.days.length) { box.innerHTML = '<div class="sp-empty">No burndown data yet — add issues with estimates.</div>'; return; }
+      var total = j.total_points || 0;
+      if (!total) { box.innerHTML = '<div class="sp-empty">Set estimate points on issues to see the burndown.</div>'; return; }
+
+      var w = 820, h = 240, padL = 38, padR = 22, padT = 24, padB = 32;
+      var innerW = w - padL - padR, innerH = h - padT - padB;
+      var n = j.days.length;
+      var stepX = innerW / Math.max(1, n - 1);
+      function x(i) { return padL + i * stepX; }
+      function y(v) { return padT + innerH - (v / total) * innerH; }
+
+      // Horizontal grid lines (5 ticks) + Y-axis labels
+      var gridLines = '', yLabels = '';
+      for (var t = 0; t <= 4; t++) {
+        var gy = padT + (innerH * t) / 4;
+        var val = Math.round(total - (total * t) / 4);
+        gridLines += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (w - padR) + '" y2="' + gy + '" stroke="#23232d" stroke-width="1" />';
+        yLabels  += '<text x="' + (padL - 8) + '" y="' + (gy + 4) + '" text-anchor="end" fill="#7a7a85" font-size="10" font-family="ui-monospace,monospace">' + val + '</text>';
+      }
+
+      // X-axis date labels — first / middle / last
+      var xLabels = '';
+      var pickIdx = n <= 2 ? [0, n - 1] : [0, Math.floor((n - 1) / 2), n - 1];
+      pickIdx.forEach(function (i) {
+        var d = j.days[i];
+        if (!d) return;
+        var lbl = '';
+        try { lbl = new Date(d.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (_) { lbl = d.date; }
+        xLabels += '<text x="' + x(i) + '" y="' + (h - 10) + '" text-anchor="middle" fill="#7a7a85" font-size="10" font-family="ui-monospace,monospace">' + esc(lbl) + '</text>';
+      });
+
+      // Today marker: find the index whose date >= today (only if start ≤ today ≤ end)
+      var todayStr = new Date().toISOString().slice(0, 10);
+      var todayIdx = -1;
+      for (var k = 0; k < n; k++) {
+        if (j.days[k].date >= todayStr) { todayIdx = k; break; }
+      }
+      var todayLine = '';
+      if (todayIdx > 0 && todayIdx < n) {
+        var tx = x(todayIdx);
+        todayLine =
+          '<line x1="' + tx + '" y1="' + padT + '" x2="' + tx + '" y2="' + (h - padB) + '" stroke="#ff570a" stroke-width="1" stroke-dasharray="3,3" opacity=".55" />' +
+          '<text x="' + tx + '" y="' + (padT - 6) + '" text-anchor="middle" fill="#ff570a" font-size="10" font-weight="700" font-family="ui-monospace,monospace">TODAY</text>';
+      }
+
+      // Actual poly + filled area under it
+      var actualPts = j.days.map(function (d, i) { return x(i) + ',' + y(d.remaining); }).join(' ');
+      var areaPts   = padL + ',' + (padT + innerH) + ' ' + actualPts + ' ' + x(n - 1) + ',' + (padT + innerH);
+      var idealPts  = x(0) + ',' + y(total) + ' ' + x(n - 1) + ',' + y(0);
+
+      box.innerHTML =
+        '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">' +
+          '<defs>' +
+            '<linearGradient id="bdFill" x1="0" y1="0" x2="0" y2="1">' +
+              '<stop offset="0%" stop-color="#ff570a" stop-opacity="0.28" />' +
+              '<stop offset="100%" stop-color="#ff570a" stop-opacity="0" />' +
+            '</linearGradient>' +
+          '</defs>' +
+          gridLines + yLabels +
+          // Axes
+          '<line x1="' + padL + '" y1="' + (h - padB) + '" x2="' + (w - padR) + '" y2="' + (h - padB) + '" stroke="#3a3a45" stroke-width="1" />' +
+          '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (h - padB) + '" stroke="#3a3a45" stroke-width="1" />' +
+          // Ideal line
+          '<polyline points="' + idealPts + '" fill="none" stroke="#5e6072" stroke-width="1.5" stroke-dasharray="4,4" />' +
+          // Today marker
+          todayLine +
+          // Area fill under actual
+          '<polygon points="' + areaPts + '" fill="url(#bdFill)" />' +
+          // Actual line
+          '<polyline points="' + actualPts + '" fill="none" stroke="#ff570a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />' +
+          // Points (highlight today if present)
+          j.days.map(function (d, i) {
+            var isToday = i === todayIdx;
+            return '<circle cx="' + x(i) + '" cy="' + y(d.remaining) + '" r="' + (isToday ? 4.5 : 3) + '" fill="' + (isToday ? '#fff' : '#ff570a') + '" stroke="#ff570a" stroke-width="' + (isToday ? 2 : 0) + '">' +
+                     '<title>' + esc(d.date) + ' — ' + d.remaining + ' pts remaining</title>' +
+                   '</circle>';
+          }).join('') +
+          xLabels +
+        '</svg>';
+    }
+
+    // ── Tab clicks ──────────────────────────────────────────────
+    document.querySelectorAll('.sp-tab').forEach(function (t) {
+      t.addEventListener('click', function () { applyFilter(t.dataset.filter); });
+    });
+
+    // ── Static-dialog backdrop-click-to-close ─────────────────────
+    // Native <dialog>.showModal() doesn't close on backdrop click by default.
+    // We wire it manually for the 3 static dialogs (sprint create/edit,
+    // From-backlog picker, Quick-add). The 'cancel' event handles Esc.
+    ['#sp-modal', '#sp-picker-modal', '#sp-quick-modal'].forEach(function (sel) {
+      var el = $(sel);
+      if (!el || el.tagName !== 'DIALOG') return;
+      el.addEventListener('click', function (e) {
+        // A click on the dialog element itself (not a child) means the
+        // user clicked the ::backdrop pseudo-area.
+        if (e.target === el) spCloseModal(el);
+      });
+      // Esc fires 'cancel' on a <dialog> opened with showModal()
+      el.addEventListener('cancel', function (e) {
+        e.preventDefault();
+        spCloseModal(el);
+      });
+    });
+
+    // ── Boot ────────────────────────────────────────────────────
+    loadSprints();
+  })();
+  </script>
+  <script src="workspace-howto.js" defer></script>
+</body>
+</html>

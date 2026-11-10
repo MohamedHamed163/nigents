@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Problem-X — Work Portfolio</title>
-  <meta name="description" content="Software studio Problem-X — shipped apps, websites and tools. Workspace, App, Droob, SmartCollegeSchool, SpecMaster, Nigents." />
+  <meta name="description" content="Software studio Problem-X — shipped apps, websites and tools. Droob, SmartCollegeSchool, SpecMaster, Nigents." />
   <meta property="og:title" content="Problem-X — Work Portfolio" />
   <meta property="og:description" content="Real apps. Live in production. Built by Problem-X." />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="/problem-x/screens/workspace-hub.png" />
+  <meta property="og:image" content="/problem-x/screens/problem-x.png" />
   <meta name="theme-color" content="#2563EB" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -423,7 +423,7 @@
     }
     @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
 
-    /* ── Featured project (Workspace) ───────────────────────── */
+    /* ── Featured project ───────────────────────── */
     .featured {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -948,65 +948,11 @@
         inside this page. Click any card to see screenshots, tech stack, and the story behind it.
       </p>
       <div class="hero-stats reveal" data-delay="300">
-        <div class="hero-stat"><div class="v">7</div><div class="l">Live products</div></div>
+        <div class="hero-stat"><div class="v">5</div><div class="l">Live products</div></div>
         <div class="hero-stat"><div class="v">iOS · Android · Web</div><div class="l">Platforms shipped</div></div>
         <div class="hero-stat"><div class="v">EG · SA · GCC</div><div class="l">Markets served</div></div>
       </div>
     </section>
-  </div>
-
-  <!-- ── Featured: Workspace ─────────────────────────────────── -->
-  <div class="wrap" id="featured">
-    <div class="section-head reveal">
-      <span class="tag">Featured</span>
-      <h2>Workspace — Home services &amp; construction on iOS</h2>
-      <p>The bilingual platform connecting Gulf homeowners with verified contractors and craftsmen — payments, chat, and project tracking in one app.</p>
-    </div>
-
-    <article class="featured reveal" data-open="workspace" tabindex="0" role="button" aria-label="Open Workspace project details">
-      <div class="featured-left">
-        <span class="featured-tag">Live · App Store + Play Store</span>
-        <h3>Workspace</h3>
-        <div class="tagline">example.com — iOS &amp; Android · Arabic + English</div>
-        <p class="desc">
-          A <strong>home-services &amp; construction marketplace</strong> for the Gulf market.
-          Homeowners post a project — bathroom renovation, AC install, paint job, plumbing fix,
-          tile work — and verified service providers (contractors, plumbers, electricians,
-          painters, carpenters) bid for the work. Customers chat in real time, track progress,
-          and pay via HyperPay. Bilingual Arabic + English with native iOS &amp; Android.
-        </p>
-        <div class="featured-tech">
-          <span class="tech-chip">SwiftUI iOS 18.6+</span>
-          <span class="tech-chip">Android Native</span>
-          <span class="tech-chip">Spring Boot</span>
-          <span class="tech-chip">MQTT realtime</span>
-          <span class="tech-chip">Firebase FCM</span>
-          <span class="tech-chip">HyperPay</span>
-          <span class="tech-chip">Google Maps</span>
-        </div>
-        <div class="featured-actions">
-          <button class="btn-primary" type="button" data-open="workspace">See full details →</button>
-          <a class="btn-ghost" href="https://example.com" target="_blank" rel="noopener" onclick="event.stopPropagation();">Visit example.com ↗</a>
-        </div>
-        <div class="store-badges">
-          <a class="store-badge" href="https://apps.apple.com/eg/app/workspace/id6752626102" target="_blank" rel="noopener" onclick="event.stopPropagation();">
-            <span class="ic"></span>
-            <span class="copy"><small>Download on the</small><span>App Store</span></span>
-          </a>
-          <a class="store-badge" href="https://play.google.com/store/apps/details?id=com.workspace.app&hl=ar" target="_blank" rel="noopener" onclick="event.stopPropagation();">
-            <span class="ic">▶</span>
-            <span class="copy"><small>GET IT ON</small><span>Google Play</span></span>
-          </a>
-        </div>
-      </div>
-      <div class="featured-right">
-        <div class="live-frame" data-src="https://example.com"></div>
-        <div class="featured-icon-stack">
-          <img src="/problem-x/screens/icons/workspace-icon.png" alt="Workspace app icon" />
-          <div class="name">Workspace<small>iOS · Android · Gulf market</small></div>
-        </div>
-      </div>
-    </article>
   </div>
 
   <!-- ── Other projects ──────────────────────────────────── -->
@@ -1014,31 +960,10 @@
     <div class="section-head reveal">
       <span class="tag">Portfolio</span>
       <h2>Click any project — every preview is the actual site, live</h2>
-      <p>Seven shipped products across home services, AI tooling, education, manufacturing and team operations — all running in production today, embedded right here.</p>
+      <p>Five shipped products across AI tooling, education, manufacturing and team operations — all running in production today, embedded right here.</p>
     </div>
 
     <div class="projects">
-
-      <!-- App — LIVE IFRAME -->
-      <button class="project has-icon reveal" data-c="teal" data-open="app" type="button">
-        <div class="project-preview">
-          <div class="live-frame" data-src="https://app.com"></div>
-          <div class="project-app-icon">
-            <img src="/problem-x/screens/icons/app-ios-icon.png" alt="App app icon" />
-          </div>
-        </div>
-        <div class="project-body">
-          <div class="project-head">
-            <div class="meta">
-              <h3>App</h3>
-              <div class="project-domain">app.com · iOS · Android</div>
-            </div>
-            <span class="project-status">Live</span>
-          </div>
-          <p class="desc">AI-powered job hunter built for Egypt — CV scoring, job aggregation across LinkedIn + Wuzzuf + Bayt, AI-rewritten resumes, portfolio site generator, and GPT-4o vision that turns career-fair photos into "apply now" links.</p>
-          <span class="project-cta">See details</span>
-        </div>
-      </button>
 
       <!-- Droob — UNDER CONSTRUCTION (icon only, no iframe) -->
       <button class="project has-icon reveal" data-c="amber" data-open="droob" type="button">
@@ -1136,27 +1061,6 @@
         </div>
       </button>
 
-      <!-- Workspace secondary — LIVE IFRAME -->
-      <button class="project has-icon reveal" data-c="cyan" data-open="workspace" type="button">
-        <div class="project-preview">
-          <div class="live-frame" data-src="https://example.com"></div>
-          <div class="project-app-icon">
-            <img src="/problem-x/screens/icons/workspace-icon.png" alt="Workspace app icon" />
-          </div>
-        </div>
-        <div class="project-body">
-          <div class="project-head">
-            <div class="meta">
-              <h3>Workspace (full details)</h3>
-              <div class="project-domain">example.com · iOS · Android</div>
-            </div>
-            <span class="project-status">Live</span>
-          </div>
-          <p class="desc">Home services &amp; construction marketplace for the Gulf market — bilingual iOS + Android apps, real-time chat, HyperPay payments, Google Maps integration. Featured above.</p>
-          <span class="project-cta">See details</span>
-        </div>
-      </button>
-
     </div>
   </div>
 
@@ -1211,7 +1115,6 @@
     <div class="row">
       <span>© 2026 Problem-X</span>
       <a href="https://nigents.com">nigents.com</a>
-      <a href="/workspace/">Workspace workspace</a>
     </div>
     <div style="margin-top:8px;">Hosted on nigents.com · Built by Problem-X</div>
   </footer>
@@ -1220,148 +1123,6 @@
        Project detail dialogs — live iframes inside the modals too where
        the target site allows embedding.
        ══════════════════════════════════════════════════════════════════════ -->
-
-  <!-- WORKSPACE -->
-  <dialog class="proj-dialog" id="dlg-workspace" style="--proj-color: var(--blue-600);">
-    <div class="pd-wrap">
-      <div class="pd-head">
-        <div class="pd-head-row">
-          <div class="pd-icon"><img src="/problem-x/screens/icons/workspace-icon.png" alt="Workspace app icon" /></div>
-          <div class="pd-head-left">
-            <div class="eyebrow">Featured · iOS · Android · Gulf market</div>
-            <h2>Workspace — Home services &amp; construction</h2>
-            <div class="domain">example.com</div>
-          </div>
-        </div>
-        <button class="pd-close" type="button" aria-label="Close" data-close>×</button>
-      </div>
-      <div class="pd-body">
-        <div class="pd-gallery">
-          <div class="pd-shot">
-            <div class="live-frame" data-src="https://example.com"></div>
-            <div class="pd-shot-caption">example.com — live preview</div>
-          </div>
-        </div>
-
-        <div class="pd-section">
-          <h3>About</h3>
-          <p>Workspace is a <strong>home-services &amp; construction marketplace</strong> for the Gulf market. Homeowners post a project — a bathroom renovation, an AC install, a paint job, plumbing or tile work, anything from a small repair to a full apartment refit — and verified service providers (contractors, plumbers, electricians, painters, carpenters) bid for the work.</p>
-          <p>Once the customer picks a provider, the platform handles the rest end-to-end: <strong>real-time chat</strong> over MQTT, <strong>project tracking</strong> with progress milestones, <strong>in-app payments</strong> via HyperPay (MADA, Visa, Apple Pay), and <strong>Google Maps integration</strong> so the provider knows exactly where they're going. Everything is fully bilingual Arabic + English with native iOS and Android apps.</p>
-        </div>
-
-        <div class="pd-section">
-          <h3>What customers use it for</h3>
-          <ul class="use-cases">
-            <li><strong>Renovations</strong> — kitchens, bathrooms, full apartment refits, room additions</li>
-            <li><strong>Repairs</strong> — plumbing leaks, AC issues, electrical faults, broken fixtures</li>
-            <li><strong>Skilled trades</strong> — tile work, painting, carpentry, gypsum, marble work</li>
-            <li><strong>Maintenance</strong> — recurring cleaning, AC servicing, garden upkeep</li>
-            <li><strong>Small tasks</strong> — TV mounting, furniture assembly, hanging shelves</li>
-          </ul>
-        </div>
-
-        <div class="pd-section">
-          <h3>Key features</h3>
-          <div class="pd-features">
-            <div class="pd-feature"><strong>Verified providers</strong>Background-checked contractors only — no walk-ins</div>
-            <div class="pd-feature"><strong>Real-time chat</strong>MQTT-backed messaging between customer + provider</div>
-            <div class="pd-feature"><strong>Project tracking</strong>Milestones, progress photos, status updates</div>
-            <div class="pd-feature"><strong>HyperPay checkout</strong>MADA, Visa, Apple Pay — Saudi-friendly</div>
-            <div class="pd-feature"><strong>Google Maps</strong>Provider gets exact pin to your address</div>
-            <div class="pd-feature"><strong>Bilingual UI</strong>Arabic + English, with full RTL support</div>
-            <div class="pd-feature"><strong>Phone OTP + Face ID</strong>Quick secure auth without passwords</div>
-            <div class="pd-feature"><strong>Push notifications</strong>Firebase FCM keeps both sides in the loop</div>
-          </div>
-        </div>
-
-        <div class="pd-section">
-          <h3>Tech stack</h3>
-          <div class="pd-tech">
-            <span class="tech-chip">SwiftUI (iOS 18.6+)</span>
-            <span class="tech-chip">Android Native</span>
-            <span class="tech-chip">Spring Boot</span>
-            <span class="tech-chip">MQTT</span>
-            <span class="tech-chip">Firebase Firestore</span>
-            <span class="tech-chip">Firebase FCM</span>
-            <span class="tech-chip">HyperPay</span>
-            <span class="tech-chip">Google Maps SDK</span>
-            <span class="tech-chip">Mixpanel</span>
-          </div>
-        </div>
-      </div>
-      <div class="pd-actions">
-        <div class="left">
-          <a class="store-badge" href="https://apps.apple.com/eg/app/workspace/id6752626102" target="_blank" rel="noopener">
-            <span class="ic"></span>
-            <span class="copy"><small>Download on the</small><span>App Store</span></span>
-          </a>
-          <a class="store-badge" href="https://play.google.com/store/apps/details?id=com.workspace.app&hl=ar" target="_blank" rel="noopener">
-            <span class="ic">▶</span>
-            <span class="copy"><small>GET IT ON</small><span>Google Play</span></span>
-          </a>
-        </div>
-        <a class="btn-primary" href="https://example.com" target="_blank" rel="noopener" style="text-decoration:none;">Visit example.com ↗</a>
-      </div>
-    </div>
-  </dialog>
-
-  <!-- APP -->
-  <dialog class="proj-dialog" id="dlg-app" style="--proj-color: #14b8a6;">
-    <div class="pd-wrap">
-      <div class="pd-head">
-        <div class="pd-head-row">
-          <div class="pd-icon"><img src="/problem-x/screens/icons/app-ios-icon.png" alt="App app icon" /></div>
-          <div class="pd-head-left">
-            <div class="eyebrow">iOS · Android · Web · Egypt</div>
-            <h2>App — AI job hunter for Egypt</h2>
-            <div class="domain">app.com</div>
-          </div>
-        </div>
-        <button class="pd-close" type="button" aria-label="Close" data-close>×</button>
-      </div>
-      <div class="pd-body">
-        <div class="pd-gallery">
-          <div class="pd-shot">
-            <div class="live-frame" data-src="https://app.com"></div>
-            <div class="pd-shot-caption">app.com — live preview</div>
-          </div>
-        </div>
-        <div class="pd-section">
-          <h3>About</h3>
-          <p><em>"App"</em> is Egyptian Arabic for <em>"there's no work / I'm jobless"</em>. It's an <strong>end-to-end job-hunting platform for Egyptian students and graduates</strong> — the goal is to take someone from "I have a CV and no plan" to "I've applied to ten real jobs this week" without leaving the app.</p>
-          <p>Egyptian graduates face a job market that doesn't behave like the one their CVs were written for. Recruiters here screen for different signals. Job boards (LinkedIn, Wuzzuf, Bayt) don't talk to each other. Career fairs at GUC, Cairo Uni, AUC dump 60+ booths on students in one day with QR codes that get lost. App fixes all of that.</p>
-        </div>
-        <div class="pd-section">
-          <h3>The 7 things it does</h3>
-          <div class="pd-features">
-            <div class="pd-feature"><strong>CV vibe check</strong>AI scores your CV out of 100 with sub-scores (clarity, proof, market-fit, formatting); rewrites weak bullets — Arabic or English</div>
-            <div class="pd-feature"><strong>Job radar</strong>One search hits LinkedIn, Wuzzuf, and Bayt at once; ranks results against your CV</div>
-            <div class="pd-feature"><strong>CV glow-up PDF</strong>ATS-optimised templates with the AI rewrites baked in, section order tuned for Egyptian recruiters</div>
-            <div class="pd-feature"><strong>Portfolio drop</strong>Shareable mini-site at app.com/portfolio/your-name — comes with a QR code</div>
-            <div class="pd-feature"><strong>Skill roadmap</strong>8-week plan with concrete courses, portfolio tasks, and weekly checkpoints tied to your target role</div>
-            <div class="pd-feature"><strong>Job-fair capture</strong>Snap photos of every booth's QR or poster — GPT-4o vision extracts apply link, company, role into one tidy pile</div>
-            <div class="pd-feature"><strong>GUC Career Fair page</strong>Curated /guc-fair with every company at this year's fair — one tap opens their apply form</div>
-          </div>
-        </div>
-        <div class="pd-section">
-          <h3>Tech stack</h3>
-          <div class="pd-tech">
-            <span class="tech-chip">SwiftUI (iOS)</span>
-            <span class="tech-chip">Android Native</span>
-            <span class="tech-chip">Next.js (web)</span>
-            <span class="tech-chip">Node.js</span>
-            <span class="tech-chip">GPT-4o Vision</span>
-            <span class="tech-chip">Playwright (scrapers)</span>
-            <span class="tech-chip">PostgreSQL</span>
-            <span class="tech-chip">Arabic NLP</span>
-          </div>
-        </div>
-      </div>
-      <div class="pd-actions">
-        <a class="btn-primary" href="https://app.com" target="_blank" rel="noopener" style="text-decoration:none;">Visit app.com ↗</a>
-      </div>
-    </div>
-  </dialog>
 
   <!-- DROOB -->
   <dialog class="proj-dialog" id="dlg-droob" style="--proj-color: var(--amber);">
@@ -1555,7 +1316,7 @@
         </div>
         <div class="pd-section">
           <h3>About</h3>
-          <p>Nigents is an <strong>AI development team accessible via Telegram</strong>. Drop a task by voice note or text and a fleet of AI agents — planner, backend, frontend, QA, reviewer, DevOps, security, architect — implement, review, and ship it. Plans go through a 233-skill catalog that can be activated per-agent on demand. Voice messages work in <strong>Arabic and English</strong>. Hosts the Workspace workspace as a sibling app.</p>
+          <p>Nigents is an <strong>AI development team accessible via Telegram</strong>. Drop a task by voice note or text and a fleet of AI agents — planner, backend, frontend, QA, reviewer, DevOps, security, architect — implement, review, and ship it. Plans go through a 233-skill catalog that can be activated per-agent on demand. Voice messages work in <strong>Arabic and English</strong>. Hosts the Workspace as a sibling app.</p>
         </div>
         <div class="pd-section">
           <h3>Key features</h3>

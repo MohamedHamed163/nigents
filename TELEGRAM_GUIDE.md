@@ -117,10 +117,10 @@ Need to add:
 
 **Files to Modify:**
 • pom.xml - Add jjwt dependency
-• src/main/java/com/workspace/security/JwtTokenProvider.java (NEW)
-• src/main/java/com/workspace/controller/AuthController.java (NEW)
-• src/main/java/com/workspace/security/JwtAuthenticationFilter.java (NEW)
-• src/main/java/com/workspace/config/SecurityConfig.java (MODIFY)
+• src/main/java/com/example/security/JwtTokenProvider.java (NEW)
+• src/main/java/com/example/controller/AuthController.java (NEW)
+• src/main/java/com/example/security/JwtAuthenticationFilter.java (NEW)
+• src/main/java/com/example/config/SecurityConfig.java (MODIFY)
 
 **Branch:** nigents/task-auth-jwt
 

@@ -20,7 +20,7 @@ mcp-servers/
 **Location:** `mcp-servers/arabic-rtl-auditor/`
 
 ### Purpose
-Audits and fixes Arabic RTL (Right-to-Left) compliance in code. Essential for Saudi/GCC projects like Workspace and Problem-X.
+Audits and fixes Arabic RTL (Right-to-Left) compliance in code. Essential for Saudi/GCC projects like Problem-X.
 
 ### Tools
 
@@ -89,7 +89,7 @@ Intelligently splits development tasks across NightOwl's 7-agent team. Optimizes
 ```typescript
 // Split a task across agents
 const split = await mcp.callTool('task-splitter', 'split_task', {
-  task: 'Add HyperPay refund webhook to Workspace backend'
+  task: 'Add HyperPay refund webhook to the payments backend'
 });
 
 // Result:
@@ -132,21 +132,21 @@ Semantic code search using embeddings. Find code by meaning, not just keywords.
 ```typescript
 // 1. Index the repository
 await mcp.callTool('smart-code-search', 'index_repository', {
-  repositoryPath: '/workspace/workspace',
-  repositoryName: 'workspace'
+  repositoryPath: '/workspace/my-app',
+  repositoryName: 'my-app'
 });
 
 // 2. Search semantically
 const results = await mcp.callTool('smart-code-search', 'semantic_query', {
   query: 'how do we handle payment retries when they fail',
-  repository: 'workspace',
+  repository: 'my-app',
   topK: 5
 });
 
 // 3. Ask natural language questions
 const answer = await mcp.callTool('smart-code-search', 'natural_language_query', {
   question: 'Where is the HyperPay integration configured?',
-  repository: 'workspace'
+  repository: 'my-app'
 });
 ```
 
@@ -229,7 +229,7 @@ Already added to `config/mcp-servers.json`:
 
 ## 🎯 Use Cases
 
-### For Workspace/Problem-X (Saudi Projects)
+### For Problem-X (Arabic/RTL Projects)
 
 ```typescript
 // Frontend dev uses RTL auditor
@@ -265,7 +265,7 @@ for (const group of plan.parallelGroups) {
 // Planner searches for patterns
 const similar = await mcp.callTool('smart-code-search', 'find_similar_functions', {
   code: currentFunction,
-  repository: 'workspace',
+  repository: 'my-app',
   topK: 3
 });
 ```

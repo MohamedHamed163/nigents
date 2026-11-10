@@ -61,7 +61,7 @@ Nigents (Night Agents) is a self-hosted AI agent team that runs 24/7 on your own
 | 🐳 **Code Sandbox** | OpenHands when available, otherwise repo-clone-push or GitLab API fallback |
 | 📚 **Free Materials** | PDF roadmaps (backend, frontend, fullstack, QA) with email subscribe flow |
 | 🤪 **Crazy Apps** | 21 native macOS menu-bar experiments, each with its own landing page + DMG |
-| 🗂️ **Nigents Apps** | Workspace-style sheets/issues/builds workspaces for multiple products |
+| 🗂️ **Nigents Apps** | Shared sheets/issues/builds workspaces for multiple products |
 
 ---
 
@@ -197,7 +197,7 @@ NotchHQ, DontForget and Rise&Open run without a standard window: they appear fro
 
 <img src="docs/screenshots/apps.png" width="100%"/>
 
-`/apps/` hosts workspaces that share one sheets-and-issues model: **Workspace** (the full workspace with Web, iOS, Android, Backend, Designs, Builds, Canvas, AI Roadmap and Admin), **App**, **Tawazon**, **Droop** and **QuickIn**. You can upload bugs with screenshots, track priority and status, and manage builds. Admins can grant per-user edit keys.
+`/apps/` hosts workspaces that share one sheets-and-issues model: **Workspace** (the full workspace with Web, iOS, Android, Backend, Designs, Builds, Canvas, AI Roadmap and Admin), **Tawazon**, **Droop** and **QuickIn**. You can upload bugs with screenshots, track priority and status, and manage builds. Admins can grant per-user edit keys.
 
 Other showcase projects served by the dashboard include `algioshy/`, `AlGioshy-school-project/`, `rawa2/` (loyalty wallet demo), `problem-x/`, `food-project-quotation/` and `quickin-demo/`.
 

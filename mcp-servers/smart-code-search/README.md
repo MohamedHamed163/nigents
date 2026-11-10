@@ -28,7 +28,7 @@ Search by natural language.
 ```javascript
 const results = await client.callTool('semantic_query', {
   query: 'how do we handle payment retries',
-  repository: 'workspace',
+  repository: 'my-app',
   topK: 5
 });
 ```
@@ -42,7 +42,7 @@ Ask questions about the codebase.
 ```javascript
 const answer = await client.callTool('natural_language_query', {
   question: 'Where is the HyperPay integration configured?',
-  repository: 'workspace'
+  repository: 'my-app'
 });
 ```
 
@@ -51,14 +51,14 @@ const answer = await client.callTool('natural_language_query', {
 ```javascript
 // 1. Index repository
 await client.callTool('index_repository', {
-  repositoryPath: '/workspace/workspace',
-  repositoryName: 'workspace'
+  repositoryPath: '/workspace/my-app',
+  repositoryName: 'my-app'
 });
 
 // 2. Search
 const results = await client.callTool('semantic_query', {
   query: 'payment refund logic',
-  repository: 'workspace'
+  repository: 'my-app'
 });
 ```
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Workspace — Nigents Apps</title>
-    <meta name="description" content="Sheets + issues workspace shared across Workspace, App, Tawazon, and Droop." />
+    <meta name="description" content="Sheets + issues workspace shared across Workspace, Tawazon, Droop, and QuickIn." />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -27,7 +27,6 @@
             --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         body[data-app="workspace"]      { --accent: #ff570a; }
-        body[data-app="app"] { --accent: #a78bfa; }
         body[data-app="tawazon"]     { --accent: #19d59e; }
         body[data-app="droop"]       { --accent: #ff3d5c; }
         body[data-app="quickin"]     { --accent: #5B0F16; }
@@ -193,7 +192,6 @@
                 <span>App:</span>
                 <select id="app-select">
                     <option value="workspace">Workspace</option>
-                    <option value="app">App</option>
                     <option value="tawazon">Tawazon</option>
                     <option value="droop">Droop</option>
                     <option value="quickin">QuickIn</option>
@@ -325,8 +323,8 @@
         'use strict';
 
         // ── State ────────────────────────────────────────────────────────────
-        const APP_LABELS = { workspace: 'Workspace', app: 'App', tawazon: 'Tawazon', droop: 'Droop', quickin: 'QuickIn' };
-        const APP_LETTER = { workspace: 'B', app: 'M', tawazon: 'T', droop: 'D', quickin: 'Q' };
+        const APP_LABELS = { workspace: 'Workspace', tawazon: 'Tawazon', droop: 'Droop', quickin: 'QuickIn' };
+        const APP_LETTER = { workspace: 'B', tawazon: 'T', droop: 'D', quickin: 'Q' };
 
         const params = new URLSearchParams(location.search);
         const state = {

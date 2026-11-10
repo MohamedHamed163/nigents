@@ -63,7 +63,7 @@ Detects parallel execution conflicts.
 
 ```javascript
 const split = await client.callTool('split_task', {
-  task: 'Add HyperPay refund webhook to Workspace backend'
+  task: 'Add HyperPay refund webhook to the payments backend'
 });
 
 // NightOwl orchestrator uses this to delegate to agents

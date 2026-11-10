@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Opening sheet…</title>
+  <script src="/workspace/workspace-multi-app.js?v=2"></script>
+  <script>
+    // App-aware redirect:
+    //   - Workspace app  → legacy "android" sheet (preserved for backwards compat)
+    //   - Other apps  → that app's sheet of the same platform (e.g. tawazon-android)
+    //                   if it doesn't exist, fall back to the workspace hub
+    (function () {
+      var app = (window.WORKSPACE_APP || 'workspace').toLowerCase();
+      var slug = (app === 'workspace') ? 'android' : app + '-android';
+      // Verify the sheet exists for this app before redirecting; if not,
+      // send the user back to the hub so they can pick from what's there.
+      fetch('/api/workspace/sheets/' + encodeURIComponent(slug) + '?app=' + encodeURIComponent(app))
+        .then(function (r) {
+          if (r.ok) {
+            location.replace('sheet.html?slug=' + encodeURIComponent(slug) + '&app=' + encodeURIComponent(app));
+          } else {
+            location.replace('./?app=' + encodeURIComponent(app));
+          }
+        })
+        .catch(function () { location.replace('./?app=' + encodeURIComponent(app)); });
+    })();
+  </script>
+</head>
+<body style="font-family:system-ui;padding:24px;background:#09080c;color:#a0a0a0;">
+  <p>Opening the android sheet&hellip;</p>
+</body>
+</html>

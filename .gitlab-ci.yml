@@ -11,8 +11,6 @@ variables:
   DEPLOY_DIR: /home/ubuntu/nigents
   GIT_DEPTH: 10
   GIT_STRATEGY: clone
-  # Workspace /workspace — written to server .env on deploy. Override in GitLab → Settings → CI/CD → Variables (masked) if you rotate.
-  WORKSPACE_EDIT_SECRET: "change-me"
   # MySQL Configuration for CI tests
   DB_HOST: mysql
   DB_PORT: 3306
@@ -217,7 +215,12 @@ deploy-to-ec2:
     - echo "=== Sync secrets to server .env + restart dashboard ==="
     - |
       ENV_SYNC="cd ${DEPLOY_DIR} && touch .env"
-      ENV_SYNC="${ENV_SYNC} && sed -i '/^WORKSPACE_EDIT_SECRET=/d' .env && echo \"WORKSPACE_EDIT_SECRET=${WORKSPACE_EDIT_SECRET}\" >> .env"
+      # WORKSPACE_EDIT_SECRET comes from GitLab → Settings → CI/CD → Variables (masked).
+      if [ -n "${WORKSPACE_EDIT_SECRET:-}" ]; then
+        ENV_SYNC="${ENV_SYNC} && sed -i '/^WORKSPACE_EDIT_SECRET=/d' .env && echo \"WORKSPACE_EDIT_SECRET=${WORKSPACE_EDIT_SECRET}\" >> .env"
+      else
+        echo "WORKSPACE_EDIT_SECRET not set in CI — skip."
+      fi
       if [ -n "${WORKSPACE_ADMIN_KEY:-}" ]; then
         ENV_SYNC="${ENV_SYNC} && sed -i '/^WORKSPACE_ADMIN_KEY=/d' .env && echo \"WORKSPACE_ADMIN_KEY=${WORKSPACE_ADMIN_KEY}\" >> .env"
         echo "WORKSPACE_ADMIN_KEY will be written to server .env."

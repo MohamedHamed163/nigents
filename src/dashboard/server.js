@@ -75,7 +75,7 @@ function requireDashboardAdmin(req, res, next) {
 }
 
 // Middleware
-// Raise body-parser limits for the Workspace workspace so big issue descriptions
+// Raise body-parser limits for the Workspace so big issue descriptions
 // (embedded base64, long prompt_text, lots of criteria) and large form posts
 // don't hit Express's default 100KB ceiling and return 413.
 // File uploads themselves are handled by multer in their own routes — those

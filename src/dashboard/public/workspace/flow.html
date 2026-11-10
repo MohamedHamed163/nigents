@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How sprints work — Workspace · Nigents</title>
+  <link rel="stylesheet" href="brief.css" />
+  <script src="/workspace/workspace-multi-app.js?v=1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    /* ── Defensive wrapping — never let long words break the layout ── */
+    .fl-wrap, .fl-card, .fl-card * { box-sizing: border-box; }
+    .fl-card p, .fl-card li, .fl-card .lede,
+    .fl-card .step-title, .fl-card .step-desc,
+    .fl-key .value, .fl-def-desc, .fl-callout,
+    .fl-role li {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    /* ── Page shell ───────────────────────────────────────────────── */
+    .fl-wrap { max-width: 1280px; margin: 0 auto; padding: clamp(16px, 4vw, 36px) var(--gutter); }
+
+    .fl-hero {
+      margin-bottom: 30px;
+      padding: clamp(20px, 4vw, 32px);
+      background: linear-gradient(155deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .fl-hero::before {
+      content: '';
+      position: absolute; right: -80px; top: -80px;
+      width: 280px; height: 280px;
+      background: radial-gradient(circle, rgba(255,107,26,.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .fl-hero h1 {
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 800; margin: 0 0 12px;
+      letter-spacing: -0.025em; line-height: 1.1;
+      position: relative;
+    }
+    .fl-hero h1 .accent { color: var(--accent-orange); }
+    .fl-hero .lede {
+      color: var(--text-soft); font-size: 15px; line-height: 1.65;
+      max-width: 68ch; position: relative;
+    }
+    .fl-hero .lede strong { color: var(--text-primary); font-weight: 700; }
+    .fl-hero .crumbs {
+      display: flex; gap: 18px; margin-top: 18px; flex-wrap: wrap;
+      font-family: ui-monospace, monospace; font-size: 12px;
+      color: var(--text-muted); position: relative;
+    }
+    .fl-hero .crumbs span { color: var(--text-soft); }
+    .fl-hero .crumbs strong { color: var(--accent-orange); font-weight: 700; }
+
+    /* ── Layout: sticky left nav + content ────────────────────────── */
+    .fl-layout {
+      display: grid; grid-template-columns: 240px 1fr; gap: 32px; align-items: start;
+    }
+    @media (max-width: 920px) { .fl-layout { grid-template-columns: 1fr; } }
+
+    .fl-nav {
+      position: sticky; top: 16px;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 16px 12px; max-height: calc(100vh - 32px); overflow-y: auto;
+    }
+    @media (max-width: 920px) { .fl-nav { position: static; } }
+    .fl-nav-group {
+      font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--text-muted); font-family: ui-monospace, monospace;
+      padding: 12px 10px 6px; border-top: 1px solid rgba(255,255,255,.04); margin-top: 4px;
+    }
+    .fl-nav-group:first-of-type { border-top: none; margin-top: 0; }
+    .fl-nav a {
+      display: block; padding: 7px 10px; border-radius: 7px;
+      font-size: 13px; font-weight: 500; color: var(--text-primary);
+      text-decoration: none; transition: all .15s; line-height: 1.35;
+      border-left: 2px solid transparent; margin: 1px 0;
+    }
+    .fl-nav a:hover { background: rgba(255,107,26,.06); color: var(--accent-orange); }
+    .fl-nav a.active {
+      background: rgba(255,107,26,.1); color: var(--accent-orange);
+      border-left-color: var(--accent-orange); font-weight: 700;
+    }
+
+    .fl-main { display: flex; flex-direction: column; gap: 28px; }
+
+    /* ── Section card ─────────────────────────────────────────────── */
+    .fl-card {
+      background: linear-gradient(155deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+      border: 1px solid var(--border); border-radius: 16px;
+      padding: clamp(20px, 3vw, 30px);
+      scroll-margin-top: 16px;
+    }
+    .fl-tag {
+      display: inline-block; padding: 3px 12px;
+      font-size: 10px; font-weight: 800; letter-spacing: .12em;
+      text-transform: uppercase; border-radius: 999px;
+      background: rgba(255,107,26,.12); color: var(--accent-orange);
+      font-family: ui-monospace, monospace; margin-bottom: 12px;
+    }
+    .fl-tag.green   { background: rgba(46,230,184,.12); color: var(--accent-green); }
+    .fl-tag.blue    { background: rgba(94,179,255,.12); color: var(--blue-accent); }
+    .fl-tag.danger  { background: rgba(248,113,113,.15); color: var(--danger); }
+    .fl-tag.purple  { background: rgba(167,139,250,.15); color: #a78bfa; }
+    .fl-tag.neutral { background: rgba(255,255,255,.06); color: var(--text-secondary); }
+
+    .fl-card h2 {
+      font-size: clamp(22px, 3vw, 26px); font-weight: 800; margin: 0 0 12px;
+      letter-spacing: -0.02em; line-height: 1.2;
+    }
+    .fl-card h3 {
+      font-size: 16px; font-weight: 700; margin: 22px 0 10px;
+      letter-spacing: -0.01em; color: var(--text-primary);
+    }
+    .fl-card p, .fl-card .lede {
+      color: var(--text-soft); font-size: 14px; line-height: 1.75; max-width: 78ch;
+    }
+    @media (max-width: 700px) {
+      .fl-card p, .fl-card .lede { max-width: none; }
+    }
+    .fl-card p strong { color: var(--text-primary); font-weight: 700; }
+    .fl-card p code {
+      padding: 2px 7px; border-radius: 5px;
+      background: rgba(255,107,26,.08); color: var(--accent-orange);
+      font-family: ui-monospace, monospace; font-size: 12.5px; font-weight: 500;
+    }
+
+    .fl-card ul, .fl-card ol { padding-left: 22px; color: var(--text-soft); line-height: 1.75; font-size: 14px; }
+    .fl-card li { padding: 3px 0; }
+    .fl-card li strong { color: var(--text-primary); font-weight: 700; }
+
+    /* ── Diagram container ────────────────────────────────────────── */
+    .fl-diagram {
+      margin: 18px 0; padding: 24px;
+      background: rgba(255,255,255,.02);
+      border: 1px solid rgba(255,255,255,.05);
+      border-radius: 12px; overflow-x: auto;
+    }
+    .fl-diagram .mermaid {
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100px; font-family: inherit;
+    }
+    .fl-diagram svg {
+      max-width: 100%; height: auto;
+      /* Allow mermaid's inner text labels to escape any clipping the rendered SVG applies */
+      overflow: visible;
+    }
+    /* While the diagram source is still raw text (before mermaid processes it), keep it readable */
+    .fl-diagram pre.mermaid:not([data-processed]) {
+      display: block; padding: 12px;
+      font-family: ui-monospace, monospace; font-size: 11px;
+      color: var(--text-muted); white-space: pre-wrap;
+      background: transparent; margin: 0;
+    }
+    .fl-diagram-caption {
+      margin-top: 14px; padding: 10px 14px;
+      border-left: 3px solid var(--accent-orange);
+      background: rgba(255,107,26,.04);
+      font-size: 12.5px; color: var(--text-soft); line-height: 1.55;
+      border-radius: 0 8px 8px 0;
+    }
+    .fl-diagram-caption strong { color: var(--accent-orange); font-weight: 700; }
+
+    /* ── Color legend ─────────────────────────────────────────────── */
+    .fl-legend {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,.02); border-radius: 8px;
+      font-size: 12px;
+    }
+    .fl-legend-item {
+      display: inline-flex; align-items: center; gap: 7px;
+      color: var(--text-soft);
+    }
+    .fl-legend-swatch {
+      width: 14px; height: 14px; border-radius: 4px;
+      border: 1.5px solid transparent;
+    }
+    .fl-legend-swatch.user   { background: #1a2540; border-color: var(--blue-accent); }
+    .fl-legend-swatch.system { background: #2a1a10; border-color: var(--accent-orange); }
+    .fl-legend-swatch.ok     { background: #0a3b30; border-color: var(--accent-green); }
+    .fl-legend-swatch.danger { background: #3d1717; border-color: var(--danger); }
+    .fl-legend-swatch.data   { background: #1d172b; border-color: #a78bfa; }
+    .fl-legend-swatch.decide { background: rgba(255,255,255,.04); border-color: var(--text-muted); border-style: dashed; }
+
+    /* ── Key-points grid ──────────────────────────────────────────── */
+    .fl-keys {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px; margin-top: 18px;
+    }
+    .fl-key {
+      padding: 14px 16px; border-radius: 10px;
+      background: rgba(255,255,255,.025);
+      border: 1px solid rgba(255,255,255,.05);
+      transition: border-color .15s;
+      /* Allow text to wrap fully inside grid cells, even with long inline code */
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .fl-key:hover { border-color: rgba(255,107,26,.25); }
+    .fl-key .label {
+      font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--accent-orange); font-family: ui-monospace, monospace; margin-bottom: 6px;
+      /* Long label terms shouldn't break uppercase tracking — but allow breaking if needed */
+      line-height: 1.4;
+    }
+    .fl-key .value { font-size: 13px; line-height: 1.6; color: var(--text-primary); }
+    .fl-key .value code {
+      font-family: ui-monospace, monospace; font-size: 11.5px;
+      background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 3px;
+      color: var(--accent-orange);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    /* ── Step-by-step list ────────────────────────────────────────── */
+    .fl-steps { counter-reset: step; margin: 18px 0 6px; padding: 0; list-style: none; }
+    .fl-steps li {
+      counter-increment: step;
+      position: relative;
+      padding: 18px 18px 18px 60px;
+      margin: 10px 0;
+      background: rgba(255,255,255,.025);
+      border: 1px solid rgba(255,255,255,.05);
+      border-radius: 10px;
+      transition: border-color .15s;
+      /* Let long lines wrap, including code samples inside step-desc */
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .fl-steps li:hover { border-color: rgba(255,107,26,.25); }
+    .fl-steps li::before {
+      content: counter(step);
+      position: absolute; left: 14px; top: 16px;
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--accent-orange) 0%, #ff8a40 100%);
+      color: #09080c;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 13px; font-family: ui-monospace, monospace;
+      box-shadow: 0 3px 10px -3px rgba(255,107,26,.5);
+    }
+    .fl-steps li .step-title {
+      font-size: 14.5px; font-weight: 700; color: var(--text-primary);
+      margin-bottom: 6px; letter-spacing: -0.01em; line-height: 1.4;
+    }
+    .fl-steps li .step-desc {
+      font-size: 13px; color: var(--text-soft); line-height: 1.7;
+    }
+    .fl-steps li .step-desc strong { color: var(--text-primary); }
+    .fl-steps li .step-desc code {
+      font-family: ui-monospace, monospace; font-size: 11.5px;
+      background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 3px;
+      color: var(--accent-orange);
+      overflow-wrap: anywhere; word-break: break-word;
+    }
+
+    /* ── Roles table ──────────────────────────────────────────────── */
+    .fl-roles {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px; margin: 16px 0;
+    }
+    .fl-role {
+      padding: 16px 18px; border-radius: 10px;
+      background: rgba(255,255,255,.025); border: 1px solid;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .fl-role.admin     { border-color: rgba(255,107,26,.3); }
+    .fl-role.developer { border-color: rgba(94,179,255,.3); }
+    .fl-role.designer  { border-color: rgba(167,139,250,.3); }
+    .fl-role.tester    { border-color: rgba(46,230,184,.3); }
+    .fl-role .role-name {
+      font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+      font-family: ui-monospace, monospace; margin-bottom: 8px;
+    }
+    .fl-role.admin     .role-name { color: var(--accent-orange); }
+    .fl-role.developer .role-name { color: var(--blue-accent); }
+    .fl-role.designer  .role-name { color: #a78bfa; }
+    .fl-role.tester    .role-name { color: var(--accent-green); }
+    .fl-role ul { padding-left: 18px; margin: 4px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--text-soft); }
+    .fl-role li { padding: 1px 0; }
+
+    /* ── Inline "what it looks like" example ──────────────────────── */
+    .fl-example {
+      margin: 18px 0; padding: 18px;
+      background: rgba(94,179,255,.04);
+      border: 1px solid rgba(94,179,255,.18);
+      border-radius: 10px;
+      min-width: 0;
+    }
+    .fl-example-label {
+      font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--blue-accent); font-family: ui-monospace, monospace; margin-bottom: 10px;
+    }
+    .fl-example pre {
+      font-family: ui-monospace, monospace; font-size: 12.5px;
+      background: rgba(0,0,0,.3); padding: 12px 14px; border-radius: 8px;
+      color: var(--text-primary); overflow-x: auto;
+      margin: 0; line-height: 1.55;
+      border: 1px solid rgba(255,255,255,.05);
+      /* Wrap long lines too, so the example doesn't force the parent card to scroll */
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    /* ── Definition table ─────────────────────────────────────────── */
+    .fl-def {
+      display: grid; grid-template-columns: minmax(180px, 260px) 1fr;
+      gap: 0; margin: 14px 0;
+      border: 1px solid rgba(255,255,255,.06); border-radius: 10px;
+    }
+    .fl-def > div {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,.04);
+      /* Critical: let long content wrap inside grid cells instead of overflowing */
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .fl-def > div:nth-child(-n+2) { border-top: none; }
+    /* Round only the outer corners so the border-radius isn't broken by removing overflow:hidden */
+    .fl-def > div:nth-child(1) { border-top-left-radius: 10px; }
+    .fl-def > div:nth-child(2) { border-top-right-radius: 10px; }
+    .fl-def > div:nth-last-child(2) { border-bottom-left-radius: 10px; }
+    .fl-def > div:nth-last-child(1) { border-bottom-right-radius: 10px; }
+    .fl-def-term {
+      background: rgba(255,255,255,.02);
+      color: var(--accent-orange); font-weight: 700; font-size: 12.5px;
+      font-family: ui-monospace, monospace; letter-spacing: 0.01em;
+      line-height: 1.5;
+    }
+    .fl-def-desc { color: var(--text-soft); font-size: 13px; line-height: 1.65; }
+    .fl-def-desc code {
+      font-family: ui-monospace, monospace; font-size: 11.5px;
+      background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 3px;
+      color: var(--text-primary);
+      /* Prevent inline code from refusing to break and pushing the cell wider than the column */
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    /* Stack term over description on narrow viewports so long terms always have full width */
+    @media (max-width: 600px) {
+      .fl-def { grid-template-columns: 1fr; }
+      .fl-def > div { border-top: 1px solid rgba(255,255,255,.04); }
+      .fl-def > div:first-child { border-top: none; }
+      .fl-def-term { padding-bottom: 4px; }
+      .fl-def-desc { padding-top: 4px; }
+    }
+
+    /* ── Callout (info / warning) ─────────────────────────────────── */
+    .fl-callout {
+      margin: 16px 0; padding: 14px 16px;
+      border-radius: 10px; border-left: 3px solid;
+      font-size: 13.5px; line-height: 1.6; color: var(--text-primary);
+    }
+    .fl-callout.info {
+      background: rgba(94,179,255,.06);
+      border-color: var(--blue-accent);
+    }
+    .fl-callout.warn {
+      background: rgba(248,113,113,.06);
+      border-color: var(--danger);
+    }
+    .fl-callout.tip {
+      background: rgba(46,230,184,.06);
+      border-color: var(--accent-green);
+    }
+    .fl-callout-title {
+      font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+      font-family: ui-monospace, monospace; margin-bottom: 6px;
+    }
+    .fl-callout.info .fl-callout-title { color: var(--blue-accent); }
+    .fl-callout.warn .fl-callout-title { color: var(--danger); }
+    .fl-callout.tip  .fl-callout-title { color: var(--accent-green); }
+    .fl-callout code {
+      font-family: ui-monospace, monospace; font-size: 11.5px;
+      background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 3px;
+      color: var(--accent-orange);
+    }
+
+    /* ── DB schema cards (replaces mermaid ERD) ───────────────────── */
+    .fl-schema {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px; margin: 18px 0;
+    }
+    .fl-tbl {
+      background: var(--bg-elevated);
+      border: 1.5px solid;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px -10px rgba(0,0,0,.5);
+      transition: transform .15s, box-shadow .2s;
+      display: flex; flex-direction: column;
+    }
+    .fl-tbl:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px -10px rgba(0,0,0,.6);
+    }
+
+    /* Per-table accent colour */
+    .fl-tbl.t-sprints { border-color: rgba(255,107,26,.55); }
+    .fl-tbl.t-join    { border-color: rgba(167,139,250,.55); }
+    .fl-tbl.t-issues  { border-color: rgba(94,179,255,.55); }
+    .fl-tbl.t-reasons { border-color: rgba(248,113,113,.55); }
+
+    .fl-tbl-head {
+      padding: 14px 16px;
+      display: flex; align-items: baseline; gap: 10px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), transparent);
+    }
+    .fl-tbl-name {
+      font-family: ui-monospace, monospace;
+      font-size: 14px; font-weight: 800; letter-spacing: -0.005em;
+      flex: 0 0 auto;
+    }
+    .fl-tbl.t-sprints .fl-tbl-name { color: var(--accent-orange); }
+    .fl-tbl.t-join    .fl-tbl-name { color: #a78bfa; }
+    .fl-tbl.t-issues  .fl-tbl-name { color: var(--blue-accent); }
+    .fl-tbl.t-reasons .fl-tbl-name { color: var(--danger); }
+
+    .fl-tbl-role {
+      font-size: 9.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+      font-family: ui-monospace, monospace;
+      padding: 3px 8px; border-radius: 999px;
+      background: rgba(255,255,255,.06); color: var(--text-secondary);
+    }
+    .fl-tbl-desc {
+      flex: 1 1 100%;
+      font-size: 12px; color: var(--text-muted); line-height: 1.5;
+      margin-top: 2px;
+    }
+
+    .fl-tbl-rows {
+      display: flex; flex-direction: column;
+      padding: 4px 0;
+    }
+    .fl-tbl-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px; align-items: center;
+      padding: 8px 16px;
+      font-family: ui-monospace, monospace;
+      font-size: 12.5px;
+      border-bottom: 1px solid rgba(255,255,255,.03);
+      transition: background-color .15s;
+    }
+    .fl-tbl-row:last-child { border-bottom: none; }
+    .fl-tbl-row:hover { background: rgba(255,255,255,.025); }
+
+    .fl-tbl-col {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      min-width: 0; overflow-wrap: anywhere;
+    }
+    .fl-tbl-col-name {
+      color: var(--text-primary); font-weight: 600;
+    }
+    .fl-tbl-row.is-pk .fl-tbl-col-name {
+      color: var(--accent-orange); font-weight: 700;
+    }
+    .fl-tbl-row.is-new .fl-tbl-col-name {
+      color: var(--accent-green); font-weight: 700;
+    }
+    .fl-tbl-badge {
+      display: inline-block; padding: 1px 6px; border-radius: 3px;
+      font-size: 9.5px; font-weight: 800; letter-spacing: .06em;
+      font-family: ui-monospace, monospace; line-height: 1.5;
+    }
+    .fl-tbl-badge.pk  { background: rgba(255,107,26,.18); color: var(--accent-orange); }
+    .fl-tbl-badge.fk  { background: rgba(94,179,255,.15); color: var(--blue-accent); }
+    .fl-tbl-badge.new { background: rgba(46,230,184,.18); color: var(--accent-green); }
+    .fl-tbl-badge.enum {
+      background: rgba(167,139,250,.12); color: #a78bfa;
+      max-width: 100%; white-space: normal;
+    }
+
+    .fl-tbl-type {
+      color: var(--text-muted); font-size: 11.5px; font-weight: 500;
+      text-align: right; flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .fl-tbl-foot {
+      margin-top: auto;
+      padding: 10px 16px;
+      background: rgba(255,255,255,.015);
+      border-top: 1px solid rgba(255,255,255,.04);
+      font-size: 11.5px; color: var(--text-soft);
+      line-height: 1.5;
+    }
+    .fl-tbl-foot strong { color: var(--text-primary); }
+    .fl-tbl-foot .arrow {
+      display: inline-block;
+      color: var(--accent-orange); font-family: ui-monospace, monospace;
+      font-weight: 800; margin: 0 4px;
+    }
+
+    /* Relationships overview band */
+    .fl-rels {
+      margin: 18px 0;
+      padding: 16px 18px;
+      background: rgba(167,139,250,.06);
+      border: 1px solid rgba(167,139,250,.22);
+      border-radius: 12px;
+    }
+    .fl-rels-title {
+      font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+      color: #a78bfa; font-family: ui-monospace, monospace; margin-bottom: 10px;
+    }
+    .fl-rel-list { display: flex; flex-direction: column; gap: 6px; }
+    .fl-rel {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      font-family: ui-monospace, monospace; font-size: 12.5px;
+      padding: 4px 0;
+    }
+    .fl-rel-from, .fl-rel-to {
+      font-weight: 700;
+      padding: 2px 8px; border-radius: 5px;
+      background: rgba(255,255,255,.04);
+    }
+    .fl-rel-from.t-sprints, .fl-rel-to.t-sprints { background: rgba(255,107,26,.12); color: var(--accent-orange); }
+    .fl-rel-from.t-join,    .fl-rel-to.t-join    { background: rgba(167,139,250,.15); color: #a78bfa; }
+    .fl-rel-from.t-issues,  .fl-rel-to.t-issues  { background: rgba(94,179,255,.12); color: var(--blue-accent); }
+    .fl-rel-from.t-reasons, .fl-rel-to.t-reasons { background: rgba(248,113,113,.15); color: var(--danger); }
+    .fl-rel-arrow {
+      color: var(--text-muted); font-weight: 800;
+      font-family: ui-monospace, monospace;
+    }
+    .fl-rel-card {
+      flex: 1 1 auto;
+      color: var(--text-soft); font-size: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    @media (max-width: 600px) {
+      .fl-schema { grid-template-columns: 1fr; }
+      .fl-tbl-row { grid-template-columns: 1fr; gap: 4px; }
+      .fl-tbl-type { text-align: left; }
+    }
+  </style>
+</head>
+<body class="workspace-theme">
+  <div class="top-banner"></div>
+  <nav class="hub-nav workspace-sheet-topnav" aria-label="Workspace section">
+    <a href="./">← Workspace hub</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="sprints.html">Sprints</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="builds.html">Builds</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="designs.html">Designs</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="canvas.html">Canvas</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="flow.html" style="color:var(--accent-orange);">How it works</a>
+    <span class="hub-nav-sep" aria-hidden="true">·</span>
+    <a href="/">Nigents</a>
+  </nav>
+
+  <main class="fl-wrap">
+
+    <!-- ── Hero ─────────────────────────────────────────────────── -->
+    <header class="fl-hero">
+      <h1>How <span class="accent">Workspace sprints</span> work — a friendly walkthrough</h1>
+      <p class="lede">
+        This page explains the entire sprint workflow in Workspace — from planning to closing — using
+        plain-language diagrams and step-by-step prose. Read it top to bottom and you'll know exactly
+        what every button on the sprints page does, who's allowed to do what, what the system tracks
+        automatically, and what happens when a task slips past its deadline.
+      </p>
+      <div class="crumbs">
+        <span>Reading time: <strong>~10 min</strong></span>
+        <span>Audience: <strong>everyone on the team</strong></span>
+        <span>Last updated: <strong>2026-05-27</strong></span>
+      </div>
+    </header>
+
+    <div class="fl-layout">
+      <!-- ── Side nav ─────────────────────────────────────────── -->
+      <aside class="fl-nav" aria-label="Section index">
+        <div class="fl-nav-group">Sprint walkthrough</div>
+        <a href="#intro"      class="active">What a sprint is</a>
+        <a href="#big-picture">The big picture</a>
+        <a href="#lifecycle"  >Four lifecycle stages</a>
+        <a href="#create"     >Stage 1 — Plan it</a>
+        <a href="#start"      >Stage 2 — Start it</a>
+        <a href="#board"      >Stage 3 — Work the board</a>
+        <a href="#track"      >Stage 4 — Track progress</a>
+        <a href="#close"      >Stage 5 — Close it</a>
+
+        <div class="fl-nav-group">When things slip</div>
+        <a href="#overdue"    >What "overdue" means</a>
+        <a href="#late"       >Filing a late reason</a>
+        <a href="#telegram"   >Admin gets the alert</a>
+
+        <div class="fl-nav-group">Reference</div>
+        <a href="#roles"      >Who does what</a>
+        <a href="#data"       >Data stored per sprint</a>
+        <a href="#glossary"   >Glossary</a>
+      </aside>
+
+      <!-- ── Main content ─────────────────────────────────────── -->
+      <div class="fl-main">
+
+        <!-- ── 1. What a sprint is ────────────────────────────── -->
+        <section id="intro" class="fl-card">
+          <span class="fl-tag">Foundation</span>
+          <h2>What is a sprint in Workspace?</h2>
+          <p>
+            A <strong>sprint</strong> in Workspace is a named, time-boxed batch of work. Think of it as
+            a folder that says <em>"these are the things we promised to ship between today and a future
+            date."</em> You put issues into it, assign them to people, give them estimates in
+            <strong>story points</strong>, and then watch the sprint progress as work moves through the
+            board.
+          </p>
+          <p>
+            Every sprint belongs to exactly one app — Workspace, Tawazon, Droop, or QuickIn — so
+            different teams never see each other's plans. The page you're reading right now lives at
+            <code>/workspace/flow.html</code>, but the actual sprint planning UI is at
+            <code>/workspace/sprints.html?app=&lt;your-app&gt;</code>.
+          </p>
+
+          <h3>What's inside a sprint?</h3>
+          <div class="fl-def">
+            <div class="fl-def-term">name</div>
+            <div class="fl-def-desc">A short title like <code>"Sprint 12 — Auth hardening"</code>.</div>
+            <div class="fl-def-term">goal</div>
+            <div class="fl-def-desc">One-line answer to <em>"why does this sprint exist?"</em>. Optional but recommended.</div>
+            <div class="fl-def-term">start_date</div>
+            <div class="fl-def-desc">When the sprint window opens.</div>
+            <div class="fl-def-term">end_date</div>
+            <div class="fl-def-desc">When it's supposed to close — the burndown chart measures against this.</div>
+            <div class="fl-def-term">capacity_points</div>
+            <div class="fl-def-desc">How many story points the team thinks it can ship in this window. Used to flag over-planning.</div>
+            <div class="fl-def-term">status</div>
+            <div class="fl-def-desc">One of <code>planning</code>, <code>active</code>, <code>completed</code>, <code>cancelled</code> — determines what buttons appear.</div>
+            <div class="fl-def-term">issues</div>
+            <div class="fl-def-desc">The work to be done. Each issue has its own assignee, estimate, due date, and current board state.</div>
+          </div>
+
+          <div class="fl-callout tip">
+            <div class="fl-callout-title">Tip</div>
+            A sprint doesn't <em>own</em> issues — it just <em>references</em> them. An issue can be in
+            zero or many sprints over time, and removing it from a sprint never deletes the issue
+            itself. This means you can move work between sprints safely.
+          </div>
+        </section>
+
+        <!-- ── 2. Big picture ─────────────────────────────────── -->
+        <section id="big-picture" class="fl-card">
+          <span class="fl-tag blue">Overview</span>
+          <h2>The big picture — one diagram, end to end</h2>
+          <p>
+            Here's the entire sprint workflow as one diagram. Read it left to right. Coloured borders
+            tell you who's doing the work at each step — the team, the system, or someone outside the
+            sprint (like the admin getting a Telegram alert).
+          </p>
+
+          <div class="fl-diagram">
+            <pre class="mermaid">
+flowchart LR
+  classDef user   fill:#1a2540,stroke:#5eb3ff,stroke-width:2px,color:#f4f4f8;
+  classDef sys    fill:#2a1a10,stroke:#ff6b1a,stroke-width:2px,color:#f4f4f8;
+  classDef ok     fill:#0a3b30,stroke:#2ee6b8,stroke-width:2px,color:#f4f4f8;
+  classDef danger fill:#3d1717,stroke:#f87171,stroke-width:2px,color:#f4f4f8;
+  classDef decide fill:#161620,stroke:#71717f,stroke-width:2px,color:#f4f4f8,stroke-dasharray:5 4;
+
+  S1["Create sprint<br/>name + dates + goal"]:::user
+  S2["Add issues<br/>from backlog or quick-add"]:::user
+  S3["Assign owner<br/>estimate + start/end date"]:::user
+  S4["Start sprint<br/>status changes to active"]:::user
+  S5["Move cards through<br/>the kanban board"]:::user
+  D{"Past due?"}:::decide
+  S6["Mark sprint<br/>complete"]:::ok
+  L1["Card turns red<br/>OVERDUE indicator"]:::danger
+  L2["Assignee files<br/>a written reason"]:::user
+  L3["System alerts<br/>admin via Telegram"]:::sys
+  S1 --&gt; S2 --&gt; S3 --&gt; S4 --&gt; S5 --&gt; D
+  D -- no  --&gt; S6
+  D -- yes --&gt; L1 --&gt; L2 --&gt; L3 --&gt; S5
+            </pre>
+          </div>
+
+          <div class="fl-legend" aria-label="Diagram colour legend">
+            <span class="fl-legend-item"><span class="fl-legend-swatch user"></span>Team member action</span>
+            <span class="fl-legend-item"><span class="fl-legend-swatch system"></span>Automatic system action</span>
+            <span class="fl-legend-item"><span class="fl-legend-swatch ok"></span>Success state</span>
+            <span class="fl-legend-item"><span class="fl-legend-swatch danger"></span>Problem / overdue</span>
+            <span class="fl-legend-item"><span class="fl-legend-swatch decide"></span>Decision branch</span>
+          </div>
+
+          <div class="fl-diagram-caption">
+            <strong>Read it like this:</strong> a team member creates a sprint, fills it with issues
+            and assignments, and starts it. From there, the team moves cards through the kanban. At
+            every step the system checks whether anything has gone past its deadline — if so, the
+            assignee files a written reason, an automated Telegram alert goes to the admin, and work
+            continues. Once the team is done, they mark the sprint complete.
+          </div>
+        </section>
+
+        <!-- ── 3. Lifecycle stages ────────────────────────────── -->
+        <section id="lifecycle" class="fl-card">
+          <span class="fl-tag green">Lifecycle</span>
+          <h2>A sprint moves through four lifecycle stages</h2>
+          <p>
+            Every sprint has a <code>status</code> field. The status determines which buttons appear
+            on the detail page. You can't "start" a completed sprint, and you can't "complete" one
+            that hasn't been started — these guardrails prevent accidental state corruption.
+          </p>
+
+          <div class="fl-diagram">
+            <pre class="mermaid">
+stateDiagram-v2
+  classDef plan fill:#1a1720,stroke:#71717f,color:#cdcdd8;
+  classDef act  fill:#0a3b30,stroke:#2ee6b8,color:#2ee6b8;
+  classDef done fill:#0a2540,stroke:#5eb3ff,color:#5eb3ff;
+  classDef bad  fill:#3d1717,stroke:#f87171,color:#f87171;
+
+  [*] --> planning : you create it
+  planning --> active : you click<br/>Start sprint
+  planning --> cancelled : you cancel<br/>before starting
+  active --> completed : you click<br/>Complete
+  active --> cancelled : something went wrong<br/>need to bail
+  completed --> [*]
+  cancelled --> [*]
+            </pre>
+          </div>
+
+          <div class="fl-keys">
+            <div class="fl-key">
+              <div class="label">Planning</div>
+              <div class="value">The sprint exists but the clock isn't ticking. You're filling it with issues, setting estimates, and rallying owners. <strong>Nothing is tracked yet.</strong></div>
+            </div>
+            <div class="fl-key">
+              <div class="label">Active</div>
+              <div class="value">The sprint is live. The burndown chart starts plotting daily progress, the board accepts drag-and-drop, and overdue checks run against the end date.</div>
+            </div>
+            <div class="fl-key">
+              <div class="label">Completed</div>
+              <div class="value">Work is locked in. Future velocity reports will count this sprint. Unfinished issues stay on the board for reference but no longer count toward "done points."</div>
+            </div>
+            <div class="fl-key">
+              <div class="label">Cancelled</div>
+              <div class="value">Sprint was abandoned (priorities changed, team unavailable, scope was wrong). Issues return to the backlog or get carried into a new sprint.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── 4. Stage 1: Plan it ────────────────────────────── -->
+        <section id="create" class="fl-card">
+          <span class="fl-tag">Stage 1 of 5</span>
+          <h2>Plan the sprint — create it and fill it with work</h2>
+          <p>
+            Click <strong>+ New sprint</strong> on the sprints page. A modal opens asking for the
+            essentials. Don't worry about getting every field perfect — you can edit any of them later.
+          </p>
+
+          <ol class="fl-steps">
+            <li>
+              <div class="step-title">Click <strong>+ New sprint</strong></div>
+              <div class="step-desc">Top-right of the sprints page. A modal slides in with the create form.</div>
+            </li>
+            <li>
+              <div class="step-title">Fill in name, goal, and dates</div>
+              <div class="step-desc">Name is required. The goal and dates are optional but strongly recommended — the goal becomes the subtitle and the dates feed the burndown chart.</div>
+            </li>
+            <li>
+              <div class="step-title">Set the capacity in story points</div>
+              <div class="step-desc">A realistic guess of how much work the team can ship. The system will later warn you if you've planned more points than this capacity allows.</div>
+            </li>
+            <li>
+              <div class="step-title">Click <strong>Save</strong> — sprint opens automatically</div>
+              <div class="step-desc">You're now in the detail view with an empty board. Time to fill it.</div>
+            </li>
+            <li>
+              <div class="step-title">Add issues — two ways to do it</div>
+              <div class="step-desc">
+                <strong>From backlog:</strong> click <strong>From backlog</strong> to pick existing issues across all sheets for this app. Tick the ones you want, click Add selected.
+                <br/>
+                <strong>Quick-add:</strong> click <strong>+ Quick add</strong> to create a brand-new issue (bug, feature, task, chore…) and drop it into this sprint in one step.
+              </div>
+            </li>
+            <li>
+              <div class="step-title">Assign each issue</div>
+              <div class="step-desc">Click any card on the board to open the detail drawer. Set the assignee, estimate (story points), start date, and end date. Save closes the drawer and updates the card.</div>
+            </li>
+          </ol>
+
+          <div class="fl-example">
+            <div class="fl-example-label">Example payload — what gets sent when you save a new sprint</div>
+            <pre>POST /api/workspace/sprints
+{
+  "name": "Sprint 12 — Auth hardening",
+  "goal": "Ship 2FA + lock out brute-force attempts",
+  "start_date": "2026-06-01",
+  "end_date":   "2026-06-14",
+  "capacity_points": 30,
+  "status": "planning"
+}</pre>
+          </div>
+
+          <div class="fl-callout info">
+            <div class="fl-callout-title">Good to know</div>
+            Story points are an abstract measure of effort — not hours. A common scale is the
+            <strong>Fibonacci sequence</strong>: 1, 2, 3, 5, 8, 13. A "1" is trivial. A "13" is a
+            full week of complex work. The team learns its own scale over a few sprints.
+          </div>
+        </section>
+
+        <!-- ── 5. Stage 2: Start it ───────────────────────────── -->
+        <section id="start" class="fl-card">
+          <span class="fl-tag">Stage 2 of 5</span>
+          <h2>Start the sprint — flip the switch to active</h2>
+          <p>
+            When you're happy with the planned work, click <strong>▶ Start sprint</strong>. The
+            status flips from <code>planning</code> to <code>active</code> and a few things turn on
+            automatically:
+          </p>
+
+          <ul>
+            <li>The <strong>burndown chart</strong> starts plotting. Day 0 = total points on the sprint. The chart compares the ideal line (linear decrease to zero) against the actual remaining points.</li>
+            <li>The <strong>"+ Quick add" and "From backlog"</strong> buttons stay available, but added issues land in the Todo column instead of being treated as "planned scope."</li>
+            <li>Overdue checks become active. The moment any issue's <code>due_date</code> falls behind today, the card lights up red.</li>
+            <li>The hero stats strip (top of the detail page) updates: <strong>Planned points</strong>, <strong>Completed</strong>, <strong>Issues</strong>, <strong>Time left</strong>.</li>
+          </ul>
+
+          <div class="fl-callout warn">
+            <div class="fl-callout-title">Once started, hard to undo cleanly</div>
+            There's no "revert to planning" button. If you started a sprint by mistake, the cleanest
+            recovery is to Cancel it and create a new planning sprint with the same issues.
+          </div>
+        </section>
+
+        <!-- ── 6. Stage 3: Work the board ─────────────────────── -->
+        <section id="board" class="fl-card">
+          <span class="fl-tag blue">Stage 3 of 5</span>
+          <h2>Work the board — drag cards through four columns</h2>
+          <p>
+            This is where day-to-day work happens. The kanban board has four columns. Each card
+            represents one issue. Drag a card from left to right as the work progresses.
+          </p>
+
+          <div class="fl-diagram">
+            <pre class="mermaid">
+flowchart LR
+  classDef todo fill:#1a1720,stroke:#71717f,color:#cdcdd8,stroke-width:2px;
+  classDef prog fill:#2b1f10,stroke:#ffb86b,color:#ffb86b,stroke-width:2px;
+  classDef rev  fill:#1d172b,stroke:#a78bfa,color:#a78bfa,stroke-width:2px;
+  classDef done fill:#0a2a20,stroke:#2ee6b8,color:#2ee6b8,stroke-width:2px;
+
+  T["Todo<br/><i>queued for work</i>"]:::todo
+  P["In progress<br/><i>someone is actively working</i>"]:::prog
+  R["In review<br/><i>code or design done<br/>awaiting check</i>"]:::rev
+  D["Done<br/><i>shipped or merged</i>"]:::done
+
+  T --&gt; P
+  P --&gt; R
+  R --&gt; D
+  R -.changes requested.-&gt; P
+            </pre>
+          </div>
+
+          <div class="fl-diagram-caption">
+            <strong>The reverse arrow</strong> from <em>In review</em> back to <em>In progress</em>
+            is what makes the workflow honest — reviews aren't a rubber stamp. If a reviewer requests
+            changes, the card goes back to In progress until those changes are made.
+          </div>
+
+          <h3>What the system tracks automatically when you drag</h3>
+          <p>
+            Every drag triggers a single API call: <code>PATCH /api/workspace/issues/&lt;id&gt;/assign</code>
+            with the new state. The server then auto-stamps lifecycle timestamps so you never have to
+            remember when something started or finished.
+          </p>
+
+          <div class="fl-def">
+            <div class="fl-def-term">first move to "in progress"</div>
+            <div class="fl-def-desc">Server sets <code>started_at = NOW()</code>. This is the moment work actually began — used later for cycle-time reports.</div>
+            <div class="fl-def-term">move to "done"</div>
+            <div class="fl-def-desc">Server sets <code>completed_at = NOW()</code> AND <code>is_done = 1</code>. The card now counts toward the sprint's "done points" total.</div>
+            <div class="fl-def-term">move backwards (review → progress)</div>
+            <div class="fl-def-desc">Lifecycle timestamps are <strong>not</strong> reset — you don't lose the original started_at. Only forward transitions stamp timestamps.</div>
+          </div>
+
+          <h3>What's on each card</h3>
+          <p>
+            Cards are designed to be readable at a glance. From top to bottom:
+          </p>
+          <ul>
+            <li><strong>Issue ID + type</strong> (e.g. <code>#42 · BUG</code>) — the "eyebrow" row at the top</li>
+            <li><strong>Title</strong> — the main bug/task title</li>
+            <li><strong>Chips row</strong>:
+              <ul>
+                <li>Priority chip (high / medium / low) — colour-coded</li>
+                <li>Estimate chip (e.g. <code>3 pt</code>) — only shown if estimate is set</li>
+                <li>Due-date chip — pulses red if overdue</li>
+                <li>Late-reason count chip — appears only if reasons have been filed</li>
+                <li>Sheet chip — which platform/area the issue belongs to</li>
+              </ul>
+            </li>
+            <li><strong>Footer row</strong>: comment count on the left, circular assignee avatar on the right (tinted by role)</li>
+          </ul>
+        </section>
+
+        <!-- ── 7. Stage 4: Track progress ─────────────────────── -->
+        <section id="track" class="fl-card">
+          <span class="fl-tag purple">Stage 4 of 5</span>
+          <h2>Track progress — burndown + hero stats + filter chips</h2>
+          <p>
+            The detail page gives you three different reading angles on how the sprint is going. Use
+            the one that matches the question you have right now.
+          </p>
+
+          <h3>Hero stats (top of the page)</h3>
+          <p>
+            Four large tiles, one number each. This is the <em>"glance and go"</em> view — pull these
+            up during standup.
+          </p>
+          <div class="fl-def">
+            <div class="fl-def-term">Planned points</div>
+            <div class="fl-def-desc">Sum of estimates across all issues in the sprint. Compared to capacity (if set) — shows when you've over-planned.</div>
+            <div class="fl-def-term">Completed</div>
+            <div class="fl-def-desc">Points in the Done column, plus a progress bar showing percentage of planned points shipped so far.</div>
+            <div class="fl-def-term">Issues</div>
+            <div class="fl-def-desc">Count of done issues out of total issues. Tells you the <em>number of cards</em> shipped, separate from points.</div>
+            <div class="fl-def-term">Time left</div>
+            <div class="fl-def-desc">Days remaining (or "X days ago" if you're past end_date). Auto-coloured — green when comfortable, orange when tight, red when overdue.</div>
+          </div>
+
+          <h3>Filter chips (above the board)</h3>
+          <p>
+            Three filters narrow the board to whatever you're investigating:
+          </p>
+          <ul>
+            <li><strong>Priority</strong> — High / Medium / Low / All</li>
+            <li><strong>Assignee</strong> — pick a teammate or "Unassigned". Useful during standup ("show me Ali's cards")</li>
+            <li><strong>Search box</strong> — free-text match against the card title. Live filter as you type.</li>
+          </ul>
+
+          <h3>Burndown chart (bottom of the page)</h3>
+          <p>
+            A line chart showing remaining points over time:
+          </p>
+          <ul>
+            <li><strong>Grey dashed line</strong> = ideal burndown. A straight line from total points to zero.</li>
+            <li><strong>Orange filled line</strong> = actual remaining points each day.</li>
+            <li><strong>Vertical dashed "TODAY" line</strong> shows where you are in the sprint window.</li>
+            <li>Each data point is hoverable — the tooltip shows that day's remaining-points number.</li>
+          </ul>
+
+          <div class="fl-callout info">
+            <div class="fl-callout-title">How to read the burndown</div>
+            If the orange line is <strong>above</strong> the grey line, you're behind. If it's
+            <strong>below</strong>, you're ahead. If it's <strong>flat</strong> for several days, work
+            isn't being marked done — investigate during standup.
+          </div>
+        </section>
+
+        <!-- ── 8. Stage 5: Close it ───────────────────────────── -->
+        <section id="close" class="fl-card">
+          <span class="fl-tag green">Stage 5 of 5</span>
+          <h2>Close the sprint — mark it complete</h2>
+          <p>
+            When the sprint window ends and (hopefully) the work is shipped, click <strong>✓ Complete</strong>.
+            The status moves to <code>completed</code>. From this point on:
+          </p>
+          <ul>
+            <li>The sprint becomes read-only in spirit (you can still view it, but it's frozen).</li>
+            <li>Its done-points number gets counted in future velocity reports.</li>
+            <li>Any unfinished issues stay on the board as a record — they don't disappear, but they don't count toward "completed" either.</li>
+            <li>The next sprint you create can pull those unfinished issues in via <strong>From backlog</strong>.</li>
+          </ul>
+
+          <div class="fl-callout tip">
+            <div class="fl-callout-title">Coming in batch 3</div>
+            A <strong>"Carry over unfinished"</strong> button on the Complete dialog will let you
+            move all open issues into the next sprint in one click, so you don't have to re-add them
+            manually.
+          </div>
+        </section>
+
+        <!-- ── 9. What overdue means ──────────────────────────── -->
+        <section id="overdue" class="fl-card">
+          <span class="fl-tag danger">When things slip · 1 of 3</span>
+          <h2>What "overdue" actually means in Workspace</h2>
+          <p>
+            An issue is overdue when <strong>all three</strong> of the following are true:
+          </p>
+          <ol>
+            <li>It has a <code>due_date</code> set</li>
+            <li>That date is <strong>before today</strong> (in the server's local time)</li>
+            <li>The issue is not yet in <code>done</code> or <code>cancelled</code> state</li>
+          </ol>
+
+          <p>
+            The system checks this on every render — there's no separate cron job needed. As soon as
+            the clock passes midnight on the due date, the next page load shows the overdue
+            indicators. Three things change visually:
+          </p>
+
+          <div class="fl-keys">
+            <div class="fl-key">
+              <div class="label">On the board card</div>
+              <div class="value">Red right-edge bar appears, the due-date chip pulses red, and an <code>OVERDUE</code> eyebrow text shows next to the issue ID.</div>
+            </div>
+            <div class="fl-key">
+              <div class="label">In the drawer</div>
+              <div class="value">A red banner appears at the top of the late-reason panel — if you're the assignee, it asks you to file a reason.</div>
+            </div>
+            <div class="fl-key">
+              <div class="label">On the sprint list card</div>
+              <div class="value">A <code>⚠ N overdue</code> pill appears next to the sprint name. The number is the count of currently-overdue issues in that sprint.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── 10. Late-reason workflow ───────────────────────── -->
+        <section id="late" class="fl-card">
+          <span class="fl-tag danger">When things slip · 2 of 3</span>
+          <h2>Filing a late reason — explain the slip</h2>
+          <p>
+            When work slips past its deadline, the assignee (or an admin) is required to file a
+            short written reason. This isn't about blame — it's about <em>capturing context</em> so
+            the team can spot patterns: <em>"are scope creeps the issue? Dependencies? Estimation
+            errors?"</em>
+          </p>
+
+          <div class="fl-diagram">
+            <pre class="mermaid">
+flowchart TD
+  classDef user   fill:#1a2540,stroke:#5eb3ff,color:#f4f4f8,stroke-width:2px;
+  classDef decide fill:#161620,stroke:#71717f,color:#f4f4f8,stroke-width:2px,stroke-dasharray:5 4;
+  classDef ok     fill:#0a3b30,stroke:#2ee6b8,color:#f4f4f8,stroke-width:2px;
+  classDef sys    fill:#2a1a10,stroke:#ff6b1a,color:#f4f4f8,stroke-width:2px;
+  classDef danger fill:#3d1717,stroke:#f87171,color:#f4f4f8,stroke-width:2px;
+
+  A["Issue is overdue"]:::danger
+  B["User opens the card"]:::user
+  C{"Is this person the<br/>assignee or admin?"}:::decide
+  D["Read-only view<br/>of past reasons"]:::user
+  E["Submit form is visible<br/>reason + optional new ETA"]:::user
+  F["Submit"]:::user
+  G["Server records reason<br/>and updates due_date<br/>if new ETA was given"]:::sys
+  H["Telegram alert<br/>fires to admin"]:::sys
+
+  A --&gt; B --&gt; C
+  C -- viewer only --&gt; D
+  C -- assignee or admin --&gt; E --&gt; F --&gt; G --&gt; H
+            </pre>
+          </div>
+
+          <h3>Who is allowed to file a reason?</h3>
+          <p>
+            Only the issue's <strong>assignee</strong> or an <strong>admin</strong>. The check happens
+            server-side in <code>POST /api/workspace/issues/&lt;id&gt;/late-reason</code>, so even if a
+            user pokes at the API directly, they can't bypass the rule.
+          </p>
+
+          <h3>What the form asks for</h3>
+          <ul>
+            <li><strong>Reason</strong> (required) — a short text explanation. Be specific: "Stripe webhook signature failing under replay" beats "blocked." Max 4,000 characters.</li>
+            <li><strong>New ETA</strong> (optional) — if you can commit to a new date, set it here. The server updates the issue's <code>due_date</code> in the same database transaction, so the card stops being overdue until the new date passes.</li>
+          </ul>
+
+          <div class="fl-callout info">
+            <div class="fl-callout-title">Everyone can read the history</div>
+            Only assignees can <em>file</em> a reason, but anyone with access to the app can
+            <em>see</em> the list of past reasons. This keeps the team honest and gives the admin
+            full context without needing to ask "why is this still open?"
+          </div>
+
+          <h3>What gets stored</h3>
+          <div class="fl-example">
+            <div class="fl-example-label">Row in <code>workspace_issue_late_reasons</code></div>
+            <pre>{
+  "id": 17,
+  "issue_id": 42,
+  "app_slug": "tawazon",
+  "user_id": 5,
+  "user_name": "Ali",
+  "user_role": "developer",
+  "old_due_date": "2026-05-25",
+  "new_due_date": "2026-06-02",
+  "reason": "Stripe webhook signature verification needs a rewrite — the existing implementation chokes on event replay.",
+  "submitted_at": "2026-05-27T10:42:00Z"
+}</pre>
+          </div>
+        </section>
+
+        <!-- ── 11. Telegram alert ─────────────────────────────── -->
+        <section id="telegram" class="fl-card">
+          <span class="fl-tag blue">When things slip · 3 of 3</span>
+          <h2>The admin gets pinged on Telegram</h2>
+          <p>
+            The moment a late reason is filed, the server sends a Markdown-formatted message to
+            the app's Telegram channel. The admin doesn't have to be watching the dashboard — the
+            phone buzzes.
+          </p>
+
+          <div class="fl-diagram">
+            <pre class="mermaid">
+sequenceDiagram
+  participant User as Assignee
+  participant API as Workspace API
+  participant Notify as notifyApp()
+  participant Env as Server config
+  participant TG as Telegram cloud
+  participant Phone as Admin's phone
+
+  User->>API: POST /late-reason<br/>{ reason, new_due_date }
+  API->>API: Validate auth + scope<br/>Insert row in DB
+  API->>Notify: Call notifyApp(app_slug, message)
+  Notify->>Env: Get bot token<br/>Get chat_id for this app
+  Env-->>Notify: Token + chat_id
+  Notify->>TG: POST sendMessage<br/>(chat_id, text, Markdown)
+  TG-->>Notify: 200 OK
+  Notify-->>API: Done
+  API-->>User: 200 success
+  TG-->>Phone: Push notification
+            </pre>
+          </div>
+
+          <h3>How channels are routed per app</h3>
+          <p>
+            Each app has its own Telegram channel. Routing is done with environment variables on
+            the Node.js server:
+          </p>
+          <div class="fl-def">
+            <div class="fl-def-term">TELEGRAM_BOT_TOKEN</div>
+            <div class="fl-def-desc">The bot's HTTP API token. One per workspace. Required.</div>
+            <div class="fl-def-term">TELEGRAM_CHAT_ID_WORKSPACE</div>
+            <div class="fl-def-desc">Chat ID for the Workspace channel.</div>
+            <div class="fl-def-term">TELEGRAM_CHAT_ID_TAWAZON</div>
+            <div class="fl-def-desc">Chat ID for the Tawazon channel.</div>
+            <div class="fl-def-term">TELEGRAM_CHAT_ID_DROOP</div>
+            <div class="fl-def-desc">Chat ID for the Droop channel.</div>
+            <div class="fl-def-term">TELEGRAM_CHAT_ID</div>
+            <div class="fl-def-desc">Global fallback. If a per-app one isn't set, alerts route here.</div>
+          </div>
+
+          <h3>What the message looks like</h3>
+          <div class="fl-example">
+            <div class="fl-example-label">Message rendered in Telegram (Markdown)</div>
+            <pre>⏰ Late-reason filed — Tawazon
+🔖 issue #42: Wire Stripe Checkout into onboarding
+👤 by: Ali (developer)
+📅 was due: 2026-05-25
+📅 new ETA: 2026-06-02
+
+&gt; Stripe webhook signature verification needs
+&gt; a rewrite — the existing implementation chokes
+&gt; on event replay.</pre>
+          </div>
+
+          <div class="fl-callout warn">
+            <div class="fl-callout-title">If the alert doesn't arrive</div>
+            Check the env vars above are set in cPanel → Node.js app → Environment variables. The
+            API never fails if Telegram is down or misconfigured — the request returns success and
+            the alert is silently dropped. This means a missed alert is hard to detect from inside
+            the app; check the Node server logs (<code>logger.error</code> lines starting with
+            <code>[TelegramWebhook]</code>).
+          </div>
+        </section>
+
+        <!-- ── 12. Roles ──────────────────────────────────────── -->
+        <section id="roles" class="fl-card">
+          <span class="fl-tag neutral">Reference</span>
+          <h2>Who does what — roles and permissions</h2>
+          <p>
+            Workspace has four built-in roles. The role you have is set on your user account in
+            <code>workspace_users.role</code> and decides what you can do in each part of the app.
+          </p>
+
+          <div class="fl-roles">
+            <div class="fl-role admin">
+              <div class="role-name">Admin</div>
+              <ul>
+                <li>Create / edit / delete any sprint</li>
+                <li>Edit any user's comment</li>
+                <li>File a late reason on any issue (not just their own)</li>
+                <li>Receives Telegram alerts for slips</li>
+                <li>Access to <code>?app=*</code> by default</li>
+              </ul>
+            </div>
+            <div class="fl-role developer">
+              <div class="role-name">Developer</div>
+              <ul>
+                <li>Pick up assigned issues</li>
+                <li>Drag own cards through the board</li>
+                <li>Edit own comments</li>
+                <li>File late reasons on issues assigned to them</li>
+                <li>Scoped to apps in their <code>app_scope</code> CSV</li>
+              </ul>
+            </div>
+            <div class="fl-role designer">
+              <div class="role-name">Designer</div>
+              <ul>
+                <li>Same as Developer for sprints</li>
+                <li>Upload designs to <code>/designs.html</code></li>
+                <li>Card avatar tinted violet on the board</li>
+                <li>Scoped to apps in their <code>app_scope</code> CSV</li>
+              </ul>
+            </div>
+            <div class="fl-role tester">
+              <div class="role-name">Tester</div>
+              <ul>
+                <li>Same as Developer for sprints</li>
+                <li>Often moves cards back from "In review" to "In progress"</li>
+                <li>Card avatar tinted teal on the board</li>
+                <li>Scoped to apps in their <code>app_scope</code> CSV</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── 13. Data stored ────────────────────────────────── -->
+        <section id="data" class="fl-card">
+          <span class="fl-tag purple">Reference</span>
+          <h2>What gets stored in the database per sprint</h2>
+          <p>
+            Behind the sprint UI sit four tables in MySQL. Knowing the shape helps you reason about
+            what's tracked and what isn't.
+          </p>
+
+          <!-- Relationships overview — how the 4 tables connect -->
+          <div class="fl-rels">
+            <div class="fl-rels-title">How the tables relate</div>
+            <div class="fl-rel-list">
+              <div class="fl-rel">
+                <span class="fl-rel-from t-sprints">workspace_sprints</span>
+                <span class="fl-rel-arrow">─ 1 to many ─&gt;</span>
+                <span class="fl-rel-to t-join">workspace_sprint_issues</span>
+                <span class="fl-rel-card">one sprint contains many issue links</span>
+              </div>
+              <div class="fl-rel">
+                <span class="fl-rel-from t-issues">workspace_issues</span>
+                <span class="fl-rel-arrow">─ 1 to many ─&gt;</span>
+                <span class="fl-rel-to t-join">workspace_sprint_issues</span>
+                <span class="fl-rel-card">an issue can be in many sprints over time</span>
+              </div>
+              <div class="fl-rel">
+                <span class="fl-rel-from t-issues">workspace_issues</span>
+                <span class="fl-rel-arrow">─ 1 to many ─&gt;</span>
+                <span class="fl-rel-to t-reasons">workspace_issue_late_reasons</span>
+                <span class="fl-rel-card">one issue can have many late-reason rows</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 schema cards, one per table -->
+          <div class="fl-schema">
+
+            <!-- workspace_sprints -->
+            <div class="fl-tbl t-sprints">
+              <div class="fl-tbl-head">
+                <span class="fl-tbl-name">workspace_sprints</span>
+                <span class="fl-tbl-role">main entity</span>
+                <span class="fl-tbl-desc">One row per sprint. Stores name, dates, status, capacity.</span>
+              </div>
+              <div class="fl-tbl-rows">
+                <div class="fl-tbl-row is-pk">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">id</span><span class="fl-tbl-badge pk">PK</span></div>
+                  <div class="fl-tbl-type">int</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">app_slug</span></div>
+                  <div class="fl-tbl-type">string</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">name</span></div>
+                  <div class="fl-tbl-type">string</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">goal</span></div>
+                  <div class="fl-tbl-type">text</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col">
+                    <span class="fl-tbl-col-name">status</span>
+                    <span class="fl-tbl-badge enum">planning | active | completed | cancelled</span>
+                  </div>
+                  <div class="fl-tbl-type">enum</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">start_date</span></div>
+                  <div class="fl-tbl-type">date</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">end_date</span></div>
+                  <div class="fl-tbl-type">date</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">capacity_points</span></div>
+                  <div class="fl-tbl-type">int</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">created_by</span></div>
+                  <div class="fl-tbl-type">int</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">created_at</span></div>
+                  <div class="fl-tbl-type">timestamp</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">closed_at</span></div>
+                  <div class="fl-tbl-type">timestamp</div>
+                </div>
+              </div>
+              <div class="fl-tbl-foot">
+                <strong>Joins to</strong><span class="arrow">→</span>workspace_sprint_issues (via id)
+              </div>
+            </div>
+
+            <!-- workspace_sprint_issues -->
+            <div class="fl-tbl t-join">
+              <div class="fl-tbl-head">
+                <span class="fl-tbl-name">workspace_sprint_issues</span>
+                <span class="fl-tbl-role">join table</span>
+                <span class="fl-tbl-desc">Pure many-to-many bridge — which issues are in which sprints.</span>
+              </div>
+              <div class="fl-tbl-rows">
+                <div class="fl-tbl-row is-pk">
+                  <div class="fl-tbl-col">
+                    <span class="fl-tbl-col-name">sprint_id</span>
+                    <span class="fl-tbl-badge pk">PK</span>
+                    <span class="fl-tbl-badge fk">FK</span>
+                  </div>
+                  <div class="fl-tbl-type">int</div>
+                </div>
+                <div class="fl-tbl-row is-pk">
+                  <div class="fl-tbl-col">
+                    <span class="fl-tbl-col-name">issue_id</span>
+                    <span class="fl-tbl-badge pk">PK</span>
+                    <span class="fl-tbl-badge fk">FK</span>
+                  </div>
+                  <div class="fl-tbl-type">int</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">added_by</span></div>
+                  <div class="fl-tbl-type">int</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">added_at</span></div>
+                  <div class="fl-tbl-type">timestamp</div>
+                </div>
+              </div>
+              <div class="fl-tbl-foot">
+                <strong>Bridge between</strong><span class="arrow">→</span>workspace_sprints &amp; workspace_issues
+              </div>
+            </div>
+
+            <!-- workspace_issues -->
+            <div class="fl-tbl t-issues">
+              <div class="fl-tbl-head">
+                <span class="fl-tbl-name">workspace_issues</span>
+                <span class="fl-tbl-role">main entity</span>
+                <span class="fl-tbl-desc">The work itself — a bug, feature, chore. Existed before sprints.</span>
+              </div>
+              <div class="fl-tbl-rows">
+                <div class="fl-tbl-row is-pk">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">id</span><span class="fl-tbl-badge pk">PK</span></div>
+                  <div class="fl-tbl-type">int</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col">
+                    <span class="fl-tbl-col-name">sheet_slug</span>
+                    <span class="fl-tbl-badge fk">FK</span>
+                  </div>
+                  <div class="fl-tbl-type">string</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">title</span></div>
+                  <div class="fl-tbl-type">string</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">priority</span></div>
+                  <div class="fl-tbl-type">enum</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col">
+                    <span class="fl-tbl-col-name">state</span>
+                    <span class="fl-tbl-badge enum">backlog | todo | in_progress | in_review | done | cancelled</span>
+                  </div>
+                  <div class="fl-tbl-type">enum</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col">
+                    <span class="fl-tbl-col-name">assignee_id</span>
+                    <span class="fl-tbl-badge fk">FK</span>
+                  </div>
+                  <div class="fl-tbl-type">int</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">estimate_points</span></div>
+                  <div class="fl-tbl-type">tinyint</div>
+                </div>
+                <div class="fl-tbl-row is-new">
+                  <div class="fl-tbl-col">
+                    <span class="fl-tbl-col-name">start_date</span>
+                    <span class="fl-tbl-badge new">NEW</span>
+                  </div>
+                  <div class="fl-tbl-type">date</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">due_date</span></div>
+                  <div class="fl-tbl-type">date</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">started_at</span></div>
+                  <div class="fl-tbl-type">timestamp</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">completed_at</span></div>
+                  <div class="fl-tbl-type">timestamp</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">is_done</span></div>
+                  <div class="fl-tbl-type">bool</div>
+                </div>
+              </div>
+              <div class="fl-tbl-foot">
+                <strong>Joins to</strong><span class="arrow">→</span>workspace_sprint_issues &amp; workspace_issue_late_reasons
+              </div>
+            </div>
+
+            <!-- workspace_issue_late_reasons -->
+            <div class="fl-tbl t-reasons">
+              <div class="fl-tbl-head">
+                <span class="fl-tbl-name">workspace_issue_late_reasons</span>
+                <span class="fl-tbl-role">slip log</span>
+                <span class="fl-tbl-desc">Every late-reason ever filed — written history of deadline slips.</span>
+              </div>
+              <div class="fl-tbl-rows">
+                <div class="fl-tbl-row is-pk">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">id</span><span class="fl-tbl-badge pk">PK</span></div>
+                  <div class="fl-tbl-type">bigint</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col">
+                    <span class="fl-tbl-col-name">issue_id</span>
+                    <span class="fl-tbl-badge fk">FK</span>
+                  </div>
+                  <div class="fl-tbl-type">int</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">app_slug</span></div>
+                  <div class="fl-tbl-type">string</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col">
+                    <span class="fl-tbl-col-name">user_id</span>
+                    <span class="fl-tbl-badge fk">FK</span>
+                  </div>
+                  <div class="fl-tbl-type">int</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">user_name</span></div>
+                  <div class="fl-tbl-type">string</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">user_role</span></div>
+                  <div class="fl-tbl-type">string</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">old_due_date</span></div>
+                  <div class="fl-tbl-type">date</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">new_due_date</span></div>
+                  <div class="fl-tbl-type">date</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">reason</span></div>
+                  <div class="fl-tbl-type">text</div>
+                </div>
+                <div class="fl-tbl-row">
+                  <div class="fl-tbl-col"><span class="fl-tbl-col-name">submitted_at</span></div>
+                  <div class="fl-tbl-type">timestamp</div>
+                </div>
+              </div>
+              <div class="fl-tbl-foot">
+                <strong>Joins to</strong><span class="arrow">→</span>workspace_issues (via issue_id)
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Legend explaining badges -->
+          <div class="fl-legend" aria-label="Schema badge legend">
+            <span class="fl-legend-item"><span class="fl-tbl-badge pk">PK</span><span>Primary key</span></span>
+            <span class="fl-legend-item"><span class="fl-tbl-badge fk">FK</span><span>Foreign key</span></span>
+            <span class="fl-legend-item"><span class="fl-tbl-badge new">NEW</span><span>Added in the latest batch</span></span>
+            <span class="fl-legend-item"><span class="fl-tbl-badge enum">enum</span><span>Allowed values listed inline</span></span>
+          </div>
+
+          <div class="fl-callout info">
+            <div class="fl-callout-title">Key design choice</div>
+            Sprint membership lives in a <strong>join table</strong> (<code>workspace_sprint_issues</code>),
+            not as a foreign key on the issue itself. This is what lets the same issue belong to
+            multiple sprints across time (carry-over) without rewriting the issue.
+          </div>
+        </section>
+
+        <!-- ── 14. Glossary ───────────────────────────────────── -->
+        <section id="glossary" class="fl-card">
+          <span class="fl-tag neutral">Reference</span>
+          <h2>Glossary — terms used on this page</h2>
+          <div class="fl-def">
+            <div class="fl-def-term">Sprint</div>
+            <div class="fl-def-desc">A named, time-boxed batch of issues with start/end dates, a goal, and a capacity.</div>
+            <div class="fl-def-term">Issue</div>
+            <div class="fl-def-desc">A single unit of work — a bug, feature, chore, research item, etc. Lives in a sheet, may live in zero or many sprints.</div>
+            <div class="fl-def-term">Sheet</div>
+            <div class="fl-def-desc">A grouping of issues by platform or area (e.g. "Android", "iOS", "Backend"). Issues always belong to exactly one sheet.</div>
+            <div class="fl-def-term">Story point</div>
+            <div class="fl-def-desc">An abstract estimate of effort, usually on a Fibonacci scale (1, 2, 3, 5, 8, 13).</div>
+            <div class="fl-def-term">Burndown</div>
+            <div class="fl-def-desc">A daily chart of remaining points versus the ideal linear-decrease line.</div>
+            <div class="fl-def-term">Velocity</div>
+            <div class="fl-def-desc">Average story points completed per sprint over the last N sprints. Used to plan capacity for the next sprint.</div>
+            <div class="fl-def-term">Cycle time</div>
+            <div class="fl-def-desc">Average time between <code>started_at</code> and <code>completed_at</code> for completed issues. Tells you how long work actually takes.</div>
+            <div class="fl-def-term">app_slug</div>
+            <div class="fl-def-desc">The per-app namespace identifier — <code>workspace</code>, <code>tawazon</code>, <code>droop</code>, or <code>quickin</code>.</div>
+            <div class="fl-def-term">app_scope</div>
+            <div class="fl-def-desc">A CSV column on each user row listing which apps that user can access. <code>*</code> means everything.</div>
+            <div class="fl-def-term">Edit key</div>
+            <div class="fl-def-desc">A secret value that proves you're a known user. Stored in the browser's localStorage and sent on every API call.</div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-logos">
+      <div class="footer-n" style="background:var(--accent-orange);" aria-hidden="true">N</div>
+    </div>
+    <div class="footer-txt">Workspace · Nigents · How sprints work — visual reference</div>
+  </footer>
+
+  <!-- ── Mermaid init + scroll-spy ──────────────────────────────── -->
+  <script>
+    (function () {
+      'use strict';
+      if (window.mermaid) {
+        mermaid.initialize({
+          startOnLoad: true,
+          theme: 'base',
+          themeVariables: {
+            background:            '#08070b',
+            primaryColor:          '#1a1720',
+            primaryTextColor:      '#f4f4f8',
+            primaryBorderColor:    '#ff6b1a',
+            secondaryColor:        '#121016',
+            tertiaryColor:         '#2e2e3a',
+            lineColor:             '#71717f',
+            textColor:             '#f4f4f8',
+            mainBkg:               '#1a1720',
+            secondBkg:             '#121016',
+            tertiaryBkg:           '#2e2e3a',
+            nodeBorder:            '#ff6b1a',
+            clusterBkg:            '#121016',
+            clusterBorder:         '#2e2e3a',
+            edgeLabelBackground:   '#08070b',
+            actorBkg:              '#1a1720',
+            actorBorder:           '#ff6b1a',
+            actorTextColor:        '#f4f4f8',
+            actorLineColor:        '#71717f',
+            signalColor:           '#5eb3ff',
+            signalTextColor:       '#f4f4f8',
+            labelBoxBkgColor:      '#1a1720',
+            labelBoxBorderColor:   '#ff6b1a',
+            labelTextColor:        '#f4f4f8',
+            loopTextColor:         '#f4f4f8',
+            noteBorderColor:       '#a78bfa',
+            noteBkgColor:          '#1d172b',
+            noteTextColor:         '#a78bfa',
+            stateBkg:              '#1a1720',
+            stateBorder:           '#ff6b1a',
+            altBackground:         '#121016',
+            fontFamily:            'inherit',
+            fontSize:              '13px',
+          },
+          flowchart: { curve: 'basis', useMaxWidth: true, htmlLabels: true, padding: 20 },
+          sequence:  { useMaxWidth: true, mirrorActors: false },
+          state:     { useMaxWidth: true },
+          er:        { useMaxWidth: true },
+        });
+      }
+
+      // Side-nav scroll spy — highlight the section currently in view
+      var sections = Array.from(document.querySelectorAll('.fl-card[id]'));
+      var links    = Array.from(document.querySelectorAll('.fl-nav a[href^="#"]'));
+      function setActive(id) {
+        links.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + id); });
+      }
+      var obs = new IntersectionObserver(function (entries) {
+        var visible = entries.filter(function (e) { return e.isIntersecting; })
+          .sort(function (a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; });
+        if (visible.length) setActive(visible[0].target.id);
+      }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+      sections.forEach(function (s) { obs.observe(s); });
+
+      // Smooth scroll on click
+      links.forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          var id = a.getAttribute('href').slice(1);
+          var t = document.getElementById(id);
+          if (t) {
+            e.preventDefault();
+            t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            history.replaceState(null, '', '#' + id);
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

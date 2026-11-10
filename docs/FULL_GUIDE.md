@@ -1004,7 +1004,7 @@ gitlab.createMergeRequest({ sourceBranch: task.plan.branch, targetBranch })
 
 ```
 10:00 PM - You send Telegram voice note:
-           "Add HyperPay refund webhook to Workspace"
+           "Add HyperPay refund webhook to the backend"
            
 10:01 PM - Orchestrator receives task, starts AutoGen group chat
 
@@ -2995,6 +2995,4 @@ Built with ❤️ for developers who sleep while their code ships.
 
 For daily operations, EC2 updates, and troubleshooting, see **[OPERATIONS.md](OPERATIONS.md)**.
 
-The **Workspace Home Services** iOS app (`workspace-cr-2`) architecture, backlog, and AI task prompts are summarized in **[docs/WORKSPACE_HOME_SERVICES_IOS.md](docs/WORKSPACE_HOME_SERVICES_IOS.md)**.  
-**5/4 change requests** (P1–P8 + roadmap A–Q with platform tags): **[docs/WORKSPACE_5_4_REQUEST_UPDATES.md](docs/WORKSPACE_5_4_REQUEST_UPDATES.md)**.
 

@@ -1,0 +1,141 @@
+/* ──────────────────────────────────────────────────────────────────────
+   workspace-howto.css — "How this works" flow-diagram panel.
+
+   Used on every page that has a workflow worth visualising:
+     /workspace/sprints.html    — sprint lifecycle
+     /workspace/sheet.html      — bug-brief flow
+     /workspace/builds.html     — build distribution flow
+     /workspace/designs.html    — design review flow
+
+   The panel is a collapsed <details> block by default — out of the way
+   until the user clicks to expand. Its sibling JS (workspace-howto.js)
+   lazy-renders the mermaid diagram on first open.
+   ────────────────────────────────────────────────────────────────────── */
+
+.workspace-howto {
+  background: linear-gradient(155deg, var(--bg-card, #121016) 0%, var(--bg-elevated, #1a1720) 100%);
+  border: 1px solid var(--border, #2e2e3a);
+  border-radius: 14px;
+  margin: 0 0 22px;
+  overflow: hidden;
+  transition: border-color .2s, box-shadow .2s;
+}
+.workspace-howto[open] {
+  border-color: rgba(255,107,26,.35);
+  box-shadow: 0 12px 30px -16px rgba(0,0,0,.45);
+}
+
+/* ── Summary (always visible) ─────────────────────────────────────── */
+.workspace-howto > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 14px 18px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary, #f4f4f8);
+  list-style: none;
+  user-select: none;
+  transition: background-color .15s;
+}
+.workspace-howto > summary::-webkit-details-marker { display: none; }
+.workspace-howto > summary:hover { background: rgba(255,255,255,.02); }
+
+.workspace-howto .howto-arrow {
+  display: inline-block;
+  color: var(--accent-orange, #ff6b1a);
+  font-size: 14px;
+  transition: transform .25s cubic-bezier(.2,.7,.2,1);
+  font-family: ui-monospace, monospace;
+}
+.workspace-howto[open] > summary .howto-arrow { transform: rotate(90deg); }
+
+.workspace-howto .howto-label { letter-spacing: -0.01em; }
+.workspace-howto .howto-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255,107,26,.12);
+  color: var(--accent-orange, #ff6b1a);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-family: ui-monospace, monospace;
+  margin-left: auto;
+}
+
+/* ── Body (revealed when open) ────────────────────────────────────── */
+.workspace-howto .howto-body {
+  padding: 4px 18px 18px;
+  border-top: 1px solid rgba(255,255,255,.04);
+}
+.workspace-howto .howto-intro {
+  color: var(--text-muted, #71717f);
+  font-size: 12.5px;
+  line-height: 1.6;
+  margin: 12px 0 6px;
+  max-width: 75ch;
+}
+.workspace-howto .howto-intro strong { color: var(--text-primary, #f4f4f8); }
+.workspace-howto .howto-intro code {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,.06);
+  font-family: ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--accent-orange, #ff6b1a);
+}
+
+/* Diagram container */
+.workspace-howto .howto-diagram {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.015);
+  border: 1px dashed rgba(255,255,255,.06);
+  overflow-x: auto;
+}
+.workspace-howto .howto-diagram .mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+  font-family: inherit;
+}
+.workspace-howto .howto-diagram svg { max-width: 100%; height: auto; }
+
+/* Loading placeholder shown while mermaid downloads */
+.workspace-howto .howto-loading {
+  text-align: center;
+  color: var(--text-muted, #71717f);
+  font-size: 12px;
+  font-family: ui-monospace, monospace;
+  padding: 24px 8px;
+}
+
+/* Footer hints */
+.workspace-howto .howto-foot {
+  margin-top: 12px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--text-muted, #71717f);
+  align-items: center;
+}
+.workspace-howto .howto-foot strong { color: var(--text-primary, #f4f4f8); font-weight: 700; }
+.workspace-howto .howto-foot a {
+  color: var(--accent-orange, #ff6b1a);
+  text-decoration: none;
+  font-weight: 600;
+}
+.workspace-howto .howto-foot a:hover { text-decoration: underline; }
+
+/* Mobile tweaks */
+@media (max-width: 640px) {
+  .workspace-howto > summary { padding: 12px 14px; font-size: 13px; }
+  .workspace-howto .howto-body { padding: 4px 14px 14px; }
+  .workspace-howto .howto-tag { display: none; }
+}

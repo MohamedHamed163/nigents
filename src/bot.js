@@ -381,7 +381,7 @@ Send voice notes or text naturally:
 
 <b>Workspace Sprints:</b>
 • /sprint — Active sprint summary (defaults to Workspace app)
-• /sprint app — Active sprint for a specific app (workspace / app / tawazon / droop)
+• /sprint app — Active sprint for a specific app (workspace / tawazon / droop / quickin)
 • /sprints — Last 5 sprints for the chosen app
 • /sprints all — Every sprint across every app
 • /all — Cross-app overview: all 4 apps + their active sprints
